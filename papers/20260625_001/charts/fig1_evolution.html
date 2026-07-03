@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<style>
+body{font-family:SimSun,"Times New Roman",serif;margin:0;padding:28px;background:#fff;color:#222}
+.wrap{width:920px;margin:0 auto}
+.title{text-align:center;font-size:18px;font-weight:bold;margin-bottom:22px}
+svg{display:block;margin:0 auto}
+.node{fill:#eef3f7;stroke:#2f6f8f;stroke-width:2;rx:8}
+.node2{fill:#f4f1e8;stroke:#8b6f2f;stroke-width:2;rx:8}
+.node3{fill:#edf5ef;stroke:#3e7c59;stroke-width:2;rx:8}
+.txt{font-size:16px;text-anchor:middle;dominant-baseline:middle}
+.small{font-size:13px;fill:#555;text-anchor:middle}
+.arrow{stroke:#555;stroke-width:2;fill:none;marker-end:url(#arrow)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="title">智慧交通调度技术演进路径</div>
+<svg width="920" height="420" viewBox="0 0 920 420">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#555"/></marker></defs>
+<rect class="node" x="30" y="120" width="150" height="88"/>
+<text class="txt" x="105" y="150">固定配时</text><text class="small" x="105" y="180">历史流量与人工规则</text>
+<path class="arrow" d="M185 164 L255 164"/>
+<rect class="node" x="260" y="120" width="150" height="88"/>
+<text class="txt" x="335" y="150">感应控制</text><text class="small" x="335" y="180">检测器触发调整</text>
+<path class="arrow" d="M415 164 L485 164"/>
+<rect class="node2" x="490" y="120" width="160" height="88"/>
+<text class="txt" x="570" y="150">强化学习</text><text class="small" x="570" y="180">状态-动作-奖励</text>
+<path class="arrow" d="M655 164 L725 164"/>
+<rect class="node3" x="730" y="120" width="160" height="88"/>
+<text class="txt" x="810" y="150">大模型协同</text><text class="small" x="810" y="180">理解、规划、解释</text>
+<rect class="node3" x="290" y="285" width="340" height="72"/>
+<text class="txt" x="460" y="315">车路云协同环境</text><text class="small" x="460" y="340">车端数据 + 路侧感知 + 云端推理 + 边缘执行</text>
+<path class="arrow" d="M570 210 C570 245,520 260,500 285"/>
+<path class="arrow" d="M810 210 C810 265,650 288,630 320"/>
+</svg>
+<div class="small">资料来源：根据文献[1][2][3][5][11]整理</div>
+</div>
+</body>
+</html>

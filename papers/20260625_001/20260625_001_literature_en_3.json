@@ -1,0 +1,268 @@
+[
+  {
+    "title": "A survey of large language models for urban traffic signal control",
+    "authors": [
+      "Wu Yunxia",
+      "Luo Caiwen",
+      "Wang Jinrun",
+      "Wang Yi",
+      "Jiang Yangsheng",
+      "Yao Zhihong"
+    ],
+    "year": 2026,
+    "source": "Expert Systems with Applications",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1016/j.eswa.2026.132998",
+    "url": "https://doi.org/10.1016/j.eswa.2026.132998",
+    "abstract": "",
+    "citation_count": 0,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "iLLM-TSC: Integration Reinforcement Learning and Large Language Model for Traffic Signal Control Policy Improvement",
+    "authors": [
+      "Pang Aoyu",
+      "Wang Maonan",
+      "Pun Man-On",
+      "Chen Chung Shue",
+      "Xiong Xi"
+    ],
+    "year": 2026,
+    "source": "IEEE Transactions on Vehicular Technology",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/tvt.2026.3674284",
+    "url": "https://doi.org/10.1109/tvt.2026.3674284",
+    "abstract": "",
+    "citation_count": 1,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "Towards Generalisable and Explainable Traffic Signal Control via Deep Reinforcement Learning and Large Language Models",
+    "authors": [
+      "Huang Hao",
+      "He Wenjie",
+      "Liu Qilie",
+      "Liu Qian",
+      "Huang Chao",
+      "Abdul Majeed Anwar P. P."
+    ],
+    "year": 2026,
+    "source": "CAAI Transactions on Intelligence Technology",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1049/cit2.70113",
+    "url": "https://doi.org/10.1049/cit2.70113",
+    "abstract": "<jats:title>ABSTRACT</jats:title>\n                  <jats:p>As a government‐regulated public service, traffic signal control (TSC) requires reliable and transparent decision‐making. However, existing deep reinforcement learning (DRL) methods, despite improvements in control accuracy, still lack expl...",
+    "citation_count": 0,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "DGLight: DQN-Guided GRPO Fine-Tuning of Large Language Models for Traffic Signal Control",
+    "authors": [
+      "Chenbo Yu"
+    ],
+    "year": 2026,
+    "source": "ArXiv",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.48550/arXiv.2604.25259",
+    "url": "https://www.semanticscholar.org/paper/22305dc51e260bca3ac94fadb9c9b1247690f229",
+    "abstract": "Traffic signal control (TSC) plays a central role in reducing congestion and maintaining urban mobility. This dissertation introduces DGLight, a critic-guided reinforcement-learning framework for adapting a pretrained large language model to TSC. DGLight first trains a CoLight-based Deep Q-Network c...",
+    "citation_count": 0,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "The Crossroads of LLM and Traffic Control: A Study on Large Language Models in Adaptive Traffic Signal Control",
+    "authors": [
+      "Movahedi Mohammad",
+      "Choi Juyeong"
+    ],
+    "year": 2025,
+    "source": "IEEE Transactions on Intelligent Transportation Systems",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/tits.2024.3498735",
+    "url": "https://doi.org/10.1109/tits.2024.3498735",
+    "abstract": "",
+    "citation_count": 41,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "Large Language Models (LLMs) as Traffic Control Systems at Urban Intersections: A New Paradigm",
+    "authors": [
+      "Masri Sari",
+      "Ashqar Huthaifa I.",
+      "Elhenawy Mohammed"
+    ],
+    "year": 2025,
+    "source": "Vehicles",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.3390/vehicles7010011",
+    "url": "https://doi.org/10.3390/vehicles7010011",
+    "abstract": "<jats:p>This study introduces a novel approach for traffic control systems by using Large Language Models (LLMs) as traffic controllers. The study utilizes their logical reasoning, scene understanding, and decision-making capabilities to optimize throughput and provide feedback based on traffic cond...",
+    "citation_count": 38,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "Large Language Model Agents for Adaptive Traffic Signal Control: A Simulation Case Study in Nairobi",
+    "authors": [
+      "Wambui Hinga Monicah"
+    ],
+    "year": 2025,
+    "source": "International Journal of Applied Science and Research",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.56293/ijmsssr.2025.5901",
+    "url": "https://doi.org/10.56293/ijmsssr.2025.5901",
+    "abstract": "<jats:p>Traffic congestion in Nairobi’s Central Business District continues to impose high economic, social, and environmental costs. Long queues at intersections, wasted fuel, and poor air quality are common outcomes of conventional fixed-time traffic signals. These systems dominate the city but do...",
+    "citation_count": 0,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "A novel approach to unlocking the synergy of large language models and chemical knowledge in biomedical signal applications",
+    "authors": [
+      "Yin Zilong",
+      "Wang Haoyu",
+      "Chen Bin",
+      "Sun Hangling",
+      "Li Anji",
+      "Zhou Chenyu"
+    ],
+    "year": 2025,
+    "source": "Biomedical Signal Processing and Control",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1016/j.bspc.2024.107388",
+    "url": "https://doi.org/10.1016/j.bspc.2024.107388",
+    "abstract": "",
+    "citation_count": 8,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "A Dual Large Language Models Architecture with Herald Guided Prompts for Parallel Fine Grained Traffic Signal Control",
+    "authors": [
+      "Qing Guo",
+      "Xinhang Li",
+      "Junyu Chen",
+      "Zheng Guo",
+      "Xiaocong Li",
+      "Lin Zhang"
+    ],
+    "year": 2025,
+    "source": "2025 IEEE 31th International Conference on Parallel and Distributed Systems (ICPADS)",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/ICPADS67057.2025.11323137",
+    "url": "https://www.semanticscholar.org/paper/50cbc8bcd56169388637d6ac6e7390879968da45",
+    "abstract": "Leveraging large language models (LLMs) in traffic signal control (TSC) improves optimization efficiency and interpretability compared to traditional reinforcement learning (RL) methods. However, existing LLM-based approaches are limited by fixed time signal durations and are prone to hallucination ...",
+    "citation_count": 2,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "Traffic Signal Control System via Collaboration Between Large Language Models and Reinforcement Learning",
+    "authors": [
+      "Shengzhe Xu",
+      "Qing Guo",
+      "Lei Li",
+      "Lin Zhang"
+    ],
+    "year": 2025,
+    "source": "2025 9th IEEE International Conference on Network Intelligence and Digital Content (IC-NIDC)",
+    "source_type": "other",
+    "doi": "https://doi.org/10.1109/IC-NIDC67200.2025.11390546",
+    "url": "https://www.semanticscholar.org/paper/90a4623b0452e4a3ce4a78013733ddf2389ef7c7",
+    "abstract": "In recent years, the expansion of cities' scale and populations has put a heavy burden on urban traffic. Although traffic signal control is the key to regulating urban traffic, traditional rule-based or reinforcement learning methods are gradually constrained by insufficient flexibility or training ...",
+    "citation_count": 0,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "LLMS as Virtual Traffic Police: Incident-Aware Traffic Signal Control Augmented by Large Language Models",
+    "authors": [
+      "Qiqing Wang",
+      "Shiqi Wei",
+      "Kaidi Yang"
+    ],
+    "year": 2025,
+    "source": "2025 IEEE 28th International Conference on Intelligent Transportation Systems (ITSC)",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/ITSC60802.2025.11423524",
+    "url": "https://www.semanticscholar.org/paper/d8794ccea524fcd655f3a6f2357fa961acd4bd0f",
+    "abstract": "Adaptive traffic signal control (TSC) has demonstrated strong effectiveness in managing dynamic traffic flows. However, conventional methods often struggle when unforeseen traffic incidents occur (e.g., accidents and road maintenance), which typically require labor-intensive and inefficient manual i...",
+    "citation_count": 0,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "CoLLMLight: Cooperative Large Language Model Agents for Network-Wide Traffic Signal Control",
+    "authors": [
+      "Zirui Yuan",
+      "Siqi Lai",
+      "Hao Liu"
+    ],
+    "year": 2025,
+    "source": "ArXiv",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.48550/arXiv.2503.11739",
+    "url": "https://www.semanticscholar.org/paper/751f2f64aa84f4cf53727ecbc8faf2b8ead28b50",
+    "abstract": "Traffic Signal Control (TSC) plays a critical role in urban traffic management by optimizing traffic flow and mitigating congestion. While Large Language Models (LLMs) have recently emerged as promising tools for TSC due to their exceptional problem-solving and generalization capabilities, existing ...",
+    "citation_count": 12,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "LLMLight: Large Language Models as Traffic Signal Control Agents",
+    "authors": [
+      "Siqi Lai",
+      "Zhao Xu",
+      "Weijiao Zhang",
+      "Hao Liu",
+      "Hui Xiong"
+    ],
+    "year": 2023,
+    "source": "Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.1",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1145/3690624.3709379",
+    "url": "https://www.semanticscholar.org/paper/5609bde8e191eb61a304047d2434868e243df5be",
+    "abstract": "Traffic Signal Control (TSC) is a crucial component in urban traffic management, aiming to optimize road network efficiency and reduce congestion. Traditional TSC methods, primarily based on transportation engineering and reinforcement learning (RL), often struggle with generalization abilities acro...",
+    "citation_count": 89,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true
+  },
+  {
+    "title": "Large Language Models as Traffic Signal Control Agents: Capacity and Opportunity",
+    "authors": [
+      "Siqi Lai",
+      "Zhao Xu",
+      "Weijiao Zhang",
+      "Hao Liu",
+      "Hui Xiong"
+    ],
+    "year": 2023,
+    "source": "ArXiv",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.48550/arXiv.2312.16044",
+    "url": "https://www.semanticscholar.org/paper/db73250cde81aa4f87b2f46954f28253cb7ec205",
+    "abstract": "",
+    "citation_count": 55,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "id": "demo-book",
+  "title": "Markdown 示例书",
+  "description": "用于测试章节导航、渲染、搜索和书签跳转的内置示例书。",
+  "chapters": [
+    {
+      "id": "welcome",
+      "title": "欢迎",
+      "src": "chapters/01-welcome.md"
+    },
+    {
+      "id": "reader-flow",
+      "title": "阅读流程",
+      "src": "chapters/02-reader-flow.md"
+    },
+    {
+      "id": "advanced-markdown",
+      "title": "进阶 Markdown",
+      "src": "chapters/03-advanced-markdown.md"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="220" viewBox="0 0 640 220" role="img" aria-labelledby="title desc">
+  <title id="title">阅读标记</title>
+  <desc id="desc">一个用于测试相对资源路径的书签形阅读标记。</desc>
+  <rect width="640" height="220" rx="8" fill="#eef2ef"/>
+  <path d="M94 42h118c11 0 20 9 20 20v116l-59-34-59 34V62c0-11 9-20 20-20Z" fill="#236b59"/>
+  <circle cx="384" cy="86" r="34" fill="#c45533"/>
+  <path d="M292 142h218" stroke="#20231f" stroke-width="16" stroke-linecap="round"/>
+  <path d="M292 96h132" stroke="#697069" stroke-width="12" stroke-linecap="round"/>
+</svg>

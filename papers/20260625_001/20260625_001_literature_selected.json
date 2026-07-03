@@ -1,0 +1,270 @@
+[
+  {
+    "title": "Fuzzy Inference Enabled Deep Reinforcement Learning-Based Traffic Light Control for Intelligent Transportation System",
+    "authors": [
+      "Kumar Neetesh",
+      "Rahman Syed Shameerur",
+      "Dhakad Navin"
+    ],
+    "year": 2021,
+    "source": "IEEE Transactions on Intelligent Transportation Systems",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/tits.2020.2984033",
+    "url": "https://doi.org/10.1109/tits.2020.2984033",
+    "abstract": "",
+    "citation_count": 179,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_4.json"
+  },
+  {
+    "title": "LLMLight: Large Language Models as Traffic Signal Control Agents",
+    "authors": [
+      "Siqi Lai",
+      "Zhao Xu",
+      "Weijiao Zhang",
+      "Hao Liu",
+      "Hui Xiong"
+    ],
+    "year": 2023,
+    "source": "Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.1",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1145/3690624.3709379",
+    "url": "https://www.semanticscholar.org/paper/5609bde8e191eb61a304047d2434868e243df5be",
+    "abstract": "Traffic Signal Control (TSC) is a crucial component in urban traffic management, aiming to optimize road network efficiency and reduce congestion. Traditional TSC methods, primarily based on transportation engineering and reinforcement learning (RL), often struggle with generalization abilities acro...",
+    "citation_count": 89,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_3.json"
+  },
+  {
+    "title": "Deep Reinforcement Learning-Based Traffic Light Scheduling Framework for SDN-Enabled Smart Transportation System",
+    "authors": [
+      "Kumar Neetesh",
+      "Mittal Sarthak",
+      "Garg Vaibhav",
+      "Kumar Neeraj"
+    ],
+    "year": 2022,
+    "source": "IEEE Transactions on Intelligent Transportation Systems",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/tits.2021.3095161",
+    "url": "https://doi.org/10.1109/tits.2021.3095161",
+    "abstract": "",
+    "citation_count": 64,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_4.json"
+  },
+  {
+    "title": "Large Language Models as Traffic Signal Control Agents: Capacity and Opportunity",
+    "authors": [
+      "Siqi Lai",
+      "Zhao Xu",
+      "Weijiao Zhang",
+      "Hao Liu",
+      "Hui Xiong"
+    ],
+    "year": 2023,
+    "source": "ArXiv",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.48550/arXiv.2312.16044",
+    "url": "https://www.semanticscholar.org/paper/db73250cde81aa4f87b2f46954f28253cb7ec205",
+    "abstract": "",
+    "citation_count": 55,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_3.json"
+  },
+  {
+    "title": "The Crossroads of LLM and Traffic Control: A Study on Large Language Models in Adaptive Traffic Signal Control",
+    "authors": [
+      "Movahedi Mohammad",
+      "Choi Juyeong"
+    ],
+    "year": 2025,
+    "source": "IEEE Transactions on Intelligent Transportation Systems",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/tits.2024.3498735",
+    "url": "https://doi.org/10.1109/tits.2024.3498735",
+    "abstract": "",
+    "citation_count": 41,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_1.json"
+  },
+  {
+    "title": "Large Language Models (LLMs) as Traffic Control Systems at Urban Intersections: A New Paradigm",
+    "authors": [
+      "Masri Sari",
+      "Ashqar Huthaifa I.",
+      "Elhenawy Mohammed"
+    ],
+    "year": 2025,
+    "source": "Vehicles",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.3390/vehicles7010011",
+    "url": "https://doi.org/10.3390/vehicles7010011",
+    "abstract": "<jats:p>This study introduces a novel approach for traffic control systems by using Large Language Models (LLMs) as traffic controllers. The study utilizes their logical reasoning, scene understanding, and decision-making capabilities to optimize throughput and provide feedback based on traffic cond...",
+    "citation_count": 38,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_3.json"
+  },
+  {
+    "title": "Traffic Signal Control Under Mixed Traffic With Connected and Automated Vehicles: A Transfer-Based Deep Reinforcement Learning Approach",
+    "authors": [
+      "Song Li",
+      "Fan Wei"
+    ],
+    "year": 2021,
+    "source": "IEEE Access",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1109/access.2021.3123273",
+    "url": "https://doi.org/10.1109/access.2021.3123273",
+    "abstract": "",
+    "citation_count": 34,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_2.json"
+  },
+  {
+    "title": "Potential impact of autonomous vehicles in mixed traffic from simulation using real traffic flow",
+    "authors": [
+      "Andreotti Eleonora",
+      "Selpi",
+      "Boyraz Pinar"
+    ],
+    "year": 2023,
+    "source": "Journal of Intelligent and Connected Vehicles",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.26599/jicv.2023.9210001",
+    "url": "https://doi.org/10.26599/jicv.2023.9210001",
+    "abstract": "",
+    "citation_count": 28,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_2.json"
+  },
+  {
+    "title": "Deep Reinforcement Q-Learning for Intelligent Traffic Signal Control with Partial Detection",
+    "authors": [
+      "Ducrocq Romain",
+      "Farhi Nadir"
+    ],
+    "year": 2023,
+    "source": "International Journal of Intelligent Transportation Systems Research",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1007/s13177-023-00346-4",
+    "url": "https://doi.org/10.1007/s13177-023-00346-4",
+    "abstract": "",
+    "citation_count": 21,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_4.json"
+  },
+  {
+    "title": "Connected Traffic Data Ontology (CTDO) for Intelligent Urban Traffic Systems Focused on Connected (Semi) Autonomous Vehicles",
+    "authors": [
+      "Viktorović Miloš",
+      "Yang Dujuan",
+      "Vries Bauke de"
+    ],
+    "year": 2020,
+    "source": "Sensors",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.3390/s20102961",
+    "url": "https://doi.org/10.3390/s20102961",
+    "abstract": "<jats:p>For autonomous vehicles (AV), the ability to share information about their surroundings is crucial. With Level 4 and 5 autonomy in sight, solving the challenge of organization and efficient storing of data, coming from these connected platforms, becomes paramount. Research done up to now has...",
+    "citation_count": 20,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_2.json"
+  },
+  {
+    "title": "CoLLMLight: Cooperative Large Language Model Agents for Network-Wide Traffic Signal Control",
+    "authors": [
+      "Zirui Yuan",
+      "Siqi Lai",
+      "Hao Liu"
+    ],
+    "year": 2025,
+    "source": "ArXiv",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.48550/arXiv.2503.11739",
+    "url": "https://www.semanticscholar.org/paper/751f2f64aa84f4cf53727ecbc8faf2b8ead28b50",
+    "abstract": "Traffic Signal Control (TSC) plays a critical role in urban traffic management by optimizing traffic flow and mitigating congestion. While Large Language Models (LLMs) have recently emerged as promising tools for TSC due to their exceptional problem-solving and generalization capabilities, existing ...",
+    "citation_count": 12,
+    "origin": "SemanticScholar",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_3.json"
+  },
+  {
+    "title": "Intelligent traffic signal controller for heterogeneous traffic using reinforcement learning",
+    "authors": [
+      "R M Savithramma",
+      "Sumathi R."
+    ],
+    "year": 2023,
+    "source": "Green Energy and Intelligent Transportation",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1016/j.geits.2023.100124",
+    "url": "https://doi.org/10.1016/j.geits.2023.100124",
+    "abstract": "",
+    "citation_count": 10,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_4.json"
+  },
+  {
+    "title": "A cold-start-free reinforcement learning approach for traffic signal control",
+    "authors": [
+      "Xiao Nan",
+      "Yu Liang",
+      "Yu Jinqiang",
+      "Chen Peng",
+      "Liu Yuehu"
+    ],
+    "year": 2022,
+    "source": "Journal of Intelligent Transportation Systems",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1080/15472450.2021.1934679",
+    "url": "https://doi.org/10.1080/15472450.2021.1934679",
+    "abstract": "",
+    "citation_count": 10,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_4.json"
+  },
+  {
+    "title": "Elevating adaptive traffic signal control in semi‐autonomous traffic dynamics by using connected and automated vehicles as probes",
+    "authors": [
+      "Li Yurong",
+      "Peng Liqun"
+    ],
+    "year": 2024,
+    "source": "IET Intelligent Transport Systems",
+    "source_type": "journal",
+    "doi": "https://doi.org/10.1049/itr2.12483",
+    "url": "https://doi.org/10.1049/itr2.12483",
+    "abstract": "<jats:title>Abstract</jats:title><jats:p>In this work, the connected vehicle's messages are used to create an enhanced adaptive traffic signal control (ATSC) system for improved traffic flow. Few existing studies use connected and automated vehicles (CAVs) to develop traffic signal control algorithm...",
+    "citation_count": 7,
+    "origin": "CrossRef",
+    "language": "en",
+    "verified": true,
+    "_file": "20260625_001_literature_en_2.json"
+  }
+]
