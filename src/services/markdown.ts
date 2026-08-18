@@ -58,6 +58,42 @@ hljs.registerLanguage("typescript", typescript);
 hljs.registerLanguage("ts", typescript);
 hljs.registerLanguage("xml", xml);
 
+function sourceLineMappingPlugin(md: MarkdownIt) {
+  md.core.ruler.push("source_line_mapping", (state) => {
+    for (const token of state.tokens) {
+      if (token.map) {
+        if (token.nesting === 1) {
+          token.attrSet("data-source-line", String(token.map[0] + 1));
+        } else if (token.nesting === 0 && (token.type === "fence" || token.type === "code_block" || token.type === "hr")) {
+          token.attrSet("data-source-line", String(token.map[0] + 1));
+        }
+      }
+    }
+  });
+
+  const prevFence = md.renderer.rules.fence;
+  md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}"` : "";
+    const rendered = prevFence ? prevFence(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
+    if (lineAttr && rendered.startsWith("<pre")) {
+      return rendered.replace("<pre", `<pre${lineAttr}`);
+    }
+    return rendered;
+  };
+
+  const prevCodeBlock = md.renderer.rules.code_block;
+  md.renderer.rules.code_block = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}"` : "";
+    const rendered = prevCodeBlock ? prevCodeBlock(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
+    if (lineAttr && rendered.startsWith("<pre")) {
+      return rendered.replace("<pre", `<pre${lineAttr}`);
+    }
+    return rendered;
+  };
+}
+
 const markdown: MarkdownIt = new MarkdownIt({
   html: true,
   linkify: true,
@@ -77,6 +113,7 @@ const markdown: MarkdownIt = new MarkdownIt({
     return `<pre class="hljs"><code>${markdown.utils.escapeHtml(source)}</code></pre>`;
   },
 })
+  .use(sourceLineMappingPlugin)
   .use(mathPlugin)
   .use(taskLists, { enabled: true, label: true })
   .use(frontMatterPlugin, (frontMatter: string) => {
@@ -97,6 +134,7 @@ export async function renderMarkdown(source: string, baseUrl = window.location.h
       "aria-hidden",
       "aria-label",
       "class",
+      "data-source-line",
       "decoding",
       "encoding",
       "fetchpriority",

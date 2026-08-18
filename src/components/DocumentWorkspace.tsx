@@ -2,7 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import type { EditorViewMode, RenderedChapter, ThemeMode } from "../core/types";
 import { EditorPane } from "./EditorPane";
 import { ReaderPane } from "./ReaderPane";
-import { RefreshCw, AlertCircle } from "lucide-react";
+import { RefreshCw, AlertCircle, Link2, Link2Off } from "lucide-react";
+import { useSyncScroll } from "../hooks/useSyncScroll";
 
 type DocumentWorkspaceProps = {
   viewMode: EditorViewMode;
@@ -40,6 +41,13 @@ export function DocumentWorkspace({
   const [splitRatio, setSplitRatio] = useState(0.5);
   const [isDragging, setIsDragging] = useState(false);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
+
+  const {
+    syncEnabled,
+    toggleSync,
+    editorViewRef,
+    handleEditorScroll,
+  } = useSyncScroll({ containerRef, viewMode });
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -92,6 +100,20 @@ export function DocumentWorkspace({
               : { flex: "1 1 100%" }
           }
         >
+          {viewMode === "split" && (
+            <div className="pane-header-bar">
+              <span className="pane-header-title">编辑器源码</span>
+              <button
+                type="button"
+                className={`sync-scroll-badge ${syncEnabled ? "active" : ""}`}
+                onClick={toggleSync}
+                title={syncEnabled ? "分屏同步滚动：已开启（点击关闭）" : "分屏同步滚动：已关闭（点击开启）"}
+              >
+                {syncEnabled ? <Link2 size={12} /> : <Link2Off size={12} />}
+                <span>同步滚动</span>
+              </button>
+            </div>
+          )}
           <EditorPane
             value={source}
             onChange={onSourceChange}
@@ -99,6 +121,10 @@ export function DocumentWorkspace({
             fontScale={fontScale}
             onSave={onSave}
             readOnly={readOnly}
+            onScroll={handleEditorScroll}
+            onEditorViewReady={(view) => {
+              editorViewRef.current = view;
+            }}
           />
         </div>
       )}
@@ -126,6 +152,11 @@ export function DocumentWorkspace({
               : { flex: "1 1 100%" }
           }
         >
+          {viewMode === "split" && (
+            <div className="pane-header-bar">
+              <span className="pane-header-title">实时预览</span>
+            </div>
+          )}
           {autoPreviewPaused && (
             <div className="large-doc-notice">
               <AlertCircle size={15} />

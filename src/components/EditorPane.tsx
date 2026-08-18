@@ -34,6 +34,8 @@ type EditorPaneProps = {
   fontScale?: number;
   readOnly?: boolean;
   onSave?: () => void;
+  onScroll?: (view: EditorView) => void;
+  onEditorViewReady?: (view: EditorView | null) => void;
 };
 
 export function EditorPane({
@@ -43,6 +45,8 @@ export function EditorPane({
   fontScale = 1,
   readOnly = false,
   onSave,
+  onScroll,
+  onEditorViewReady,
 }: EditorPaneProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -53,6 +57,10 @@ export function EditorPane({
   onSaveRef.current = onSave;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onScrollRef = useRef(onScroll);
+  onScrollRef.current = onScroll;
+  const onEditorViewReadyRef = useRef(onEditorViewReady);
+  onEditorViewReadyRef.current = onEditorViewReady;
 
   const isDarkMode =
     theme === "dark" ||
@@ -166,8 +174,17 @@ export function EditorPane({
     });
 
     viewRef.current = view;
+    onEditorViewReadyRef.current?.(view);
+
+    const onScroll = () => {
+      onScrollRef.current?.(view);
+    };
+
+    view.scrollDOM.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
+      view.scrollDOM.removeEventListener("scroll", onScroll);
+      onEditorViewReadyRef.current?.(null);
       view.destroy();
       viewRef.current = null;
     };
