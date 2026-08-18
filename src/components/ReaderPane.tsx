@@ -8,9 +8,17 @@ type ReaderPaneProps = {
   fontScale: number;
   mermaidTheme: MermaidTheme;
   onMermaidError: () => void;
+  onElementClick?: (targetElement: HTMLElement, selectedText: string) => void;
 };
 
-export const ReaderPane = memo(function ReaderPane({ chapter, containerRef, fontScale, mermaidTheme, onMermaidError }: ReaderPaneProps) {
+export const ReaderPane = memo(function ReaderPane({
+  chapter,
+  containerRef,
+  fontScale,
+  mermaidTheme,
+  onMermaidError,
+  onElementClick,
+}: ReaderPaneProps) {
   const articleRef = useRef<HTMLElement | null>(null);
   const attachReader = useCallback((node: HTMLElement | null) => {
     containerRef.current = node;
@@ -19,6 +27,18 @@ export const ReaderPane = memo(function ReaderPane({ chapter, containerRef, font
   const attachArticle = useCallback((node: HTMLElement | null) => {
     articleRef.current = node;
   }, []);
+
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (!onElementClick) return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const selection = window.getSelection();
+      const selectedText = selection ? selection.toString() : "";
+      onElementClick(target, selectedText);
+    },
+    [onElementClick]
+  );
 
   useLayoutEffect(() => {
     const node = articleRef.current;
@@ -52,6 +72,7 @@ export const ReaderPane = memo(function ReaderPane({ chapter, containerRef, font
       <article
         className="markdown-body"
         ref={attachArticle}
+        onMouseUp={handleMouseUp}
         dangerouslySetInnerHTML={{ __html: chapter?.html ?? "" }}
       />
     </main>

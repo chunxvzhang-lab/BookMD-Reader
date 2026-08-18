@@ -1665,3 +1665,27 @@ button {
     display: none;
   }
 }
+
+/* Synchronized Selection Highlighting (Split Mode) */
+.markdown-body [data-source-line] {
+  transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 4px;
+}
+
+.markdown-body [data-source-line].sync-highlight-active {
+  background: rgba(255, 77, 0, 0.08) !important;
+  box-shadow: 0 0 0 2px rgba(255, 77, 0, 0.38), 0 2px 10px rgba(255, 77, 0, 0.1) !important;
+  border-radius: 6px;
+}
+
+[data-theme="dark"] .markdown-body [data-source-line].sync-highlight-active {
+  background: rgba(255, 107, 53, 0.14) !important;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.5), 0 2px 14px rgba(255, 77, 0, 0.18) !important;
+}
+
+.document-workspace.view-split .markdown-body [data-source-line] {
+  cursor: text;
+}
+

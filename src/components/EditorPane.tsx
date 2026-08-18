@@ -35,6 +35,7 @@ type EditorPaneProps = {
   readOnly?: boolean;
   onSave?: () => void;
   onScroll?: (view: EditorView) => void;
+  onSelectionChange?: (view: EditorView) => void;
   onEditorViewReady?: (view: EditorView | null) => void;
 };
 
@@ -46,6 +47,7 @@ export function EditorPane({
   readOnly = false,
   onSave,
   onScroll,
+  onSelectionChange,
   onEditorViewReady,
 }: EditorPaneProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -59,6 +61,8 @@ export function EditorPane({
   onChangeRef.current = onChange;
   const onScrollRef = useRef(onScroll);
   onScrollRef.current = onScroll;
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
   const onEditorViewReadyRef = useRef(onEditorViewReady);
   onEditorViewReadyRef.current = onEditorViewReady;
 
@@ -163,6 +167,9 @@ export function EditorPane({
           if (update.docChanged) {
             const docString = update.state.doc.toString();
             onChangeRef.current(docString);
+          }
+          if (update.selectionSet || update.docChanged) {
+            onSelectionChangeRef.current?.(update.view);
           }
         }),
       ],

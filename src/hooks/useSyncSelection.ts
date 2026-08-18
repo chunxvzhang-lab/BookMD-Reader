@@ -1,0 +1,199 @@
+import { useCallback, useRef, useEffect } from "react";
+import type { EditorView } from "@codemirror/view";
+
+type SyncSelectionOptions = {
+  containerRef: React.RefObject<HTMLElement | null>;
+  viewMode: string;
+  editorViewRef: React.RefObject<EditorView | null>;
+};
+
+/**
+ * Finds all elements in the preview container that overlap with the given line range.
+ */
+export function findMatchingPreviewElements(
+  container: HTMLElement,
+  startLine: number,
+  endLine: number
+): HTMLElement[] {
+  const elements = Array.from(
+    container.querySelectorAll<HTMLElement>("[data-source-line]")
+  );
+
+  const matched: HTMLElement[] = [];
+
+  for (let i = 0; i < elements.length; i += 1) {
+    const el = elements[i];
+    const rawStart = el.getAttribute("data-source-line");
+    if (!rawStart) continue;
+
+    const elemStart = parseInt(rawStart, 10);
+    if (Number.isNaN(elemStart)) continue;
+
+    const rawEnd = el.getAttribute("data-source-line-end");
+    const elemEnd = rawEnd ? parseInt(rawEnd, 10) : elemStart;
+
+    // Check interval overlap: [startLine, endLine] intersects with [elemStart, elemEnd]
+    if (Math.max(startLine, elemStart) <= Math.min(endLine, elemEnd)) {
+      matched.push(el);
+    }
+  }
+
+  return matched;
+}
+
+/**
+ * Clears highlight from all elements in the container.
+ */
+export function clearAllHighlights(container: HTMLElement): void {
+  const activeElements = container.querySelectorAll(".sync-highlight-active");
+  activeElements.forEach((el) => {
+    el.classList.remove("sync-highlight-active");
+  });
+}
+
+export function useSyncSelection({
+  containerRef,
+  viewMode,
+  editorViewRef,
+}: SyncSelectionOptions) {
+  const lockRef = useRef<"editor" | "preview" | null>(null);
+  const lockTimerRef = useRef<number | null>(null);
+
+  const setLock = useCallback((source: "editor" | "preview") => {
+    lockRef.current = source;
+    if (lockTimerRef.current) {
+      window.clearTimeout(lockTimerRef.current);
+    }
+    lockTimerRef.current = window.setTimeout(() => {
+      lockRef.current = null;
+      lockTimerRef.current = null;
+    }, 150);
+  }, []);
+
+  // 1. Editor -> Preview Highlight Sync
+  const handleEditorSelectionChange = useCallback(
+    (view: EditorView) => {
+      if (viewMode !== "split") return;
+      if (lockRef.current === "preview") return;
+
+      const readerElem = containerRef.current;
+      if (!readerElem) return;
+
+      const selection = view.state.selection.main;
+      const doc = view.state.doc;
+      if (doc.length === 0) return;
+
+      const from = Math.min(selection.from, selection.to);
+      const to = Math.max(selection.from, selection.to);
+
+      const startLine = doc.lineAt(from).number;
+      const endLine = doc.lineAt(to).number;
+
+      setLock("editor");
+
+      // Clear previous highlights
+      clearAllHighlights(readerElem);
+
+      const matched = findMatchingPreviewElements(readerElem, startLine, endLine);
+      if (matched.length > 0) {
+        matched.forEach((el) => {
+          el.classList.add("sync-highlight-active");
+        });
+
+        // Ensure the first highlighted element is visible in preview
+        const first = matched[0];
+        const containerRect = readerElem.getBoundingClientRect();
+        const elRect = first.getBoundingClientRect();
+
+        // If outside visible bounds of container, smoothly scroll into view
+        if (elRect.top < containerRect.top || elRect.bottom > containerRect.bottom) {
+          first.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
+    },
+    [viewMode, containerRef, setLock]
+  );
+
+  // 2. Preview -> Editor Selection Sync
+  const handlePreviewSelectionChange = useCallback(
+    (targetElement: HTMLElement, selectedText = "") => {
+      if (viewMode !== "split") return;
+      if (lockRef.current === "editor") return;
+
+      const view = editorViewRef.current;
+      const readerElem = containerRef.current;
+      if (!view || !readerElem) return;
+
+      const blockElem = targetElement.closest<HTMLElement>("[data-source-line]");
+      if (!blockElem) return;
+
+      const rawStart = blockElem.getAttribute("data-source-line");
+      if (!rawStart) return;
+
+      const startLine = parseInt(rawStart, 10);
+      if (Number.isNaN(startLine) || startLine < 1) return;
+
+      const rawEnd = blockElem.getAttribute("data-source-line-end");
+      const endLine = rawEnd ? parseInt(rawEnd, 10) : startLine;
+
+      setLock("preview");
+
+      // Highlight in preview immediately
+      clearAllHighlights(readerElem);
+      blockElem.classList.add("sync-highlight-active");
+
+      const doc = view.state.doc;
+      const totalLines = doc.lines;
+      const safeStartLine = Math.min(Math.max(1, startLine), totalLines);
+      const safeEndLine = Math.min(Math.max(safeStartLine, endLine), totalLines);
+
+      let targetFrom = doc.line(safeStartLine).from;
+      let targetTo = doc.line(safeEndLine).to;
+
+      // If user selected specific text, attempt to locate the exact character range
+      const cleanSelection = selectedText.trim();
+      if (cleanSelection.length >= 2) {
+        const searchScopeStart = doc.line(Math.max(1, safeStartLine - 1)).from;
+        const searchScopeEnd = doc.line(Math.min(totalLines, safeEndLine + 1)).to;
+        const scopeText = doc.sliceString(searchScopeStart, searchScopeEnd);
+
+        const foundIndex = scopeText.indexOf(cleanSelection);
+        if (foundIndex !== -1) {
+          targetFrom = searchScopeStart + foundIndex;
+          targetTo = targetFrom + cleanSelection.length;
+        }
+      }
+
+      view.dispatch({
+        selection: { anchor: targetFrom, head: targetTo },
+        scrollIntoView: true,
+      });
+      view.focus();
+    },
+    [viewMode, editorViewRef, containerRef, setLock]
+  );
+
+  // Clear highlight when exiting split mode
+  useEffect(() => {
+    if (viewMode !== "split" && containerRef.current) {
+      clearAllHighlights(containerRef.current);
+    }
+  }, [viewMode, containerRef]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (lockTimerRef.current) {
+        window.clearTimeout(lockTimerRef.current);
+      }
+    };
+  }, []);
+
+  return {
+    handleEditorSelectionChange,
+    handlePreviewSelectionChange,
+    clearAllHighlights: () => {
+      if (containerRef.current) clearAllHighlights(containerRef.current);
+    },
+  };
+}

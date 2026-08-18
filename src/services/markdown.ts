@@ -64,8 +64,10 @@ function sourceLineMappingPlugin(md: MarkdownIt) {
       if (token.map) {
         if (token.nesting === 1) {
           token.attrSet("data-source-line", String(token.map[0] + 1));
+          token.attrSet("data-source-line-end", String(token.map[1]));
         } else if (token.nesting === 0 && (token.type === "fence" || token.type === "code_block" || token.type === "hr")) {
           token.attrSet("data-source-line", String(token.map[0] + 1));
+          token.attrSet("data-source-line-end", String(token.map[1]));
         }
       }
     }
@@ -74,7 +76,7 @@ function sourceLineMappingPlugin(md: MarkdownIt) {
   const prevFence = md.renderer.rules.fence;
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     const token = tokens[idx];
-    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}"` : "";
+    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}" data-source-line-end="${token.map[1]}"` : "";
     const rendered = prevFence ? prevFence(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
     if (lineAttr && rendered.startsWith("<pre")) {
       return rendered.replace("<pre", `<pre${lineAttr}`);
@@ -85,7 +87,7 @@ function sourceLineMappingPlugin(md: MarkdownIt) {
   const prevCodeBlock = md.renderer.rules.code_block;
   md.renderer.rules.code_block = (tokens, idx, options, env, self) => {
     const token = tokens[idx];
-    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}"` : "";
+    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}" data-source-line-end="${token.map[1]}"` : "";
     const rendered = prevCodeBlock ? prevCodeBlock(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
     if (lineAttr && rendered.startsWith("<pre")) {
       return rendered.replace("<pre", `<pre${lineAttr}`);
@@ -96,7 +98,7 @@ function sourceLineMappingPlugin(md: MarkdownIt) {
   const prevHr = md.renderer.rules.hr;
   md.renderer.rules.hr = (tokens, idx, options, env, self) => {
     const token = tokens[idx];
-    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}"` : "";
+    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}" data-source-line-end="${token.map[1]}"` : "";
     const rendered = prevHr ? prevHr(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
     if (lineAttr && rendered.startsWith("<hr")) {
       return rendered.replace("<hr", `<hr${lineAttr}`);
@@ -146,6 +148,7 @@ export async function renderMarkdown(source: string, baseUrl = window.location.h
       "aria-label",
       "class",
       "data-source-line",
+      "data-source-line-end",
       "decoding",
       "encoding",
       "fetchpriority",

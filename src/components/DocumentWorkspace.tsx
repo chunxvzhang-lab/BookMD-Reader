@@ -4,6 +4,7 @@ import { EditorPane } from "./EditorPane";
 import { ReaderPane } from "./ReaderPane";
 import { RefreshCw, AlertCircle, Link2, Link2Off } from "lucide-react";
 import { useSyncScroll } from "../hooks/useSyncScroll";
+import { useSyncSelection } from "../hooks/useSyncSelection";
 
 type DocumentWorkspaceProps = {
   viewMode: EditorViewMode;
@@ -48,6 +49,15 @@ export function DocumentWorkspace({
     editorViewRef,
     handleEditorScroll,
   } = useSyncScroll({ containerRef, viewMode });
+
+  const {
+    handleEditorSelectionChange,
+    handlePreviewSelectionChange,
+  } = useSyncSelection({
+    containerRef,
+    viewMode,
+    editorViewRef,
+  });
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -122,6 +132,7 @@ export function DocumentWorkspace({
             onSave={onSave}
             readOnly={readOnly}
             onScroll={handleEditorScroll}
+            onSelectionChange={handleEditorSelectionChange}
             onEditorViewReady={(view) => {
               editorViewRef.current = view;
             }}
@@ -180,6 +191,7 @@ export function DocumentWorkspace({
             fontScale={fontScale}
             mermaidTheme={mermaidTheme}
             onMermaidError={onMermaidError}
+            onElementClick={handlePreviewSelectionChange}
           />
         </div>
       )}

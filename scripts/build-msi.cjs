@@ -1,41 +1,29 @@
-const { execFileSync } = require("child_process");
+const { execSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
 const root = path.resolve(__dirname, "..");
 const releaseDir = path.join(root, "release");
 const releaseRepo = path.join(releaseDir, "BookMD-Reader-win-x64");
-const wixDir = path.resolve(process.env.LOCALAPPDATA, "electron-builder/Cache/wix-4.0.0.5512.2/wix-4.0.0.5512.2-1xm13");
 const stageDir = path.join(releaseDir, "__msi-x64");
 const appOutDir = path.join(releaseDir, "win-unpacked");
 const finalMsiPath = path.join(releaseDir, "BookMD-Reader-1.0.0.msi");
 
-const candle = path.join(wixDir, "candle.exe");
-const light = path.join(wixDir, "light.exe");
+const ps = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+const wixBase = path.resolve(process.env.LOCALAPPDATA, "electron-builder/Cache/wix-4.0.0.5512.2");
+const candle = path.join(wixBase, "candle.exe");
+const light = path.join(wixBase, "light.exe");
 
 console.log("Compiling WiX XML with candle.exe...");
-execFileSync(
-  candle,
-  ["-arch", "x64", "-pedantic", `-dappDir=${appOutDir}`, "project.wxs"],
-  { cwd: stageDir, stdio: "inherit" }
+execSync(
+  `& "${candle}" -arch x64 -pedantic -dappDir="${appOutDir}" project.wxs`,
+  { cwd: stageDir, stdio: "inherit", shell: ps }
 );
 
 console.log("Linking WiX Object with light.exe to:", finalMsiPath);
-execFileSync(
-  light,
-  [
-    "-out",
-    finalMsiPath,
-    "-spdb",
-    "-sw1076",
-    `-dappDir=${appOutDir}`,
-    "-b",
-    appOutDir,
-    "-ext",
-    "WixUIExtension",
-    "project.wixobj",
-  ],
-  { cwd: stageDir, stdio: "inherit" }
+execSync(
+  `& "${light}" -out "${finalMsiPath}" -spdb -sw1076 -dappDir="${appOutDir}" -b "${appOutDir}" -ext WixUIExtension project.wixobj`,
+  { cwd: stageDir, stdio: "inherit", shell: ps }
 );
 
 if (fs.existsSync(finalMsiPath)) {
