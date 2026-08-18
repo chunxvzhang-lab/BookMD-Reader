@@ -1,4 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AboutDialog } from "./components/AboutDialog";
 import { ActivityBar } from "./components/ActivityBar";
 import { BookmarkPanel } from "./components/BookmarkPanel";
 import { ChapterList } from "./components/ChapterList";
@@ -60,6 +61,7 @@ export function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [preferences, setPreferences] = useState(preferencesRef.current);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const {
     session,
@@ -802,6 +804,7 @@ export function App() {
         onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
         onNewFile={window.bookMDDesktop ? createNewFile : undefined}
         onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
+        onOpenAbout={() => setAboutOpen(true)}
         isDirty={isDirty}
       />
 
@@ -828,6 +831,7 @@ export function App() {
           canSave={Boolean(session?.writable)}
           onOpenMarkdown={openMarkdownFile}
           onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
+          onOpenAbout={() => setAboutOpen(true)}
           onFocusSearch={focusSearch}
           onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
           onFontScaleChange={(fontScale) => setPreferences((current) => ({ ...current, fontScale }))}
@@ -959,6 +963,12 @@ export function App() {
         onOverwrite={() => saveSession({ force: true })}
         onSaveAs={saveSessionAs}
         onCancel={clearConflict}
+      />
+
+      {/* About Application Dialog */}
+      <AboutDialog
+        isOpen={aboutOpen}
+        onClose={() => setAboutOpen(false)}
       />
 
       {notice ? (

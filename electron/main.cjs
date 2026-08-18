@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme } = require("electron");
+const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme, shell } = require("electron");
 const path = require("node:path");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 const {
@@ -294,6 +294,14 @@ ipcMain.handle("bookmd:refresh-directory", async (_event, rootPath) => {
 
 ipcMain.handle("bookmd:read-markdown-file", async (_event, absolutePath) => {
   return await readMarkdownSource(absolutePath);
+});
+
+ipcMain.handle("bookmd:open-external", async (_event, url) => {
+  if (typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("mailto:"))) {
+    await shell.openExternal(url);
+    return true;
+  }
+  return false;
 });
 
 ipcMain.handle("bookmd:get-directory-for-file", async (_event, absolutePath) => {

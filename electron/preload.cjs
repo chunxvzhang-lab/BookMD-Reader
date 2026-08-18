@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("bookMDDesktop", {
   saveMarkdownFileAs: (request) => ipcRenderer.invoke("bookmd:save-markdown-file-as", request),
   setDocumentState: (state) => ipcRenderer.invoke("bookmd:set-document-state", state),
   resolveBeforeClose: (result) => ipcRenderer.invoke("bookmd:resolve-before-close", result),
+  openExternal: (url) => ipcRenderer.invoke("bookmd:open-external", url),
 
   onOpenFilePath: (callback) => {
     const listener = (_event, filePath) => callback(filePath);

@@ -10,6 +10,7 @@ import {
   Search,
   Sun,
   FileText,
+  Info,
 } from "lucide-react";
 import appLogo from "../assets/icon.png";
 import type { EditorViewMode, ThemeMode } from "../core/types";
@@ -28,6 +29,7 @@ type ActivityBarProps = {
   onThemeChange: (theme: ThemeMode) => void;
   onNewFile?: () => void;
   onOpenDirectory?: () => void;
+  onOpenAbout?: () => void;
   isDirty?: boolean;
 };
 
@@ -43,6 +45,7 @@ export function ActivityBar({
   onThemeChange,
   onNewFile,
   onOpenDirectory,
+  onOpenAbout,
   isDirty = false,
 }: ActivityBarProps) {
   const isDarkMode =
@@ -132,7 +135,7 @@ export function ActivityBar({
         )}
       </div>
 
-      {/* Bottom Controls: View Mode & Theme Switch */}
+      {/* Bottom Controls: View Mode & Theme Switch & About */}
       <div className="activity-bottom">
         <div className="activity-viewmodes" role="group" aria-label="视图模式">
           <button
@@ -160,6 +163,18 @@ export function ActivityBar({
             <Code2 size={16} />
           </button>
         </div>
+
+        {onOpenAbout && (
+          <button
+            type="button"
+            className="activity-btn"
+            onClick={onOpenAbout}
+            title="关于 BookMD Reader"
+            aria-label="关于应用"
+          >
+            <Info size={18} />
+          </button>
+        )}
 
         <button
           type="button"

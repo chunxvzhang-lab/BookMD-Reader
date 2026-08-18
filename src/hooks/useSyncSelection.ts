@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from "react";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 
 type SyncSelectionOptions = {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -100,15 +100,16 @@ export function useSyncSelection({
           el.classList.add("sync-highlight-active");
         });
 
-        // Ensure the first highlighted element is visible in preview
+        // Ensure the highlighted element is smoothly scrolled to the upper area of the preview (~40px margin)
         const first = matched[0];
         const containerRect = readerElem.getBoundingClientRect();
         const elRect = first.getBoundingClientRect();
+        const targetScrollTop = readerElem.scrollTop + (elRect.top - containerRect.top) - 40;
 
-        // If outside visible bounds of container, smoothly scroll into view
-        if (elRect.top < containerRect.top || elRect.bottom > containerRect.bottom) {
-          first.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }
+        readerElem.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: "smooth",
+        });
       }
     },
     [viewMode, containerRef, setLock]
@@ -138,9 +139,18 @@ export function useSyncSelection({
 
       setLock("preview");
 
-      // Highlight in preview immediately
+      // Highlight in preview immediately and scroll element to upper area
       clearAllHighlights(readerElem);
       blockElem.classList.add("sync-highlight-active");
+
+      const containerRect = readerElem.getBoundingClientRect();
+      const elRect = blockElem.getBoundingClientRect();
+      const targetScrollTop = readerElem.scrollTop + (elRect.top - containerRect.top) - 40;
+
+      readerElem.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: "smooth",
+      });
 
       const doc = view.state.doc;
       const totalLines = doc.lines;
@@ -166,7 +176,10 @@ export function useSyncSelection({
 
       view.dispatch({
         selection: { anchor: targetFrom, head: targetTo },
-        scrollIntoView: true,
+        effects: EditorView.scrollIntoView(targetFrom, {
+          y: "start",
+          yMargin: 40,
+        }),
       });
       view.focus();
     },

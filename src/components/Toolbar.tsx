@@ -16,6 +16,7 @@ import {
   Search,
   Sun,
   Type,
+  Info,
 } from "lucide-react";
 import type { EditorViewMode, ThemeMode } from "../core/types";
 import { ViewModeControl } from "./ViewModeControl";
@@ -45,6 +46,7 @@ type ToolbarProps = {
   onFocusSearch: () => void;
   onThemeChange: (theme: ThemeMode) => void;
   onFontScaleChange: (scale: number) => void;
+  onOpenAbout?: () => void;
 };
 
 export function Toolbar(props: ToolbarProps) {
@@ -193,6 +195,17 @@ export function Toolbar(props: ToolbarProps) {
             <Sun size={18} />
           )}
         </button>
+
+        {props.onOpenAbout && (
+          <button
+            className="icon-button"
+            onClick={props.onOpenAbout}
+            aria-label="关于应用"
+            title="关于 BookMD Reader"
+          >
+            <Info size={18} />
+          </button>
+        )}
 
         <label className="font-control" title="阅读字号">
           <Type size={16} />
