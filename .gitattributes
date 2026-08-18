@@ -1,41 +1,32 @@
-# Auto detect text files and perform LF normalization
+# Set default behavior, in case users don't have core.autocrlf set.
 * text=auto eol=lf
 
 # ----------------------------------------------------------------------
-# GitHub Linguist Language Configuration
+# GitHub Linguist Overrides & Language Configuration
 # ----------------------------------------------------------------------
 
-# Exclude compiled output, vendored binaries, and archives from language statistics
-dist/** linguist-vendored
-release/** linguist-vendored
-public/** linguist-vendored
-node_modules/** linguist-vendored
-.system_generated/** linguist-vendored
-*.ico binary
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ttf binary
-*.woff binary
-*.woff2 binary
-*.msi binary
-*.zip binary
-*.exe binary
-*.dll binary
-*.bin binary
-*.dat binary
+# Exclude package locks, build artifacts, vendors and static bundles
+package-lock.json linguist-generated=true
+dist/** linguist-vendored=true
+release/** linguist-vendored=true
+public/** linguist-vendored=true
+node_modules/** linguist-vendored=true
+.system_generated/** linguist-vendored=true
 
-# Exclude markdown docs, index.html template and SVGs from language calculations
-docs/** linguist-documentation
-*.md linguist-documentation
-index.html linguist-documentation
-*.svg linguist-documentation
+# Exclude HTML files and SVG images from language statistics
+*.html linguist-vendored=true
+*.htm linguist-vendored=true
+*.svg linguist-vendored=true
+index.html linguist-vendored=true
 
-# Primary Platform Development Languages
-*.ts linguist-detectable=true
-*.tsx linguist-detectable=true
-*.css linguist-detectable=true
-*.cjs linguist-detectable=true
-*.js linguist-detectable=true
-*.ps1 linguist-detectable=true
+# Exclude Markdown documentation
+docs/** linguist-documentation=true
+*.md linguist-documentation=true
+
+# Explicitly declare primary application development languages
+*.ts linguist-language=TypeScript linguist-detectable=true
+*.tsx linguist-language=TypeScript linguist-detectable=true
+*.css linguist-language=CSS linguist-detectable=true
+*.cjs linguist-language=JavaScript linguist-detectable=true
+*.js linguist-language=JavaScript linguist-detectable=true
+*.ps1 linguist-language=PowerShell linguist-detectable=true
