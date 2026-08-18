@@ -36,4 +36,18 @@ console.log("code block at line 11");
     expect(rendered.html).toContain('data-source-line="1"');
     expect(rendered.html).toContain('data-source-line="4"');
   });
+
+  it("handles horizontal rules and task lists", async () => {
+    const md = `# First Header
+
+---
+
+- [ ] Task 1
+- [x] Task 2
+`;
+    const rendered = await renderMarkdown(md);
+    expect(rendered.html).toContain('data-source-line="1"');
+    expect(rendered.html).toContain('data-source-line="3"');
+    expect(rendered.html).toContain('data-source-line="5"');
+  });
 });

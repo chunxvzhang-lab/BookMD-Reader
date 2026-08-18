@@ -6,6 +6,114 @@ type SyncScrollOptions = {
   viewMode: string;
 };
 
+type ScrollKeyframe = {
+  editorY: number;
+  readerY: number;
+};
+
+/**
+ * Builds piecewise anchor keyframes mapping editor pixel coordinates
+ * directly to rendered preview DOM block coordinates.
+ */
+function buildScrollKeyframes(view: EditorView, readerElem: HTMLElement): ScrollKeyframe[] {
+  const scrollDOM = view.scrollDOM;
+  const maxEditorScroll = Math.max(0, scrollDOM.scrollHeight - scrollDOM.clientHeight);
+  const maxReaderScroll = Math.max(0, readerElem.scrollHeight - readerElem.clientHeight);
+
+  const keyframes: ScrollKeyframe[] = [{ editorY: 0, readerY: 0 }];
+
+  const mappedElements = Array.from(
+    readerElem.querySelectorAll<HTMLElement>("[data-source-line]")
+  );
+
+  const readerRect = readerElem.getBoundingClientRect();
+  const doc = view.state.doc;
+  const totalLines = doc.lines;
+
+  for (let i = 0; i < mappedElements.length; i += 1) {
+    const el = mappedElements[i];
+    const rawLine = el.getAttribute("data-source-line");
+    if (!rawLine) continue;
+
+    const lineNumber = parseInt(rawLine, 10);
+    if (Number.isNaN(lineNumber) || lineNumber < 1 || lineNumber > totalLines) continue;
+
+    try {
+      const lineObj = doc.line(lineNumber);
+      const lineBlock = view.lineBlockAt(lineObj.from);
+      const editorY = Math.max(0, lineBlock.top);
+
+      const elRect = el.getBoundingClientRect();
+      const readerY = Math.max(0, elRect.top - readerRect.top + readerElem.scrollTop);
+
+      const lastKeyframe = keyframes[keyframes.length - 1];
+      // Keep strictly increasing keyframes to ensure monotonic interpolation
+      if (editorY > lastKeyframe.editorY && readerY > lastKeyframe.readerY) {
+        keyframes.push({ editorY, readerY });
+      }
+    } catch {
+      // Ignore lines that can't be mapped
+    }
+  }
+
+  // Append end-of-document keyframe
+  const lastKeyframe = keyframes[keyframes.length - 1];
+  const finalEditorY = Math.max(maxEditorScroll, lastKeyframe.editorY + 1);
+  const finalReaderY = Math.max(maxReaderScroll, lastKeyframe.readerY + 1);
+
+  if (finalEditorY > lastKeyframe.editorY || finalReaderY > lastKeyframe.readerY) {
+    keyframes.push({
+      editorY: finalEditorY,
+      readerY: finalReaderY,
+    });
+  }
+
+  return keyframes;
+}
+
+/**
+ * Piecewise linear interpolation between keyframes using binary search.
+ */
+function interpolateCoordinate(
+  sourceY: number,
+  keyframes: ScrollKeyframe[],
+  fromKey: "editorY" | "readerY",
+  toKey: "editorY" | "readerY"
+): number {
+  if (keyframes.length <= 1) return sourceY;
+
+  if (sourceY <= keyframes[0][fromKey]) {
+    return keyframes[0][toKey];
+  }
+
+  const last = keyframes[keyframes.length - 1];
+  if (sourceY >= last[fromKey]) {
+    return last[toKey];
+  }
+
+  let low = 0;
+  let high = keyframes.length - 2;
+  let idx = 0;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    if (keyframes[mid][fromKey] <= sourceY) {
+      idx = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  const k1 = keyframes[idx];
+  const k2 = keyframes[idx + 1];
+  const span = k2[fromKey] - k1[fromKey];
+  if (span <= 0) return k1[toKey];
+
+  const progress = (sourceY - k1[fromKey]) / span;
+  return k1[toKey] + progress * (k2[toKey] - k1[toKey]);
+}
+
 export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
   const [syncEnabled, setSyncEnabled] = useState(true);
   const editorViewRef = useRef<EditorView | null>(null);
@@ -28,7 +136,7 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
     lockTimerRef.current = window.setTimeout(() => {
       scrollingSourceRef.current = null;
       lockTimerRef.current = null;
-    }, 180);
+    }, 150);
   }, []);
 
   // Sync from Editor -> Reader Preview
@@ -40,84 +148,13 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
       const readerElem = containerRef.current;
       if (!readerElem) return;
 
-      const scrollDOM = view.scrollDOM;
-      const editorScrollTop = scrollDOM.scrollTop;
-      const maxEditorScroll = scrollDOM.scrollHeight - scrollDOM.clientHeight;
-
       setLock("editor");
 
-      // Handle top / bottom edge cases directly
-      if (editorScrollTop <= 2) {
-        readerElem.scrollTop = 0;
-        return;
-      }
-      if (maxEditorScroll > 0 && editorScrollTop >= maxEditorScroll - 4) {
-        readerElem.scrollTop = readerElem.scrollHeight - readerElem.clientHeight;
-        return;
-      }
+      const editorScrollTop = view.scrollDOM.scrollTop;
+      const keyframes = buildScrollKeyframes(view, readerElem);
+      const targetReaderY = interpolateCoordinate(editorScrollTop, keyframes, "editorY", "readerY");
 
-      // Find current fractional line number in Editor
-      try {
-        const lineBlock = view.lineBlockAtHeight(editorScrollTop);
-        const lineNumber = view.state.doc.lineAt(lineBlock.from).number;
-        const blockOffset = Math.max(0, editorScrollTop - lineBlock.top);
-        const blockHeight = Math.max(1, lineBlock.bottom - lineBlock.top);
-        const fractionalLine = lineNumber + blockOffset / blockHeight;
-
-        // Query all source-mapped block elements in the reader
-        const mappedElements = Array.from(
-          readerElem.querySelectorAll<HTMLElement>("[data-source-line]")
-        ).filter((el) => !Number.isNaN(parseInt(el.getAttribute("data-source-line") || "", 10)));
-
-        if (mappedElements.length === 0) {
-          // Fallback to proportional scroll
-          if (maxEditorScroll > 0) {
-            const ratio = editorScrollTop / maxEditorScroll;
-            const maxReaderScroll = readerElem.scrollHeight - readerElem.clientHeight;
-            readerElem.scrollTop = ratio * maxReaderScroll;
-          }
-          return;
-        }
-
-        // Find boundary elements surrounding fractionalLine
-        let prevElem: HTMLElement | null = null;
-        let nextElem: HTMLElement | null = null;
-        let prevLine = 1;
-        let nextLine = 1;
-
-        for (let i = 0; i < mappedElements.length; i += 1) {
-          const el = mappedElements[i];
-          const line = parseInt(el.getAttribute("data-source-line") || "1", 10);
-          if (line <= fractionalLine) {
-            prevElem = el;
-            prevLine = line;
-          } else {
-            nextElem = el;
-            nextLine = line;
-            break;
-          }
-        }
-
-        const readerRect = readerElem.getBoundingClientRect();
-
-        if (prevElem && nextElem && nextLine > prevLine) {
-          const ratio = (fractionalLine - prevLine) / (nextLine - prevLine);
-          const prevTop = prevElem.getBoundingClientRect().top - readerRect.top + readerElem.scrollTop;
-          const nextTop = nextElem.getBoundingClientRect().top - readerRect.top + readerElem.scrollTop;
-          const targetScrollTop = prevTop + (nextTop - prevTop) * ratio;
-          readerElem.scrollTop = Math.max(0, targetScrollTop - 16);
-        } else if (prevElem) {
-          const prevTop = prevElem.getBoundingClientRect().top - readerRect.top + readerElem.scrollTop;
-          readerElem.scrollTop = Math.max(0, prevTop - 16);
-        }
-      } catch {
-        // Fallback to proportional scroll on any measurement error
-        if (maxEditorScroll > 0) {
-          const ratio = editorScrollTop / maxEditorScroll;
-          const maxReaderScroll = readerElem.scrollHeight - readerElem.clientHeight;
-          readerElem.scrollTop = ratio * maxReaderScroll;
-        }
-      }
+      readerElem.scrollTop = targetReaderY;
     },
     [syncEnabled, viewMode, containerRef, setLock]
   );
@@ -131,76 +168,13 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
     const view = editorViewRef.current;
     if (!readerElem || !view) return;
 
-    const readerScrollTop = readerElem.scrollTop;
-    const maxReaderScroll = readerElem.scrollHeight - readerElem.clientHeight;
-    const maxEditorScroll = view.scrollDOM.scrollHeight - view.scrollDOM.clientHeight;
-
     setLock("reader");
 
-    if (readerScrollTop <= 2) {
-      view.scrollDOM.scrollTop = 0;
-      return;
-    }
-    if (maxReaderScroll > 0 && readerScrollTop >= maxReaderScroll - 4) {
-      view.scrollDOM.scrollTop = maxEditorScroll;
-      return;
-    }
+    const readerScrollTop = readerElem.scrollTop;
+    const keyframes = buildScrollKeyframes(view, readerElem);
+    const targetEditorY = interpolateCoordinate(readerScrollTop, keyframes, "readerY", "editorY");
 
-    try {
-      const mappedElements = Array.from(
-        readerElem.querySelectorAll<HTMLElement>("[data-source-line]")
-      ).filter((el) => !Number.isNaN(parseInt(el.getAttribute("data-source-line") || "", 10)));
-
-      if (mappedElements.length === 0) {
-        if (maxReaderScroll > 0 && maxEditorScroll > 0) {
-          view.scrollDOM.scrollTop = (readerScrollTop / maxReaderScroll) * maxEditorScroll;
-        }
-        return;
-      }
-
-      const readerRect = readerElem.getBoundingClientRect();
-      const targetOffset = readerScrollTop + 24;
-
-      let prevElem: HTMLElement | null = null;
-      let nextElem: HTMLElement | null = null;
-      let prevLine = 1;
-      let nextLine = 1;
-
-      for (let i = 0; i < mappedElements.length; i += 1) {
-        const el = mappedElements[i];
-        const elTop = el.getBoundingClientRect().top - readerRect.top + readerElem.scrollTop;
-        const line = parseInt(el.getAttribute("data-source-line") || "1", 10);
-        if (elTop <= targetOffset) {
-          prevElem = el;
-          prevLine = line;
-        } else {
-          nextElem = el;
-          nextLine = line;
-          break;
-        }
-      }
-
-      let targetFractionalLine = prevLine;
-      if (prevElem && nextElem && nextLine > prevLine) {
-        const prevTop = prevElem.getBoundingClientRect().top - readerRect.top + readerElem.scrollTop;
-        const nextTop = nextElem.getBoundingClientRect().top - readerRect.top + readerElem.scrollTop;
-        const ratio = Math.max(0, Math.min(1, (targetOffset - prevTop) / Math.max(1, nextTop - prevTop)));
-        targetFractionalLine = prevLine + (nextLine - prevLine) * ratio;
-      }
-
-      const totalLines = view.state.doc.lines;
-      const targetLineNumber = Math.min(totalLines, Math.max(1, Math.floor(targetFractionalLine)));
-      const lineObj = view.state.doc.line(targetLineNumber);
-      const lineBlock = view.lineBlockAt(lineObj.from);
-      const lineRemainder = targetFractionalLine - targetLineNumber;
-      const targetScroll = lineBlock.top + lineRemainder * (lineBlock.bottom - lineBlock.top);
-
-      view.scrollDOM.scrollTop = Math.max(0, targetScroll);
-    } catch {
-      if (maxReaderScroll > 0 && maxEditorScroll > 0) {
-        view.scrollDOM.scrollTop = (readerScrollTop / maxReaderScroll) * maxEditorScroll;
-      }
-    }
+    view.scrollDOM.scrollTop = targetEditorY;
   }, [syncEnabled, viewMode, containerRef, setLock]);
 
   // Bind scroll event to reader element

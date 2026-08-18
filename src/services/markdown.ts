@@ -92,6 +92,17 @@ function sourceLineMappingPlugin(md: MarkdownIt) {
     }
     return rendered;
   };
+
+  const prevHr = md.renderer.rules.hr;
+  md.renderer.rules.hr = (tokens, idx, options, env, self) => {
+    const token = tokens[idx];
+    const lineAttr = token.map ? ` data-source-line="${token.map[0] + 1}"` : "";
+    const rendered = prevHr ? prevHr(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
+    if (lineAttr && rendered.startsWith("<hr")) {
+      return rendered.replace("<hr", `<hr${lineAttr}`);
+    }
+    return rendered;
+  };
 }
 
 const markdown: MarkdownIt = new MarkdownIt({
