@@ -9,6 +9,7 @@ const winUnpacked = path.join(releaseRoot, "win-unpacked");
 const appDir = path.join(releaseRoot, "BookMD-Reader-win-x64");
 const portableZip = path.join(releaseRoot, "BookMD-Reader-win-x64-portable.zip");
 const execPromise = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 async function main() {
   console.log("1. Ensuring dist is built...");
@@ -19,7 +20,7 @@ async function main() {
 
   console.log("3. Copying unpacked binaries into release/BookMD-Reader-win-x64...");
   await fs.mkdir(releaseRoot, { recursive: true });
-  
+
   // Clean old target folder
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
@@ -31,6 +32,26 @@ async function main() {
   }
 
   await copyDirectory(winUnpacked, appDir);
+
+  console.log("3.5 Embedding icon & PE version info into BookMD Reader.exe...");
+  const rcedit = path.join(root, "node_modules", "electron-winstaller", "vendor", "rcedit.exe");
+  const targetExe = path.join(appDir, "BookMD Reader.exe");
+  const iconIco = path.join(root, "build", "icon.ico");
+  try {
+    await execFileAsync(rcedit, [
+      targetExe,
+      "--set-icon", iconIco,
+      "--set-file-version", "1.0.0",
+      "--set-product-version", "1.0.0",
+      "--set-version-string", "CompanyName", "摸鱼Lab",
+      "--set-version-string", "LegalCopyright", "Copyright © 2026 摸鱼Lab",
+      "--set-version-string", "FileDescription", "BookMD Reader",
+      "--set-version-string", "ProductName", "BookMD Reader",
+    ]);
+    console.log("Successfully embedded icon and PE metadata into BookMD Reader.exe.");
+  } catch (err) {
+    console.warn("rcedit notice:", err.message);
+  }
 
   console.log("4. Organizing subfolders (release, docs, assets)...");
   const releaseSubDir = path.join(appDir, "release");
