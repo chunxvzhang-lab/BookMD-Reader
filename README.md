@@ -99,14 +99,14 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **安装包路径**：[`release/BookMD-Reader-1.0.0.msi`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-1.0.0.msi)
-- **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单应用图标，支持标准控制面板卸载。
+- **安装包位置**：[`release/BookMD-Reader-win-x64/release/BookMD-Reader-1.0.0.msi`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64/release/BookMD-Reader-1.0.0.msi)
+- **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版
 - **便携目录**：[`release/BookMD-Reader-win-x64/`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64/)
 - **直接运行**：[`release/BookMD-Reader-win-x64/BookMD Reader.exe`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64/BookMD%20Reader.exe)
 - **便携压缩包**：[`release/BookMD-Reader-win-x64-portable.zip`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64-portable.zip)
-- **特点**：解压即用，无需配置 Node.js、Electron 等任何环境；支持右键“打开方式”关联 `.md` 文件。
+- **特点**：解压即用，无需配置 Node.js、Electron 等任何运行时；支持右键“打开方式”关联 `.md` 文件。
 
 ---
 
