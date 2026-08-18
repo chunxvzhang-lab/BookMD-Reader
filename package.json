@@ -2,6 +2,8 @@
   "name": "codex-book-md-viewer",
   "private": true,
   "version": "1.0.0",
+  "description": "BookMD Reader - Modern high performance Markdown reader and editor",
+  "author": "Codex BookMD Team",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -11,6 +13,7 @@
     "desktop": "electron .",
     "desktop:pack": "npm run build && node scripts/package-desktop.cjs",
     "desktop:pack:builder": "npm run build && electron-builder --win portable",
+    "desktop:msi": "npm run build && electron-builder --win msi",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -26,10 +29,16 @@
       "package.json"
     ],
     "win": {
-      "icon": "build/icon.ico",
+      "icon": "electron/icon.ico",
       "target": [
-        "portable"
+        "msi"
       ]
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "shortcutName": "BookMD Reader"
     }
   },
   "dependencies": {

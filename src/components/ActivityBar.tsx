@@ -11,6 +11,7 @@ import {
   Sun,
   FileText,
 } from "lucide-react";
+import appLogo from "../assets/icon.png";
 import type { EditorViewMode, ThemeMode } from "../core/types";
 
 type SidebarTab = "toc" | "bookmarks" | "search";
@@ -55,7 +56,7 @@ export function ActivityBar({
       {/* Top Brand Logo */}
       <div className="activity-brand" title="BookMD Reader">
         <div className="brand-badge">
-          <span>B</span>
+          <img src={appLogo} alt="BookMD Logo" className="brand-logo-img" />
         </div>
       </div>
 
