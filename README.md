@@ -1,4 +1,4 @@
-# BookMD Reader
+dnag# BookMD Reader
 
 <p align="center">
   <img src="icon.png" alt="BookMD Reader Logo" width="128" />
@@ -10,7 +10,7 @@ BookMD Reader 是一个本地优先的 Markdown 书籍阅读与编辑工具。�
 
 ---
 
-## 中文说明
+## 中文说明w
 
 ### 🌟 核心功能特性
 

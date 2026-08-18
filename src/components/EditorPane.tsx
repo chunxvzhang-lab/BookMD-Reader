@@ -51,6 +51,8 @@ export function EditorPane({
   const fontSizeCompartment = useRef(new Compartment());
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   const isDarkMode =
     theme === "dark" ||
@@ -152,7 +154,7 @@ export function EditorPane({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const docString = update.state.doc.toString();
-            onChange(docString);
+            onChangeRef.current(docString);
           }
         }),
       ],

@@ -240,7 +240,11 @@ app.on("open-file", (event, filePath) => {
 });
 
 // IPC handlers
-ipcMain.handle("bookmd:get-launch-file-path", async () => launchFilePath);
+ipcMain.handle("bookmd:get-launch-file-path", async () => {
+  const current = launchFilePath;
+  launchFilePath = null;
+  return current;
+});
 
 ipcMain.handle("bookmd:set-native-theme", (_event, theme) => {
   nativeTheme.themeSource = theme;

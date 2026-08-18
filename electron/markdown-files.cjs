@@ -4,8 +4,29 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const markdownExtensions = new Set([".md", ".markdown"]);
-const ignoredDirectoryNames = new Set(["node_modules", ".git"]);
+const ignoredDirectoryNames = new Set([
+  "node_modules",
+  ".git",
+  ".svn",
+  ".hg",
+  ".vscode",
+  ".idea",
+  "dist",
+  "build",
+  "release",
+  "out",
+  "target",
+  "vendor",
+  ".gemini",
+  ".agents",
+  ".agenteam",
+  "AppData",
+  "$RECYCLE.BIN",
+  "System Volume Information",
+]);
 const directoryScanBatchSize = 16;
+const MAX_DIRECTORY_SCAN_FILES = 3000;
+const MAX_DIRECTORY_SCAN_DEPTH = 6;
 const markdownSourceCache = new Map();
 const maxCachedSourceBytes = 4 * 1024 * 1024;
 const maxCachedSources = 8;
@@ -63,28 +84,34 @@ async function readDirectoryEntries(directoryPath) {
 }
 
 async function collectMarkdownFiles(rootPath, basePath) {
-  const directories = [rootPath];
+  // Queue stores { dirPath, depth }
+  const directories = [{ dirPath: rootPath, depth: 0 }];
   const files = [];
 
-  for (let cursor = 0; cursor < directories.length;) {
+  for (let cursor = 0; cursor < directories.length && files.length < MAX_DIRECTORY_SCAN_FILES;) {
     const batch = directories.slice(cursor, cursor + directoryScanBatchSize);
     cursor += batch.length;
-    const scanned = await Promise.all(batch.map(readDirectoryEntries));
+    const scanned = await Promise.all(batch.map((item) => readDirectoryEntries(item.dirPath)));
 
     for (let index = 0; index < batch.length; index += 1) {
-      const directoryPath = batch[index];
-      for (const entry of scanned[index]) {
+      const currentItem = batch[index];
+      const entries = scanned[index];
+      for (const entry of entries) {
         if (entry.name.startsWith(".") || ignoredDirectoryNames.has(entry.name)) continue;
-        const absolutePath = path.join(directoryPath, entry.name);
+        const absolutePath = path.join(currentItem.dirPath, entry.name);
         if (entry.isDirectory()) {
-          directories.push(absolutePath);
+          if (currentItem.depth < MAX_DIRECTORY_SCAN_DEPTH) {
+            directories.push({ dirPath: absolutePath, depth: currentItem.depth + 1 });
+          }
         } else if (entry.isFile() && isValidMarkdownPath(entry.name)) {
           files.push({
             absolutePath,
             relativePath: path.relative(basePath, absolutePath).replaceAll(path.sep, "/"),
           });
+          if (files.length >= MAX_DIRECTORY_SCAN_FILES) break;
         }
       }
+      if (files.length >= MAX_DIRECTORY_SCAN_FILES) break;
     }
   }
 

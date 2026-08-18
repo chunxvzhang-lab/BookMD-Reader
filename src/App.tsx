@@ -280,31 +280,40 @@ export function App() {
     openRequestRef.current = requestId;
 
     try {
-      const directoryPromise = window.bookMDDesktop.getDirectoryForFile(absolutePath);
+      // 1. Immediately read and display the file for instant opening
       const source = await window.bookMDDesktop.readMarkdownFile(absolutePath);
       if (openRequestRef.current !== requestId) return;
 
       const fileName = absolutePath.split(/[\\/]/).pop() ?? "Markdown.md";
       const baseName = fileName.replace(/\.(md|markdown)$/i, "") || "本地 Markdown";
+      const singleChapterId = `file:${encodeURIComponent(absolutePath.toLowerCase())}`;
 
-      const dirResult = await directoryPromise;
-      if (openRequestRef.current !== requestId) return;
+      const singleChapter: ChapterManifest = {
+        id: singleChapterId,
+        title: baseName,
+        src: fileName,
+        absolutePath,
+        baseUrl: source.baseUrl,
+      };
 
-      const activeChap = dirResult.directory.chapters.find(
-        (c) => c.absolutePath && c.absolutePath.toLowerCase() === absolutePath.toLowerCase()
-      );
-      const activeId = activeChap ? activeChap.id : (dirResult.activeChapterId ?? dirResult.directory.chapters[0]?.id ?? "uploaded");
+      const singleManifest: BookManifest = {
+        id: `file:${absolutePath.toLowerCase()}`,
+        title: baseName,
+        description: "本地 Markdown 文件",
+        rootPath: absolutePath.substring(0, Math.max(absolutePath.lastIndexOf("\\"), absolutePath.lastIndexOf("/"))),
+        chapters: [singleChapter],
+      };
 
       pendingBookmarkRef.current = null;
-      setManifest(dirResult.directory);
-      setBookmarks(loadBookmarks(dirResult.directory.id, dirResult.directory.chapters));
-      setChapterId(activeId);
+      setManifest(singleManifest);
+      setBookmarks(loadBookmarks(singleManifest.id, singleManifest.chapters));
+      setChapterId(singleChapterId);
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
 
       openSession({
-        chapterId: activeId,
+        chapterId: singleChapterId,
         absolutePath,
         fileName,
         baseUrl: source.baseUrl,
@@ -316,6 +325,26 @@ export function App() {
       });
 
       setNotice(`已打开：${fileName}`);
+
+      // 2. In background, asynchronously index directory without blocking UI
+      if (window.bookMDDesktop.getDirectoryForFile) {
+        window.bookMDDesktop
+          .getDirectoryForFile(absolutePath)
+          .then((dirResult) => {
+            if (openRequestRef.current !== requestId) return;
+            const activeChap = dirResult.directory.chapters.find(
+              (c) => c.absolutePath && c.absolutePath.toLowerCase() === absolutePath.toLowerCase()
+            );
+            if (activeChap) {
+              setManifest(dirResult.directory);
+              setBookmarks(loadBookmarks(dirResult.directory.id, dirResult.directory.chapters));
+              setChapterId(activeChap.id);
+            }
+          })
+          .catch(() => {
+            // Keep single file manifest if directory scanning fails
+          });
+      }
     } catch (cause: unknown) {
       setNotice(cause instanceof Error ? cause.message : "无法读取 Markdown 文件。");
     }
@@ -430,9 +459,12 @@ export function App() {
 
   const openDesktopMarkdownPath = useCallback(
     (absolutePath: string) => {
+      if (session?.absolutePath && session.absolutePath.toLowerCase() === absolutePath.toLowerCase()) {
+        return;
+      }
       guardAction({ type: "open-desktop-file", absolutePath });
     },
-    [guardAction]
+    [session?.absolutePath, guardAction]
   );
 
   const openMarkdownDirectory = useCallback(() => {
@@ -519,15 +551,32 @@ export function App() {
     onScrollIdle: saveCurrentReadingPosition,
   });
 
-  // Handle launch path and file open events
+  const createNewFileRef = useRef(createNewFile);
+  const openMarkdownDirectoryRef = useRef(openMarkdownDirectory);
+  const openDesktopMarkdownPathRef = useRef(openDesktopMarkdownPath);
+  const saveSessionRef = useRef(saveSession);
+  const saveSessionAsRef = useRef(saveSessionAs);
+  const guardActionRef = useRef(guardAction);
+
+  useEffect(() => {
+    createNewFileRef.current = createNewFile;
+    openMarkdownDirectoryRef.current = openMarkdownDirectory;
+    openDesktopMarkdownPathRef.current = openDesktopMarkdownPath;
+    saveSessionRef.current = saveSession;
+    saveSessionAsRef.current = saveSessionAs;
+    guardActionRef.current = guardAction;
+  });
+
+  // Handle launch path once on startup and register global event listeners
   useEffect(() => {
     if (!window.bookMDDesktop) return undefined;
     let cancelled = false;
+
     window.bookMDDesktop
       .getLaunchFilePath()
       .then((filePath) => {
         if (!cancelled && filePath) {
-          openDesktopMarkdownPath(filePath);
+          openDesktopMarkdownPathRef.current(filePath);
         }
       })
       .catch((cause: unknown) => {
@@ -535,18 +584,18 @@ export function App() {
       });
 
     const unsubscribeOpen = window.bookMDDesktop.onOpenFilePath((filePath) => {
-      openDesktopMarkdownPath(filePath);
+      openDesktopMarkdownPathRef.current(filePath);
     });
 
     const unsubscribeMenu = window.bookMDDesktop.onMenuCommand?.((command) => {
-      if (command === "new-file") createNewFile();
-      else if (command === "open-directory") openMarkdownDirectory();
-      else if (command === "save") saveSession();
-      else if (command === "save-as") saveSessionAs();
+      if (command === "new-file") createNewFileRef.current();
+      else if (command === "open-directory") openMarkdownDirectoryRef.current();
+      else if (command === "save") saveSessionRef.current();
+      else if (command === "save-as") saveSessionAsRef.current();
     });
 
     const unsubscribeClose = window.bookMDDesktop.onBeforeClose?.(({ requestId }) => {
-      guardAction({ type: "close-window", requestId });
+      guardActionRef.current({ type: "close-window", requestId });
     });
 
     return () => {
@@ -555,7 +604,7 @@ export function App() {
       unsubscribeMenu?.();
       unsubscribeClose?.();
     };
-  }, [createNewFile, guardAction, openDesktopMarkdownPath, openMarkdownDirectory, saveSession, saveSessionAs]);
+  }, []);
 
   // Load chapter content when chapterId changes
   useEffect(() => {
@@ -566,6 +615,14 @@ export function App() {
     let cancelled = false;
     const targetChapter = manifest.chapters.find((item) => item.id === chapterId);
     if (!targetChapter) return;
+
+    if (
+      session?.absolutePath &&
+      targetChapter.absolutePath &&
+      session.absolutePath.toLowerCase() === targetChapter.absolutePath.toLowerCase()
+    ) {
+      return;
+    }
 
     const loadPromise =
       targetChapter.absolutePath && window.bookMDDesktop
@@ -597,7 +654,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [chapterId, manifest, openSession, session?.chapterId]);
+  }, [chapterId, manifest, openSession, session?.chapterId, session?.absolutePath]);
 
   // Restore reading position or bookmark position
   useEffect(() => {
