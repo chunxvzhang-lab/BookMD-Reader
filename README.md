@@ -9,7 +9,18 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/Electron_42-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron 42" />
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3" />
+  <img src="https://img.shields.io/badge/PowerShell-5391FE?style=flat-square&logo=powershell&logoColor=white" alt="PowerShell" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
+  <img src="https://img.shields.io/badge/Team-摸鱼Lab-orange?style=flat-square" alt="摸鱼Lab" />
+</p>
+
+<p align="center">
   <a href="#-核心功能特性">中文文档</a> •
+  <a href="#️-平台开发架构与语言构成">架构与语言</a> •
   <a href="#-key-features">English Docs</a> •
   <a href="#-便携版与-msi-安装包">下载运行</a> •
   <a href="#-键盘快捷键">快捷键</a> •
@@ -18,7 +29,7 @@
 
 ---
 
-BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。它采用现代设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动编辑、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
+BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，采用现代设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
 
 ---
 
@@ -134,32 +145,46 @@ npm run desktop:msi
 
 ---
 
-## 📂 项目架构
+## 🛠️ 平台开发架构与语言构成 (Architecture & Languages)
+
+项目基于严谨的跨平台桌面应用架构设计，各开发语言在技术栈中承担明确的核心职责：
+
+| 开发语言 / 技术栈 | 架构层次 | 核心职责与代表模块 | 仓库语言权重 |
+| :--- | :--- | :--- | :---: |
+| **TypeScript / TSX** | 核心业务与交互层 (Core Logic & UI) | React 19 用户界面、CodeMirror 6 极客源码编辑引擎、Markdown/AST 行号映射注入、双向精准同步滚动与高亮 Hook、会话状态机、持久化存储服务 | **~75%** |
+| **CSS3 (Design System)** | 视觉设计系统 (Aesthetic Styling) | Antigravity / Dribbble 现代流体视觉规范、日光白 / 黑曜暗主题变量、Acrylic 毛玻璃卡片、物理弹性动画、响应式断点适配 | **~15%** |
+| **JavaScript / CommonJS** | 原生运行时与桥接层 (Electron Desktop Runtime) | Electron 42 主进程生命周期管理、`contextBridge` 安全跨进程通信、原子落盘物理事务保存、UTF-8 BOM/换行符保真与外部修改冲突检测 | **~6%** |
+| **PowerShell / WiX** | 发布构建与自动化 (Build & DevOps) | Windows MSI 安装包生成流水线、WiX 工具链自动编译链接、便携版零依赖打包压缩自动化脚本 | **~4%** |
+
+### 📂 目录结构与分层
 
 ```text
 electron/
-  ├── main.cjs                  # Electron 主进程、窗口管理、原生菜单与 IPC
+  ├── main.cjs                  # Electron 主进程、窗口管理、原生菜单、外部链接安全跳转与 IPC
   ├── preload.cjs               # contextBridge 安全桌面 API 暴露
   └── markdown-files.cjs        # 稳定 ID 树生成、原子落盘保存、BOM保护与冲突检测
 src/
   ├── components/
-  │     ├── ActivityBar.tsx         # 左侧核心活动功能栏（Logo、工具切换、视图与主题）
-  │     ├── StatusBar.tsx           # 底部科技信息停靠栏（字数统计、状态徽章、编码）
-  │     ├── EditorPane.tsx          # CodeMirror 6 编辑器集成
-  │     ├── DocumentWorkspace.tsx   # 阅读/分屏/源码工作区与拖拽分割
-  │     ├── Toolbar.tsx             # 顶部工具栏（章节标题、保存、大纲/目录控制）
+  │     ├── ActivityBar.tsx         # 左侧核心活动功能栏（Logo、工具切换、视图模式、主题与关于）
+  │     ├── StatusBar.tsx           # 底部科技信息停靠栏（字数统计、状态徽章、编码与阅读预估）
+  │     ├── EditorPane.tsx          # CodeMirror 6 编辑器集成与选区监听
+  │     ├── ReaderPane.tsx          # 渲染阅读面板与富文本交互
+  │     ├── DocumentWorkspace.tsx   # 阅读/分屏/源码工作区与拖拽分割调度
+  │     ├── Toolbar.tsx             # 顶部工具栏（章节标题、保存、大纲/目录控制、关于）
   │     ├── ChapterList.tsx         # 目录树列表
   │     ├── TocPanel.tsx            # 多级大纲侧栏
   │     ├── BookmarkPanel.tsx       # 书签侧栏
   │     ├── SearchPanel.tsx         # 全文检索侧栏
+  │     ├── AboutDialog.tsx         # 关于应用卡片弹窗（项目简介、GitHub、作者与环境）
   │     ├── UnsavedChangesDialog.tsx# 未保存修改守卫弹窗
   │     └── FileConflictDialog.tsx  # 外部修改冲突处理弹窗
   ├── hooks/
   │     ├── useSyncScroll.ts        # 双向高精度行号映射同步滚动 Hook
+  │     ├── useSyncSelection.ts     # 双向选择同步高亮与平滑上移聚焦 Hook
   │     ├── useDocumentSession.ts   # 文档编辑会话状态机与防抖渲染调度
   │     └── useReadingTracker.ts    # 标题位置追踪与阅读进度记忆
   ├── services/
-  │     ├── markdown.ts             # markdown-it 渲染管线、KaTeX 公式、Mermaid 图表
+  │     ├── markdown.ts             # markdown-it 渲染管线、AST行号注入、KaTeX 公式、Mermaid 图表
   │     ├── storage.ts              # 本地阅读偏好与进度持久化
   │     ├── bookmarks.ts            # 书签索引与校验
   │     └── bookSource.ts           # 文档源数据加载
@@ -167,7 +192,8 @@ src/
         └── types.ts                # 全局核心类型定义
 scripts/
   ├── package-desktop.cjs       # Windows 便携版打包脚本
-  ├── build-msi.cjs             # WiX MSI 安装包编译链接脚本
+  ├── build-msi.ps1             # WiX / Electron-Builder MSI 安装包自动化脚本
+  ├── build-msi.cjs             # WiX MSI 编译链接配置
   └── extract-wix.cjs           # WiX 工具链环境解压准备脚本
 release/                        # 便携版与 MSI 安装包发布输出目录
 ```
@@ -180,7 +206,7 @@ release/                        # 便携版与 MSI 安装包发布输出目录
 
 - **Activity Bar & Dock Architecture**: Modern activity navigation rail with custom BookMD logo, sidebar panels (Directory Tree, TOC Outline, Bookmarks, and Full-Text Search), view mode switcher, and light/dark theme toggles.
 - **Three Editing & Reading Modes**: Read mode (clean reader), Split mode (side-by-side editing with live preview & draggable splitter, vertical responsive wrap on small screens), and Source mode (fullscreen code editor).
-- **Bidirectional Synchronized Scrolling**: Line-mapped piecewise linear keyframe interpolation using AST `data-source-line` attributes, eliminating rendering height offsets between source markdown and rich preview.
+- **Bidirectional Synchronized Scrolling & Highlighting**: Line-mapped piecewise linear keyframe interpolation using AST `data-source-line` attributes, paired with synchronized selection highlighting that smoothly scrolls highlighted content to the upper reading zone.
 - **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, auto-closing brackets, and undo/redo history.
 - **Safe Atomic Saving & Conflict Detection**: Same-directory temporary write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings. Automatically detects external modifications before writing.
 - **Status Bar Dock**: Real-time word count, character count, estimated read time, dirty status indicator badge, line ending format, and encoding.
@@ -190,4 +216,5 @@ release/                        # 便携版与 MSI 安装包发布输出目录
 
 ## 📄 License
 
-MIT License © 2026 Codex BookMD Team
+MIT License © 2026 摸鱼Lab (Moyu Lab)
+

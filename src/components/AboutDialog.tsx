@@ -139,7 +139,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               </div>
               <div className="about-item-row">
                 <span className="about-label">研发团队：</span>
-                <span className="about-value">Codex Lab / BookMD Team</span>
+                <span className="about-value">摸鱼Lab</span>
               </div>
             </div>
           </div>

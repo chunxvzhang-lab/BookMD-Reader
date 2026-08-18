@@ -1,0 +1,35 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# ----------------------------------------------------------------------
+# GitHub Linguist Language Configuration
+# ----------------------------------------------------------------------
+
+# Exclude compiled output, vendored binaries, and archives from language statistics
+dist/** linguist-vendored
+release/** linguist-vendored
+public/** linguist-vendored
+node_modules/** linguist-vendored
+.system_generated/** linguist-vendored
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.msi binary
+*.zip binary
+*.exe binary
+*.dll binary
+*.bin binary
+*.dat binary
+
+# Primary Application & Platform Languages
+*.ts linguist-detectable=true
+*.tsx linguist-detectable=true
+*.css linguist-detectable=true
+*.cjs linguist-detectable=true
+*.js linguist-detectable=true
+*.ps1 linguist-detectable=true
