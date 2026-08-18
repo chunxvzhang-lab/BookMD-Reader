@@ -122,13 +122,19 @@ function sendMenuCommand(command) {
 }
 
 async function createWindow() {
+  const iconIco = path.join(__dirname, "icon.ico");
+  const iconPng = path.join(__dirname, "icon.png");
+  const windowIcon = process.platform === "win32" && fsSync.existsSync(iconIco)
+    ? iconIco
+    : (fsSync.existsSync(iconPng) ? iconPng : undefined);
+
   mainWindow = new BrowserWindow({
     width: 1320,
     height: 860,
     minWidth: 960,
     minHeight: 640,
     title: "BookMD 阅读器",
-    icon: path.join(__dirname, "icon.png"),
+    icon: windowIcon,
     backgroundColor: "#f6f7f4",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),

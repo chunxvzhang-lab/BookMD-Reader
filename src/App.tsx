@@ -1,4 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, FilePlus2, FileText, FolderOpen } from "lucide-react";
 import { AboutDialog } from "./components/AboutDialog";
 import { ActivityBar } from "./components/ActivityBar";
 import { BookmarkPanel } from "./components/BookmarkPanel";
@@ -610,6 +611,28 @@ export function App() {
     };
   }, []);
 
+  // Load default welcome book if no launch file was opened after startup
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled || manifest) return;
+      loadPackagedBook()
+        .then((demo) => {
+          if (cancelled || manifest) return;
+          setManifest(demo);
+          setBookmarks(loadBookmarks(demo.id, demo.chapters));
+          const initialChapter = demo.chapters[0]?.id ?? "";
+          setChapterId(initialChapter);
+        })
+        .catch(() => {});
+    }, 120);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [manifest]);
+
   // Load chapter content when chapterId changes
   useEffect(() => {
     if (!manifest || !chapterId) return;
@@ -925,9 +948,51 @@ export function App() {
             />
           ) : (
             <main className="empty-reader" ref={readerRef}>
-              <div>
-                <h1>选择或新建 Markdown 文档</h1>
-                <p>使用右上角“新建”创建新文件，使用“打开”载入文件，或使用“目录”载入整个文档文件夹。</p>
+              <div className="empty-reader-card">
+                <h1 className="empty-reader-title">选择或新建 Markdown 文档</h1>
+                <p className="empty-reader-desc">
+                  体验现代化本地优先的 Markdown 阅读与极客编辑。支持双向同步滚动、选择联动高亮、多级大纲与原子物理落盘。
+                </p>
+                <div className="empty-actions-grid">
+                  {window.bookMDDesktop ? (
+                    <button type="button" className="empty-action-card" onClick={createNewFile}>
+                      <FilePlus2 size={22} className="about-icon text-orange" />
+                      <span>新建 Markdown</span>
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="empty-action-card"
+                    onClick={() => {
+                      document.querySelector<HTMLInputElement>("input[type='file']")?.click();
+                    }}
+                  >
+                    <FileText size={22} className="about-icon text-blue" />
+                    <span>打开单文件</span>
+                  </button>
+                  {window.bookMDDesktop ? (
+                    <button type="button" className="empty-action-card" onClick={openMarkdownDirectory}>
+                      <FolderOpen size={22} className="about-icon text-purple" />
+                      <span>打开文档目录</span>
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="empty-action-card"
+                    onClick={() => {
+                      loadPackagedBook()
+                        .then((demo) => {
+                          setManifest(demo);
+                          setBookmarks(loadBookmarks(demo.id, demo.chapters));
+                          setChapterId(demo.chapters[0]?.id ?? "");
+                        })
+                        .catch(() => {});
+                    }}
+                  >
+                    <BookOpen size={22} className="about-icon text-green" />
+                    <span>载入示例书籍</span>
+                  </button>
+                </div>
               </div>
             </main>
           )}

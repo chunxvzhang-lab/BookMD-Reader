@@ -17,24 +17,42 @@ async function main() {
   try {
     await fs.copyFile(rootMsi, targetMsi);
     await fs.rm(rootMsi, { force: true });
-    console.log("Moved BookMD-Reader-1.0.0.msi into release/ subfolder.");
-  } catch (err) {
-    console.log("MSI root file not found or already moved:", err.message);
-  }
+  } catch (err) {}
 
-  // Copy assets and docs
+  // Copy necessary assets and docs into their respective folders
   try {
     await fs.copyFile(path.join(targetDir, "icon.png"), path.join(assetsDir, "icon.png"));
+  } catch (e) {}
+  try {
     await fs.copyFile(path.join(targetDir, "screenshot.png"), path.join(assetsDir, "screenshot.png"));
   } catch (e) {}
-
   try {
     await fs.copyFile(path.join(targetDir, "README.txt"), path.join(docsDir, "README.txt"));
+  } catch (e) {}
+  try {
     await fs.copyFile(path.join(targetDir, "LICENSE"), path.join(docsDir, "LICENSE"));
+  } catch (e) {}
+  try {
     await fs.copyFile(path.join(targetDir, "LICENSES.chromium.html"), path.join(docsDir, "LICENSES.chromium.html"));
   } catch (e) {}
 
-  console.log("Release directory organization complete.");
+  // Delete redundant root duplicate files to keep root directory clean and concise
+  const redundantFiles = [
+    "LICENSES.chromium.html",
+    "README.txt",
+    "LICENSE",
+    "screenshot.png",
+    "icon.png",
+  ];
+
+  for (const file of redundantFiles) {
+    try {
+      await fs.rm(path.join(targetDir, file), { force: true });
+      console.log(`Removed redundant root file: ${file}`);
+    } catch (e) {}
+  }
+
+  console.log("Cleaned and organized release directory.");
 }
 
 main().catch(console.error);
