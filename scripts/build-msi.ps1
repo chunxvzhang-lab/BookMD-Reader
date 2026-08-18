@@ -20,9 +20,13 @@ if ($builtMsi) {
     Write-Host "`n🎉 MSI installer successfully created at: $finalMsiPath ($sizeMb MB)" -ForegroundColor Green
 
     if (Test-Path $releaseRepo) {
-        $repoMsi = Join-Path $releaseRepo "BookMD-Reader-1.0.0.msi"
+        $repoReleaseSubdir = Join-Path $releaseRepo "release"
+        if (-not (Test-Path $repoReleaseSubdir)) {
+            New-Item -ItemType Directory -Path $repoReleaseSubdir -Force | Out-Null
+        }
+        $repoMsi = Join-Path $repoReleaseSubdir "BookMD-Reader-1.0.0.msi"
         Copy-Item -Path $finalMsiPath -Destination $repoMsi -Force
-        Write-Host "Copied MSI to release repo: $repoMsi"
+        Write-Host "Copied MSI to release subfolder: $repoMsi"
     }
 } else {
     Write-Error "Failed to locate generated MSI installer in $releaseDir"
