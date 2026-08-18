@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme, shell } = require("electron");
+const fs = require("node:fs");
 const path = require("node:path");
 const { fileURLToPath, pathToFileURL } = require("node:url");
 const {
@@ -124,9 +125,9 @@ function sendMenuCommand(command) {
 async function createWindow() {
   const iconIco = path.join(__dirname, "icon.ico");
   const iconPng = path.join(__dirname, "icon.png");
-  const windowIcon = process.platform === "win32" && fsSync.existsSync(iconIco)
+  const windowIcon = process.platform === "win32" && fs.existsSync(iconIco)
     ? iconIco
-    : (fsSync.existsSync(iconPng) ? iconPng : undefined);
+    : (fs.existsSync(iconPng) ? iconPng : undefined);
 
   mainWindow = new BrowserWindow({
     width: 1320,

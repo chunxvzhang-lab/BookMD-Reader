@@ -2,7 +2,9 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 
 async function main() {
-  const targetDir = path.resolve(__dirname, "..", "release", "BookMD-Reader-win-x64");
+  const rootDir = path.resolve(__dirname, "..");
+  const releaseRoot = path.join(rootDir, "release");
+  const targetDir = path.join(releaseRoot, "BookMD-Reader-win-x64");
   const releaseSubDir = path.join(targetDir, "release");
   const assetsDir = path.join(targetDir, "assets");
   const docsDir = path.join(targetDir, "docs");
@@ -11,32 +13,41 @@ async function main() {
   await fs.mkdir(assetsDir, { recursive: true });
   await fs.mkdir(docsDir, { recursive: true });
 
-  // Move MSI to release subdirectory
-  const rootMsi = path.join(targetDir, "BookMD-Reader-1.0.0.msi");
+  // Move newly built MSI to release subdirectory
+  const possibleMsiSources = [
+    path.join(releaseRoot, "BookMD Reader 1.0.0.msi"),
+    path.join(releaseRoot, "BookMD-Reader-1.0.0.msi"),
+    path.join(targetDir, "BookMD-Reader-1.0.0.msi"),
+    path.join(targetDir, "BookMD Reader 1.0.0.msi"),
+  ];
+
   const targetMsi = path.join(releaseSubDir, "BookMD-Reader-1.0.0.msi");
-  try {
-    await fs.copyFile(rootMsi, targetMsi);
-    await fs.rm(rootMsi, { force: true });
-  } catch (err) {}
+  for (const src of possibleMsiSources) {
+    try {
+      await fs.copyFile(src, targetMsi);
+      console.log(`Copied MSI from ${src} to ${targetMsi}`);
+      break;
+    } catch (e) {}
+  }
 
-  // Copy necessary assets and docs into their respective folders
+  // Copy icon and screenshot into assets
   try {
-    await fs.copyFile(path.join(targetDir, "icon.png"), path.join(assetsDir, "icon.png"));
+    await fs.copyFile(path.join(rootDir, "icon.png"), path.join(assetsDir, "icon.png"));
   } catch (e) {}
   try {
-    await fs.copyFile(path.join(targetDir, "screenshot.png"), path.join(assetsDir, "screenshot.png"));
-  } catch (e) {}
-  try {
-    await fs.copyFile(path.join(targetDir, "README.txt"), path.join(docsDir, "README.txt"));
-  } catch (e) {}
-  try {
-    await fs.copyFile(path.join(targetDir, "LICENSE"), path.join(docsDir, "LICENSE"));
-  } catch (e) {}
-  try {
-    await fs.copyFile(path.join(targetDir, "LICENSES.chromium.html"), path.join(docsDir, "LICENSES.chromium.html"));
+    await fs.copyFile(path.join(rootDir, "screenshot.png"), path.join(assetsDir, "screenshot.png"));
   } catch (e) {}
 
-  // Delete redundant root duplicate files to keep root directory clean and concise
+  // Docs
+  try {
+    await fs.copyFile(path.join(rootDir, "LICENSE"), path.join(docsDir, "LICENSE"));
+  } catch (e) {}
+  try {
+    const readmeTxt = `BookMD Reader v1.0.0\nModern Local-First Markdown Reader & Editor\n\nDirect Run: Double-click 'BookMD Reader.exe'\nInstaller: Locate MSI in 'release/BookMD-Reader-1.0.0.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
+    await fs.writeFile(path.join(docsDir, "README.txt"), readmeTxt, "utf8");
+  } catch (e) {}
+
+  // Delete redundant root duplicate files in win-x64
   const redundantFiles = [
     "LICENSES.chromium.html",
     "README.txt",
@@ -48,7 +59,6 @@ async function main() {
   for (const file of redundantFiles) {
     try {
       await fs.rm(path.join(targetDir, file), { force: true });
-      console.log(`Removed redundant root file: ${file}`);
     } catch (e) {}
   }
 
