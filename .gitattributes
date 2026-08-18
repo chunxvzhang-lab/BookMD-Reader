@@ -26,7 +26,13 @@ node_modules/** linguist-vendored
 *.bin binary
 *.dat binary
 
-# Primary Application & Platform Languages
+# Exclude markdown docs, index.html template and SVGs from language calculations
+docs/** linguist-documentation
+*.md linguist-documentation
+index.html linguist-documentation
+*.svg linguist-documentation
+
+# Primary Platform Development Languages
 *.ts linguist-detectable=true
 *.tsx linguist-detectable=true
 *.css linguist-detectable=true
