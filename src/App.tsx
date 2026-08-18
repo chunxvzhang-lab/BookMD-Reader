@@ -1,9 +1,11 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityBar } from "./components/ActivityBar";
 import { BookmarkPanel } from "./components/BookmarkPanel";
 import { ChapterList } from "./components/ChapterList";
 import { DocumentWorkspace } from "./components/DocumentWorkspace";
 import { FileConflictDialog } from "./components/FileConflictDialog";
 import { SearchPanel } from "./components/SearchPanel";
+import { StatusBar } from "./components/StatusBar";
 import { TocPanel } from "./components/TocPanel";
 import { Toolbar } from "./components/Toolbar";
 import { UnsavedChangesDialog } from "./components/UnsavedChangesDialog";
@@ -775,36 +777,61 @@ export function App() {
     return () => window.clearTimeout(handle);
   }, [notice]);
 
+  const handleSelectSidebarTab = useCallback((tab: SidebarTab) => {
+    if (sidebarOpen && sidebarTab === tab) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarTab(tab);
+      setSidebarOpen(true);
+    }
+  }, [sidebarOpen, sidebarTab]);
+
   const shellClass = `app-shell${sidebarOpen ? " sidebar-open" : ""}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}`;
 
   return (
     <div className={shellClass}>
-      <Toolbar
-        title={manifest?.title ?? "Markdown Viewer"}
-        chapterTitle={activeChapter?.title ?? "打开 Markdown 文件或目录"}
-        isDirty={isDirty}
+      <ActivityBar
+        directoryOpen={directoryOpen}
+        onToggleDirectory={() => setDirectoryOpen((open) => !open)}
+        sidebarOpen={sidebarOpen}
+        activeSidebarTab={sidebarTab}
+        onSelectSidebarTab={handleSelectSidebarTab}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        canGoPrevious={activeIndex > 0}
-        canGoNext={Boolean(manifest && activeIndex >= 0 && activeIndex < manifest.chapters.length - 1)}
-        sidebarOpen={sidebarOpen}
-        directoryOpen={directoryOpen}
         theme={preferences.theme}
-        fontScale={preferences.fontScale}
-        onPrevious={goPrevious}
-        onNext={goNext}
-        onToggleSidebar={() => setSidebarOpen((open) => !open)}
-        onToggleDirectory={() => setDirectoryOpen((open) => !open)}
-        onAddBookmark={addBookmark}
-        onNewFile={window.bookMDDesktop ? createNewFile : undefined}
-        onSave={() => saveSession()}
-        canSave={Boolean(session?.writable)}
-        onOpenMarkdown={openMarkdownFile}
-        onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
-        onFocusSearch={focusSearch}
         onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
-        onFontScaleChange={(fontScale) => setPreferences((current) => ({ ...current, fontScale }))}
+        onNewFile={window.bookMDDesktop ? createNewFile : undefined}
+        onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
+        isDirty={isDirty}
       />
+
+      <div className="main-viewport-container">
+        <Toolbar
+          title={manifest?.title ?? "Markdown Viewer"}
+          chapterTitle={activeChapter?.title ?? "打开 Markdown 文件或目录"}
+          isDirty={isDirty}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          canGoPrevious={activeIndex > 0}
+          canGoNext={Boolean(manifest && activeIndex >= 0 && activeIndex < manifest.chapters.length - 1)}
+          sidebarOpen={sidebarOpen}
+          directoryOpen={directoryOpen}
+          theme={preferences.theme}
+          fontScale={preferences.fontScale}
+          onPrevious={goPrevious}
+          onNext={goNext}
+          onToggleSidebar={() => setSidebarOpen((open) => !open)}
+          onToggleDirectory={() => setDirectoryOpen((open) => !open)}
+          onAddBookmark={addBookmark}
+          onNewFile={window.bookMDDesktop ? createNewFile : undefined}
+          onSave={() => saveSession()}
+          canSave={Boolean(session?.writable)}
+          onOpenMarkdown={openMarkdownFile}
+          onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
+          onFocusSearch={focusSearch}
+          onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
+          onFontScaleChange={(fontScale) => setPreferences((current) => ({ ...current, fontScale }))}
+        />
 
       <div className="workspace">
         {manifest ? (
@@ -902,6 +929,18 @@ export function App() {
           )}
         </section>
       </div>
+
+      <StatusBar
+        fileName={session?.fileName}
+        chapterTitle={activeChapter?.title}
+        source={session?.source}
+        isDirty={isDirty}
+        writable={session?.writable}
+        lineEnding={session?.lineEnding}
+        viewMode={viewMode}
+        isLargeDocument={isLargeDocument}
+      />
+    </div>
 
       {/* Unsaved Changes Guard Dialog */}
       <UnsavedChangesDialog
