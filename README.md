@@ -1,169 +1,193 @@
-dnag# BookMD Reader
+# BookMD Reader
 
 <p align="center">
   <img src="icon.png" alt="BookMD Reader Logo" width="128" />
 </p>
 
-BookMD Reader is a local-first Markdown reader and editor. It can open single files, scan directories into a hierarchical document tree, render headings as outlines, save bookmarks, provide real-time side-by-side editing and preview, and run as a portable Windows desktop app.
+<p align="center">
+  <strong>现代化高颜值 Markdown 书籍阅读与编辑桌面应用 | Modern High-Performance Markdown Reader & Editor</strong>
+</p>
 
-BookMD Reader 是一个本地优先的 Markdown 书籍阅读与编辑工具。它支持新建与编辑文档、实时分屏预览、大纲定位、书签与进度记忆、安全原子保存、外部修改冲突检测以及 Windows 桌面免安装便携运行。
-
----
-
-## 中文说明w
-
-### 🌟 核心功能特性
-
-#### 1. 阅读与知识浏览
-- **单文件与文件夹**：打开单个 `.md` / `.markdown` 文件，或载入包含多个 Markdown 文件的文件夹并按层级生成文档树。
-- **动态大纲同步**：自动解析文档标题生成多级大纲，随正文阅读滚动实时高亮同步。
-- **书签与阅读进度**：支持添加/删除书签，大纲中直观标记书签位置；自动记忆各文档的阅读位置。
-- **全文检索**：即时检索当前章节内容并提取上下文高亮摘要，一键精准定位跳转。
-- **丰富排版与扩展语法**：支持 GFM 表格、代码语法高亮、任务列表、Front Matter、Mermaid 图表渲染与 KaTeX 数学公式解析。
-- **视觉与排版个性化**：浅色模式、深色模式、跟随系统主题轮转；支持 `0.85x ~ 1.35x` 无级字号调节。
-
-#### 2. 编辑与创作（全新升级）
-- **新建与编辑**：支持新建 Markdown 文档、编辑当前文件、一键保存（`Ctrl+S`）与另存为（`Ctrl+Shift+S`）。
-- **三段式视图切换**：
-  - 📖 **阅读模式**：沉浸式只读排版浏览。
-  - 🪟 **分屏模式**：左侧 CodeMirror 6 代码编辑、右侧实时渲染预览；支持自由拖拽分界比例，在 `<980px` 窄屏下自动折叠为上下分屏。
-  - 💻 **源码模式**：全屏纯源码高效编写。
-- **CodeMirror 6 现代编辑器**：Markdown 语法高亮、行号、代码折叠、括号自动补全、撤销/重做历史记录。
-- **防抖实时预览**：输入后 250ms 防抖自动渲染，内置版本 Revision 乱序淘汰机制，防止异步延迟覆盖最新编辑内容。
-- **大文件性能保护**：超大文档（>2MB）自动暂停实时高频防抖渲染并提供手动刷新按钮，确保键入输入零卡顿。
-
-#### 3. 安全防丢稿机制
-- **原子落盘保存**：采用同目录临时文件（`.bookmd-tmp-*`）写入与 `fsync` 确保落盘后再原子重命名替换，杜绝断电或崩溃导致的文件截断。
-- **BOM 与换行风格保护**：保存时自动识别并保留原文件的 UTF-8 BOM 以及 CRLF (`\r\n`) / LF (`\n`) 格式。
-- **外部修改冲突检测**：保存前校验磁盘 `{ size, mtimeMs }` 版本。若被外部程序修改，弹出冲突处理对话框（可选择重新载入、覆盖磁盘、另存为新文件或取消）。
-- **全流程未保存导航守卫**：切换章节、新建文件、打开文件/目录、关闭窗口或退出应用时，若有未保存修改均弹出保存确认，绝不静默丢稿。
-- **稳定章节 ID**：基于相对路径生成稳定章节标识，增删文件或调整排序不影响已有书签与阅读进度。
+<p align="center">
+  <a href="#-核心功能特性">中文文档</a> •
+  <a href="#-key-features">English Docs</a> •
+  <a href="#-便携版与-msi-安装包">下载运行</a> •
+  <a href="#-键盘快捷键">快捷键</a> •
+  <a href="#️-研发与构建">开发构建</a>
+</p>
 
 ---
 
-### ⌨️ 键盘快捷键
+BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。它采用现代设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动编辑、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
+
+---
+
+## 🌟 核心功能特性
+
+### 1. 现代视觉与交互系统（Dribbble & Antigravity 风格）
+- **左侧 Activity Bar 功能活动栏**：
+  - 顶部品牌专属蓝色飞鱼 Logo 徽章。
+  - 快捷切换：📁 **文档目录树**、📑 **文档大纲 (TOC)**、⭐ **精选书签**、🔍 **全文即时检索**。
+  - 快速操作：➕ **新建文档** (`Ctrl+N`)、📂 **打开目录** (`Ctrl+Shift+O`)。
+  - 底部控制：微型三段式视图切换器、日/夜间主题无缝切换（☀️ 日光白 / 🌙 黑曜暗）。
+- **高质感卡片排版**：
+  - 阅读正文采用悬浮卡片构型，具备抗重力柔和阴影与精细边框。
+  - 重磅黑体标题搭配底部品牌强调色分割线，引用块渐变强调条，暗黑极客代码块。
+- **底部实时状态信息栏（Footer Dock Bar）**：
+  - **保存状态徽章**：绿色已保存（`● 已保存`）、橙色修改中（`● 未保存`）、青色只读标识。
+  - **实时文档统计**：字数、词数统计及阅读预估时长（例如 `2,450 字符 • 约 6 分钟阅读`）。
+  - **环境指标胶囊**：当前视图模式、换行符格式（`LF / CRLF`）、`UTF-8` 编码与 `BookMD` 引擎标识。
+- **弹性动力学动效**：全局接入 `cubic-bezier(0.16, 1, 0.3, 1)` 弹性物理缓动，抽屉展开与弹窗呼出丝滑轻快。
+
+### 2. 编辑与创作（全新升级）
+- **三段式视图随心切换**：
+  - 📖 **阅读模式**：纯净无干扰的书籍沉浸式排版阅读。
+  - 🪟 **分屏模式**：左侧 CodeMirror 6 源码编辑、右侧实时渲染预览；支持鼠标自由拖拽分割线调整比例，在窄屏（`<980px`）下自适应垂直分屏。
+  - 💻 **源码模式**：全屏纯源码极客专注编写。
+- **双向高精度同步滚动（Synchronized Scrolling）**：
+  - 基于 AST 块级源码行号标记（`data-source-line`）与分段线性插值算法，彻底消除富文本与源码高度差异产生的滚动漂移。
+  - 支持编辑器顶部一键开启/关闭同步滚动胶囊徽章（`🔗 同步滚动`）。
+- **CodeMirror 6 现代编辑器**：Markdown 语法高亮、实时行号、代码折叠、括号自动补全与撤销/重做历史。
+- **防抖实时预览与版本防乱序**：250ms 智能防抖渲染，结合 Revision 乱序淘汰机制，保障大段快速输入时预览流畅不丢帧。
+- **大文档性能守护**：超大文档（>2MB）自动开启性能保护模式，暂停高频防抖并提供手动一键刷新。
+
+### 3. 阅读与知识检索
+- **单文件与多层级文档库**：打开单个 `.md` 文件，或载入整套技术文档/书籍文件夹自动构建树状目录。
+- **稳定章节标识符**：基于相对路径哈希生成稳定 ID，文件夹增删改或文档重命名不丢失已有书签与阅读进度。
+- **动态大纲随动高亮**：正文滚动时多级大纲实时高亮当前小节，点击大纲平滑跳转。
+- **全文即时检索**：关键词上下文高亮预览，点击一键直达。
+- **丰富富文本渲染**：完美支持 GFM 表格、任务清单、Front Matter 元数据标签、KaTeX 数学公式与 Mermaid 动态图表。
+
+### 4. 数据安全与防丢稿守卫
+- **原子事务落盘保存**：同目录临时文件写入 + `fsync` 物理落盘 + 原子重命名替换，杜绝断电或异常退出的文件截断损坏。
+- **编码与换行风格保真**：自动识别并保留原文件的 UTF-8 BOM 以及 CRLF (`\r\n`) / LF (`\n`) 格式。
+- **外部修改冲突检测**：保存前校验磁盘 `{ size, mtimeMs }`。若文件被外部工具修改，自动弹出冲突协商弹窗（重新载入、强制覆盖或另存为）。
+- **全链路未保存守卫**：切换章节、新建文件、打开文件/目录或关闭窗口时，若有未保存修改均触发拦截提示，杜绝误操作丢稿。
+
+---
+
+## ⌨️ 键盘快捷键
 
 | 快捷键 | 功能 | 说明 |
 | :--- | :--- | :--- |
-| `Ctrl + N` | **新建文件** | 打开系统保存对话框创建新 Markdown 文件并进入编辑 |
-| `Ctrl + S` | **保存文件** | 保存当前文档的修改（已修改时高亮提示） |
+| `Ctrl + N` | **新建文件** | 打开保存对话框创建新 Markdown 文件并进入编辑 |
+| `Ctrl + S` | **保存文件** | 保存当前文档修改（未保存时顶部与底部指示灯高亮） |
 | `Ctrl + Shift + S` | **另存为** | 将当前编辑内容另存为新路径 |
-| `Ctrl + O` | **打开文件** | 打开单个 `.md` / `.markdown` 文件 |
-| `Ctrl + Shift + O` | **打开目录** | 选择并载入文档文件夹 |
-| `Ctrl + \` | **折叠/展开目录栏** | 独立控制左侧 `DOCUMENT` 文件夹树目录 |
-| `Ctrl + F` | **搜索内容** | 聚焦右侧搜索面板并快速查找当前文档 |
-| `Ctrl + B` | **添加书签** | 保存当前高亮标题与阅读进度至书签（阅读状态下） |
-| `Alt + ←` | **上一篇** | 切换到上一章节（未保存时触发守卫） |
-| `Alt + →` | **下一篇** | 切换到下一章节（未保存时触发守卫） |
+| `Ctrl + O` | **打开文件** | 快速打开本地单个 Markdown 文件 |
+| `Ctrl + Shift + O` | **打开目录** | 选择并载入 Markdown 文档文件夹 |
+| `Ctrl + \` | **折叠/展开目录栏** | 快捷切换左侧文件目录树显示状态 |
+| `Ctrl + F` | **搜索内容** | 呼出右侧搜索面板并快速定位关键词 |
+| `Ctrl + B` | **添加书签** | 快速记录当前小节与阅读百分比 |
+| `Alt + ←` | **上一篇** | 切换到上一章节（未保存修改时自动拦截提醒） |
+| `Alt + →` | **下一篇** | 切换到下一章节（未保存修改时自动拦截提醒） |
 
 ---
 
-### 📦 便携版直接运行
+## 📦 便携版与 MSI 安装包
 
-构建输出位置：
-```text
-release/BookMD-Reader-win-x64/
-```
+本项目提供两种 Windows 运行与安装形式：
 
-直接运行：
-```text
-release/BookMD-Reader-win-x64/BookMD Reader.exe
-```
+### 1. Windows MSI 标准安装包
+- **安装包路径**：[`release/BookMD-Reader-1.0.0.msi`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-1.0.0.msi)
+- **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单应用图标，支持标准控制面板卸载。
 
-独立发布压缩包：
-```text
-release/BookMD-Reader-win-x64-portable.zip
-```
-
-**说明**：
-- 目标电脑无需安装 Node.js、npm、Electron 或任何开发环境。
-- 必须保留整个 `BookMD-Reader-win-x64` 文件夹（包含 `resources`、`locales` 等依赖动态链接库）。
-- 支持 Windows 右键“打开方式”关联 `BookMD Reader.exe` 直接打开 Markdown。
+### 2. Windows 绿色免安装便携版
+- **便携目录**：[`release/BookMD-Reader-win-x64/`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64/)
+- **直接运行**：[`release/BookMD-Reader-win-x64/BookMD Reader.exe`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64/BookMD%20Reader.exe)
+- **便携压缩包**：[`release/BookMD-Reader-win-x64-portable.zip`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64-portable.zip)
+- **特点**：解压即用，无需配置 Node.js、Electron 等任何环境；支持右键“打开方式”关联 `.md` 文件。
 
 ---
 
-### 🛠️ 研发与构建
+## 🛠️ 研发与构建
 
-安装依赖：
+### 环境要求
+- Node.js >= 18.0.0
+- npm >= 9.0.0
+
+### 本地开发
 ```powershell
+# 1. 安装依赖
 npm install
-```
 
-运行单元测试（Vitest）：
-```powershell
+# 2. 运行单元测试 (Vitest)
 npm test
-```
 
-启动 Vite 开发服务器：
-```powershell
+# 3. 启动 Vite 开发服务器 (Web 预览)
 npm run dev
-```
 
-启动 Electron 桌面开发版：
-```powershell
+# 4. 启动 Electron 桌面应用开发模式
 npm run desktop
 ```
 
-构建 Web 静态资源：
+### 生产打包
 ```powershell
+# 构建 Web 静态 bundle
 npm run build
-```
 
-打包 Windows 便携发布版：
-```powershell
+# 生成 Windows 绿色便携版
 npm run desktop:pack
+
+# 生成 Windows MSI 标准安装包
+npm run desktop:msi
 ```
 
 ---
 
-### 📂 项目架构
+## 📂 项目架构
 
 ```text
 electron/
-  ├── main.cjs                  # Electron 主进程、原生菜单、IPC 通信与关闭协调
-  ├── preload.cjs               # contextBridge 暴露的安全桌面接口
-  └── markdown-files.cjs        # 稳定 ID、扫描、原子读写、BOM保护与冲突检测
+  ├── main.cjs                  # Electron 主进程、窗口管理、原生菜单与 IPC
+  ├── preload.cjs               # contextBridge 安全桌面 API 暴露
+  └── markdown-files.cjs        # 稳定 ID 树生成、原子落盘保存、BOM保护与冲突检测
 src/
   ├── components/
-  │     ├── EditorPane.tsx          # CodeMirror 6 编辑器组件
-  │     ├── DocumentWorkspace.tsx   # 阅读、分屏、源码三视图工作区与拖拽分割
-  │     ├── ViewModeControl.tsx     # 三段式视图切换按钮组
-  │     ├── UnsavedChangesDialog.tsx# 离开前未保存确认弹窗
-  │     ├── FileConflictDialog.tsx  # 外部修改冲突处理弹窗
-  │     ├── Toolbar.tsx             # 顶部工具栏（新建、保存、视图、主题、字号）
-  │     ├── ChapterList.tsx         # 左侧目录树（稳定 ID、脏标记、折叠控制）
-  │     ├── ReaderPane.tsx          # 渲染阅读面板
-  │     ├── TocPanel.tsx            # 大纲侧栏
+  │     ├── ActivityBar.tsx         # 左侧核心活动功能栏（Logo、工具切换、视图与主题）
+  │     ├── StatusBar.tsx           # 底部科技信息停靠栏（字数统计、状态徽章、编码）
+  │     ├── EditorPane.tsx          # CodeMirror 6 编辑器集成
+  │     ├── DocumentWorkspace.tsx   # 阅读/分屏/源码工作区与拖拽分割
+  │     ├── Toolbar.tsx             # 顶部工具栏（章节标题、保存、大纲/目录控制）
+  │     ├── ChapterList.tsx         # 目录树列表
+  │     ├── TocPanel.tsx            # 多级大纲侧栏
   │     ├── BookmarkPanel.tsx       # 书签侧栏
-  │     └── SearchPanel.tsx         # 搜索侧栏
+  │     ├── SearchPanel.tsx         # 全文检索侧栏
+  │     ├── UnsavedChangesDialog.tsx# 未保存修改守卫弹窗
+  │     └── FileConflictDialog.tsx  # 外部修改冲突处理弹窗
   ├── hooks/
-  │     ├── useDocumentSession.ts   # 文档会话状态机、防抖预览调度与冲突处理
-  │     └── useReadingTracker.ts    # 标题滚动追踪与阅读进度采集
+  │     ├── useSyncScroll.ts        # 双向高精度行号映射同步滚动 Hook
+  │     ├── useDocumentSession.ts   # 文档编辑会话状态机与防抖渲染调度
+  │     └── useReadingTracker.ts    # 标题位置追踪与阅读进度记忆
   ├── services/
-  │     ├── markdown.ts             # markdown-it 净化渲染、KaTeX、Mermaid、纯文本提取
-  │     ├── storage.ts              # V2 本地存储与 V1 兼容自动迁移
-  │     ├── bookmarks.ts            # 书签创建与模糊校验
-  │     └── bookSource.ts           # 文档源加载器
+  │     ├── markdown.ts             # markdown-it 渲染管线、KaTeX 公式、Mermaid 图表
+  │     ├── storage.ts              # 本地阅读偏好与进度持久化
+  │     ├── bookmarks.ts            # 书签索引与校验
+  │     └── bookSource.ts           # 文档源数据加载
   └── core/
         └── types.ts                # 全局核心类型定义
 scripts/
-  └── package-desktop.cjs       # Windows 便携版打包脚本
-release/                        # 桌面便携版发布输出
-docs/                           # 研发计划与工作总结文档
+  ├── package-desktop.cjs       # Windows 便携版打包脚本
+  ├── build-msi.cjs             # WiX MSI 安装包编译链接脚本
+  └── extract-wix.cjs           # WiX 工具链环境解压准备脚本
+release/                        # 便携版与 MSI 安装包发布输出目录
 ```
 
 ---
 
-## English
+## 🌐 English
 
 ### Key Features
 
-- **Read & Edit**: Create, open, edit, and save Markdown files with `Ctrl+S` / `Ctrl+Shift+S`.
-- **Three View Modes**: Read mode, Split mode (resizable side-by-side editing & live preview, responsive vertical collapse on narrow screens), and Source mode.
-- **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, bracket auto-closing, and undo/redo history.
-- **Safe Atomic Saving**: Same-directory temporary file write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings.
-- **Conflict Detection**: Checks file `{ size, mtimeMs }` before saving to prevent silent overwriting of external modifications.
-- **Unsaved Changes Guard**: Prompt confirmations before navigating away, switching chapters, opening files, or closing the app.
-- **Hierarchical Tree & Outline**: Directory browsing with stable chapter IDs, table of contents synchronization, bookmarks, and search.
-- **Rich Syntax Support**: GitHub Flavored Markdown, KaTeX math formulas, Mermaid diagrams, task lists, and tables.
-- **Portable Windows App**: Zero-dependency portable distribution via `BookMD-Reader-win-x64-portable.zip`.
+- **Activity Bar & Dock Architecture**: Modern activity navigation rail with custom BookMD logo, sidebar panels (Directory Tree, TOC Outline, Bookmarks, and Full-Text Search), view mode switcher, and light/dark theme toggles.
+- **Three Editing & Reading Modes**: Read mode (clean reader), Split mode (side-by-side editing with live preview & draggable splitter, vertical responsive wrap on small screens), and Source mode (fullscreen code editor).
+- **Bidirectional Synchronized Scrolling**: Line-mapped piecewise linear keyframe interpolation using AST `data-source-line` attributes, eliminating rendering height offsets between source markdown and rich preview.
+- **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, auto-closing brackets, and undo/redo history.
+- **Safe Atomic Saving & Conflict Detection**: Same-directory temporary write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings. Automatically detects external modifications before writing.
+- **Status Bar Dock**: Real-time word count, character count, estimated read time, dirty status indicator badge, line ending format, and encoding.
+- **Distribution Packages**: Windows MSI installer (`BookMD-Reader-1.0.0.msi`) and zero-dependency portable package (`BookMD-Reader-win-x64-portable.zip`).
+
+---
+
+## 📄 License
+
+MIT License © 2026 Codex BookMD Team
