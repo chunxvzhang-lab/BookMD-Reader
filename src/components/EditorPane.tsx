@@ -76,34 +76,34 @@ export function EditorPane({
         "&": {
           height: "100%",
           fontSize: `${14 * fontScale}px`,
-          fontFamily: '"Cascadia Code", Consolas, "Courier New", monospace',
-          backgroundColor: "var(--surface)",
-          color: "var(--text)",
+          fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
+          backgroundColor: isDarkMode ? "#0f1520" : "#ffffff",
+          color: isDarkMode ? "#f1f5f9" : "#0f172a",
         },
         ".cm-scroller": {
           overflow: "auto",
-          fontFamily: '"Cascadia Code", Consolas, "Courier New", monospace',
-          lineHeight: "1.6",
+          fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
+          lineHeight: "1.65",
         },
         ".cm-content": {
-          padding: "16px 12px",
-          caretColor: "var(--accent)",
+          padding: "16px 14px",
+          caretColor: isDarkMode ? "#38bdf8" : "#2563eb",
         },
         ".cm-gutters": {
-          backgroundColor: "var(--surface-sunken, color-mix(in srgb, var(--surface) 90%, var(--text) 10%))",
-          color: "var(--text-muted)",
-          borderRight: "1px solid var(--border)",
-          paddingRight: "4px",
+          backgroundColor: isDarkMode ? "#0b1018" : "#f1f5f9",
+          color: isDarkMode ? "#64748b" : "#94a3b8",
+          borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
+          paddingRight: "6px",
         },
         ".cm-activeLine": {
-          backgroundColor: "color-mix(in srgb, var(--accent) 8%, transparent)",
+          backgroundColor: isDarkMode ? "rgba(56, 189, 248, 0.06)" : "rgba(37, 99, 235, 0.04)",
         },
         ".cm-activeLineGutter": {
-          backgroundColor: "color-mix(in srgb, var(--accent) 15%, transparent)",
-          color: "var(--accent)",
+          backgroundColor: isDarkMode ? "rgba(56, 189, 248, 0.12)" : "rgba(37, 99, 235, 0.08)",
+          color: isDarkMode ? "#38bdf8" : "#2563eb",
         },
         ".cm-selectionBackground, ::selection": {
-          backgroundColor: "color-mix(in srgb, var(--accent) 25%, transparent) !important",
+          backgroundColor: isDarkMode ? "rgba(56, 189, 248, 0.22) !important" : "rgba(37, 99, 235, 0.16) !important",
         },
       },
       { dark: isDarkMode }
@@ -210,13 +210,13 @@ export function EditorPane({
       {
         "&": {
           height: "100%",
-          backgroundColor: "var(--surface)",
-          color: "var(--text)",
+          backgroundColor: isDarkMode ? "#0f1520" : "#ffffff",
+          color: isDarkMode ? "#f1f5f9" : "#0f172a",
         },
         ".cm-gutters": {
-          backgroundColor: "var(--surface-sunken, color-mix(in srgb, var(--surface) 90%, var(--text) 10%))",
-          color: "var(--text-muted)",
-          borderRight: "1px solid var(--border)",
+          backgroundColor: isDarkMode ? "#0b1018" : "#f1f5f9",
+          color: isDarkMode ? "#64748b" : "#94a3b8",
+          borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
         },
       },
       { dark: isDarkMode }
