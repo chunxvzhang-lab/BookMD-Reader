@@ -4,303 +4,166 @@
   <img src="icon.png" alt="BookMD Reader Logo" width="128" />
 </p>
 
-BookMD Reader is a local-first Markdown book reader. It can open one Markdown file, scan a folder as a document library, render headings as an outline, save bookmarks, and run as a portable Windows desktop app.
+BookMD Reader is a local-first Markdown reader and editor. It can open single files, scan directories into a hierarchical document tree, render headings as outlines, save bookmarks, provide real-time side-by-side editing and preview, and run as a portable Windows desktop app.
 
-BookMD Reader 是一个本地优先的 Markdown 书籍阅读器。它可以打开单个 Markdown 文件，也可以把一个文件夹按层级展示成文档目录，并支持大纲、书签、搜索、阅读位置记忆和 Windows 桌面便携运行。
+BookMD Reader 是一个本地优先的 Markdown 书籍阅读与编辑工具。它支持新建与编辑文档、实时分屏预览、大纲定位、书签与进度记忆、安全原子保存、外部修改冲突检测以及 Windows 桌面免安装便携运行。
 
 ---
 
 ## 中文说明
 
-### 功能特性
+### 🌟 核心功能特性
 
-- 打开单个 `.md` / `.markdown` 文件。
-- 打开 Markdown 文件夹，并按目录层级展示文件树。
-- 自动生成章节大纲，正文滚动时大纲同步定位。
-- 支持书签保存、书签跳转、删除书签，并在大纲标题旁显示书签标记。
-- 支持搜索当前章节内容。
-- 支持代码高亮、表格、任务列表、Front Matter、Mermaid 图表和 KaTeX 公式。
-- 支持浅色、深色、跟随系统主题，以及阅读字号调节。
-- 支持 Windows “打开方式”：右键 Markdown 文件，选择 BookMD Reader 后直接显示内容。
-- 支持免安装便携版：解压后双击即可运行。
+#### 1. 阅读与知识浏览
+- **单文件与文件夹**：打开单个 `.md` / `.markdown` 文件，或载入包含多个 Markdown 文件的文件夹并按层级生成文档树。
+- **动态大纲同步**：自动解析文档标题生成多级大纲，随正文阅读滚动实时高亮同步。
+- **书签与阅读进度**：支持添加/删除书签，大纲中直观标记书签位置；自动记忆各文档的阅读位置。
+- **全文检索**：即时检索当前章节内容并提取上下文高亮摘要，一键精准定位跳转。
+- **丰富排版与扩展语法**：支持 GFM 表格、代码语法高亮、任务列表、Front Matter、Mermaid 图表渲染与 KaTeX 数学公式解析。
+- **视觉与排版个性化**：浅色模式、深色模式、跟随系统主题轮转；支持 `0.85x ~ 1.35x` 无级字号调节。
 
-### 软件截图
+#### 2. 编辑与创作（全新升级）
+- **新建与编辑**：支持新建 Markdown 文档、编辑当前文件、一键保存（`Ctrl+S`）与另存为（`Ctrl+Shift+S`）。
+- **三段式视图切换**：
+  - 📖 **阅读模式**：沉浸式只读排版浏览。
+  - 🪟 **分屏模式**：左侧 CodeMirror 6 代码编辑、右侧实时渲染预览；支持自由拖拽分界比例，在 `<980px` 窄屏下自动折叠为上下分屏。
+  - 💻 **源码模式**：全屏纯源码高效编写。
+- **CodeMirror 6 现代编辑器**：Markdown 语法高亮、行号、代码折叠、括号自动补全、撤销/重做历史记录。
+- **防抖实时预览**：输入后 250ms 防抖自动渲染，内置版本 Revision 乱序淘汰机制，防止异步延迟覆盖最新编辑内容。
+- **大文件性能保护**：超大文档（>2MB）自动暂停实时高频防抖渲染并提供手动刷新按钮，确保键入输入零卡顿。
 
-<p align="center">
-  <img src="screenshot.png" alt="BookMD Reader 软件截图" width="800" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
-</p>
+#### 3. 安全防丢稿机制
+- **原子落盘保存**：采用同目录临时文件（`.bookmd-tmp-*`）写入与 `fsync` 确保落盘后再原子重命名替换，杜绝断电或崩溃导致的文件截断。
+- **BOM 与换行风格保护**：保存时自动识别并保留原文件的 UTF-8 BOM 以及 CRLF (`\r\n`) / LF (`\n`) 格式。
+- **外部修改冲突检测**：保存前校验磁盘 `{ size, mtimeMs }` 版本。若被外部程序修改，弹出冲突处理对话框（可选择重新载入、覆盖磁盘、另存为新文件或取消）。
+- **全流程未保存导航守卫**：切换章节、新建文件、打开文件/目录、关闭窗口或退出应用时，若有未保存修改均弹出保存确认，绝不静默丢稿。
+- **稳定章节 ID**：基于相对路径生成稳定章节标识，增删文件或调整排序不影响已有书签与阅读进度。
 
-### 快捷键与操作说明
+---
 
-#### ⌨️ 键盘快捷键
+### ⌨️ 键盘快捷键
 
-| 快捷键 | 功能 |
-| :--- | :--- |
-| `Ctrl + \` | 展开/折叠 **左侧目录栏** |
-| `Ctrl + F` | 聚焦 **局部搜索栏**（自动展开右侧工具栏） |
-| `Ctrl + B` | 快速 **添加书签**（自动将当前高亮的标题/滚动位置存入书签） |
-| `Alt + ←` (左方向键) | 切换至 **上一章** |
-| `Alt + →` (右方向键) | 切换至 **下一章** |
+| 快捷键 | 功能 | 说明 |
+| :--- | :--- | :--- |
+| `Ctrl + N` | **新建文件** | 打开系统保存对话框创建新 Markdown 文件并进入编辑 |
+| `Ctrl + S` | **保存文件** | 保存当前文档的修改（已修改时高亮提示） |
+| `Ctrl + Shift + S` | **另存为** | 将当前编辑内容另存为新路径 |
+| `Ctrl + O` | **打开文件** | 打开单个 `.md` / `.markdown` 文件 |
+| `Ctrl + Shift + O` | **打开目录** | 选择并载入文档文件夹 |
+| `Ctrl + \` | **折叠/展开目录栏** | 独立控制左侧 `DOCUMENT` 文件夹树目录 |
+| `Ctrl + F` | **搜索内容** | 聚焦右侧搜索面板并快速查找当前文档 |
+| `Ctrl + B` | **添加书签** | 保存当前高亮标题与阅读进度至书签（阅读状态下） |
+| `Alt + ←` | **上一篇** | 切换到上一章节（未保存时触发守卫） |
+| `Alt + →` | **下一篇** | 切换到下一章节（未保存时触发守卫） |
 
-#### 🛠️ 面板及按键功能说明
+---
 
-1. **双侧栏独立控制**:
-   - **左上角折叠按钮**（📂 图标）: 独立控制左侧 `DOCUMENT` 文件夹树目录的显示与隐藏，配合快捷键 `Ctrl + \` 可以实现沉浸式大屏阅读。
-   - **右上角大纲折叠按钮**（📋 图标）: 独立控制右侧工具面板（大纲、书签、搜索）的显示与隐藏。
-2. **目录一键收起 (Collapse All)**:
-   - 当在左侧目录树中展开了多层级的文件夹时，在左侧目录头部 `DOCUMENT` 右侧会浮现一个收起按钮（`FolderMinus` 图标）。点击即可**一键收起所有已展开的文件夹**。
-3. **内容检索**:
-   - 点击右上角搜索按钮（或按下 `Ctrl + F`），可在右侧即时检索当前章节，提取包含关键字的上下文摘要，点击摘要即可精准滚动至该行。
-4. **个性化排版控制**:
-   - **三档主题轮转**: 支持亮色（Light Mode）、暗色（Dark Mode）与跟随系统（System Theme）三种主题无缝轮转。
-   - **无级字号缩放**: 拖动字号滑块，文章的排版字体可在 `0.85x` - `1.35x` 范围内无级调节大小，自动匹配不同高低DPI屏幕。
+### 📦 便携版直接运行
 
-### 直接使用便携版
-
-发布文件在：
-
+构建输出位置：
 ```text
 release/BookMD-Reader-win-x64/
 ```
 
 直接运行：
-
 ```text
 release/BookMD-Reader-win-x64/BookMD Reader.exe
 ```
 
-也可以分发压缩包：
-
+独立发布压缩包：
 ```text
 release/BookMD-Reader-win-x64-portable.zip
 ```
 
-将 zip 拷贝到任意 Windows 电脑，解压后双击 `BookMD Reader.exe` 即可使用。
+**说明**：
+- 目标电脑无需安装 Node.js、npm、Electron 或任何开发环境。
+- 必须保留整个 `BookMD-Reader-win-x64` 文件夹（包含 `resources`、`locales` 等依赖动态链接库）。
+- 支持 Windows 右键“打开方式”关联 `BookMD Reader.exe` 直接打开 Markdown。
 
-重要说明：
+---
 
-- 目标电脑不需要安装 Node.js、npm、Electron 或开发环境。
-- 不要只复制 `BookMD Reader.exe`。必须保留整个 `BookMD-Reader-win-x64` 文件夹，因为程序依赖同目录下的 `resources`、`locales` 和多个运行时文件。
-- 如果 Windows SmartScreen 出现提示，选择“更多信息”后继续运行即可。正式分发时建议做代码签名。
-
-### 使用方法
-
-1. 双击 `BookMD Reader.exe`。
-2. 点击右上角“打开”，选择单个 Markdown 文件。
-3. 点击右上角“目录”，选择包含 Markdown 文件的文件夹。
-4. 在 Windows 资源管理器中，也可以右键 `.md` 文件，选择“打开方式”，指定 `BookMD Reader.exe`。
-5. 阅读时点击“书签”保存当前位置；大纲中对应标题会显示书签标记。
-
-### 开发运行
+### 🛠️ 研发与构建
 
 安装依赖：
-
 ```powershell
 npm install
 ```
 
-启动开发服务器：
+运行单元测试（Vitest）：
+```powershell
+npm test
+```
 
+启动 Vite 开发服务器：
 ```powershell
 npm run dev
 ```
 
-构建 Web 静态资源：
-
-```powershell
-npm run build
-```
-
-启动桌面开发版：
-
+启动 Electron 桌面开发版：
 ```powershell
 npm run desktop
 ```
 
-生成 Windows 便携发布包：
-
-```powershell
-npm run desktop:pack
-```
-
-该命令会生成：
-
-- `release/BookMD-Reader-win-x64/`
-- `release/BookMD-Reader-win-x64-portable.zip`
-
-### 项目结构
-
-```text
-electron/                  Electron 主进程和 preload
-src/                       React 前端源码
-src/components/            工具栏、文件树、大纲、书签、搜索和阅读组件
-src/services/              Markdown 渲染、书签、存储、文件源读取
-scripts/package-desktop.cjs 便携桌面版打包脚本
-dist/                      Vite 构建输出
-release/                   桌面发布输出
-```
-
-### 验证清单
-
-发布前建议执行：
-
+构建 Web 静态资源：
 ```powershell
 npm run build
+```
+
+打包 Windows 便携发布版：
+```powershell
 npm run desktop:pack
 ```
 
-并验证：
+---
 
-- `BookMD Reader.exe` 能直接启动。
-- 单文件 Markdown 能打开。
-- 文件夹目录能打开并按层级展示。
-- 右键 Markdown 文件通过“打开方式”能直接显示内容。
-- 书签创建后大纲出现标记，删除后标记消失。
-- 复制整个发布文件夹到另一台 Windows 电脑后仍能运行。
+### 📂 项目架构
 
-### 常见问题
-
-**只复制 exe 到别的电脑为什么打不开？**
-
-便携版不是单文件程序。请复制整个 `BookMD-Reader-win-x64` 文件夹，或使用 `BookMD-Reader-win-x64-portable.zip`。
-
-**打开方式启动后为什么以前是空白？**
-
-Windows 会把 Markdown 路径作为启动参数传给程序。当前版本已经支持读取该参数并自动打开文件。
-
-**是否需要联网？**
-
-普通 Markdown 阅读不需要联网。外部图片、外部链接或网络资源仍取决于原文档内容。
+```text
+electron/
+  ├── main.cjs                  # Electron 主进程、原生菜单、IPC 通信与关闭协调
+  ├── preload.cjs               # contextBridge 暴露的安全桌面接口
+  └── markdown-files.cjs        # 稳定 ID、扫描、原子读写、BOM保护与冲突检测
+src/
+  ├── components/
+  │     ├── EditorPane.tsx          # CodeMirror 6 编辑器组件
+  │     ├── DocumentWorkspace.tsx   # 阅读、分屏、源码三视图工作区与拖拽分割
+  │     ├── ViewModeControl.tsx     # 三段式视图切换按钮组
+  │     ├── UnsavedChangesDialog.tsx# 离开前未保存确认弹窗
+  │     ├── FileConflictDialog.tsx  # 外部修改冲突处理弹窗
+  │     ├── Toolbar.tsx             # 顶部工具栏（新建、保存、视图、主题、字号）
+  │     ├── ChapterList.tsx         # 左侧目录树（稳定 ID、脏标记、折叠控制）
+  │     ├── ReaderPane.tsx          # 渲染阅读面板
+  │     ├── TocPanel.tsx            # 大纲侧栏
+  │     ├── BookmarkPanel.tsx       # 书签侧栏
+  │     └── SearchPanel.tsx         # 搜索侧栏
+  ├── hooks/
+  │     ├── useDocumentSession.ts   # 文档会话状态机、防抖预览调度与冲突处理
+  │     └── useReadingTracker.ts    # 标题滚动追踪与阅读进度采集
+  ├── services/
+  │     ├── markdown.ts             # markdown-it 净化渲染、KaTeX、Mermaid、纯文本提取
+  │     ├── storage.ts              # V2 本地存储与 V1 兼容自动迁移
+  │     ├── bookmarks.ts            # 书签创建与模糊校验
+  │     └── bookSource.ts           # 文档源加载器
+  └── core/
+        └── types.ts                # 全局核心类型定义
+scripts/
+  └── package-desktop.cjs       # Windows 便携版打包脚本
+release/                        # 桌面便携版发布输出
+docs/                           # 研发计划与工作总结文档
+```
 
 ---
 
 ## English
 
-### Features
+### Key Features
 
-- Open a single `.md` / `.markdown` file.
-- Open a Markdown folder and display files as a hierarchical tree.
-- Generate an outline from headings and keep it synced with the reader scroll position.
-- Save bookmarks, jump to bookmarks, delete bookmarks, and show bookmark markers in the outline.
-- Search inside the current chapter.
-- Render code blocks, tables, task lists, Front Matter, Mermaid diagrams, and KaTeX formulas.
-- Support light mode, dark mode, system theme, and reader font scaling.
-- Support Windows "Open with": open a Markdown file directly with BookMD Reader.
-- Ship as an install-free portable Windows desktop app.
-
-### Portable App
-
-The packaged app is generated at:
-
-```text
-release/BookMD-Reader-win-x64/
-```
-
-Run:
-
-```text
-release/BookMD-Reader-win-x64/BookMD Reader.exe
-```
-
-The distributable zip is:
-
-```text
-release/BookMD-Reader-win-x64-portable.zip
-```
-
-Copy the zip to any Windows computer, extract it, and double-click `BookMD Reader.exe`.
-
-Important notes:
-
-- Node.js, npm, Electron, and development tools are not required on the target computer.
-- Do not copy only `BookMD Reader.exe`. Keep the whole `BookMD-Reader-win-x64` folder because the app needs the sibling `resources`, `locales`, and runtime files.
-- Windows SmartScreen may warn about unsigned portable apps. For public distribution, code signing is recommended.
-
-### Usage
-
-1. Double-click `BookMD Reader.exe`.
-2. Use "Open" to load one Markdown file.
-3. Use "Directory" to load a folder of Markdown documents.
-4. In Windows Explorer, right-click a `.md` file, choose "Open with", and select `BookMD Reader.exe`.
-5. Click "Bookmark" while reading to save the current position. The matching outline heading shows a bookmark marker.
-
-### Development
-
-Install dependencies:
-
-```powershell
-npm install
-```
-
-Start the Vite development server:
-
-```powershell
-npm run dev
-```
-
-Build the web assets:
-
-```powershell
-npm run build
-```
-
-Run the Electron app in development:
-
-```powershell
-npm run desktop
-```
-
-Build the Windows portable release:
-
-```powershell
-npm run desktop:pack
-```
-
-This creates:
-
-- `release/BookMD-Reader-win-x64/`
-- `release/BookMD-Reader-win-x64-portable.zip`
-
-### Project Structure
-
-```text
-electron/                    Electron main process and preload bridge
-src/                         React frontend source
-src/components/              Toolbar, file tree, outline, bookmarks, search, reader
-src/services/                Markdown rendering, bookmarks, storage, file source loading
-scripts/package-desktop.cjs  Portable desktop packaging script
-dist/                        Vite build output
-release/                     Desktop release output
-```
-
-### Release Checklist
-
-Before distribution, run:
-
-```powershell
-npm run build
-npm run desktop:pack
-```
-
-Then verify:
-
-- `BookMD Reader.exe` starts directly.
-- A single Markdown file opens correctly.
-- A Markdown folder opens and renders as a tree.
-- Windows "Open with" launches the app and displays the file content.
-- Creating a bookmark shows a marker in the outline, and deleting it removes the marker.
-- Copying the whole release folder to another Windows computer still works.
-
-### FAQ
-
-**Why does the app fail if I copy only the exe?**
-
-The portable build is folder-based, not a single-file executable. Copy the whole `BookMD-Reader-win-x64` folder or use `BookMD-Reader-win-x64-portable.zip`.
-
-**Why did "Open with" previously show a blank page?**
-
-Windows passes the Markdown file path as a launch argument. The current version reads that argument and opens the file automatically.
-
-**Does it require internet access?**
-
-Normal Markdown reading does not require internet access. External images, external links, and network resources still depend on the original document content.
+- **Read & Edit**: Create, open, edit, and save Markdown files with `Ctrl+S` / `Ctrl+Shift+S`.
+- **Three View Modes**: Read mode, Split mode (resizable side-by-side editing & live preview, responsive vertical collapse on narrow screens), and Source mode.
+- **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, bracket auto-closing, and undo/redo history.
+- **Safe Atomic Saving**: Same-directory temporary file write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings.
+- **Conflict Detection**: Checks file `{ size, mtimeMs }` before saving to prevent silent overwriting of external modifications.
+- **Unsaved Changes Guard**: Prompt confirmations before navigating away, switching chapters, opening files, or closing the app.
+- **Hierarchical Tree & Outline**: Directory browsing with stable chapter IDs, table of contents synchronization, bookmarks, and search.
+- **Rich Syntax Support**: GitHub Flavored Markdown, KaTeX math formulas, Mermaid diagrams, task lists, and tables.
+- **Portable Windows App**: Zero-dependency portable distribution via `BookMD-Reader-win-x64-portable.zip`.

@@ -1,20 +1,81 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme } = require("electron");
-const fs = require("node:fs/promises");
 const path = require("node:path");
 const { fileURLToPath, pathToFileURL } = require("node:url");
+const {
+  markdownExtensions,
+  buildDirectoryManifest,
+  readMarkdownSource,
+  saveMarkdownFile,
+  registerPath,
+  isValidMarkdownPath,
+} = require("./markdown-files.cjs");
 
 const devServerUrl = process.env.BOOKMD_DEV_SERVER_URL;
-const markdownExtensions = new Set([".md", ".markdown"]);
 
 let mainWindow = null;
 let launchFilePath = findMarkdownPathFromArgs(process.argv);
+let isAppQuitting = false;
+let pendingCloseResolvers = new Map();
+let closeRequestId = 0;
+let documentState = {
+  activePath: null,
+  isDirty: false,
+};
 
 function buildApplicationMenu() {
+  const isMac = process.platform === "darwin";
   const template = [
     {
       label: "文件",
       submenu: [
-        { label: "退出", role: "quit" },
+        {
+          label: "新建",
+          accelerator: "Ctrl+N",
+          click: () => sendMenuCommand("new-file"),
+        },
+        {
+          label: "打开文件...",
+          accelerator: "Ctrl+O",
+          click: async () => {
+            if (!mainWindow) return;
+            const result = await dialog.showOpenDialog(mainWindow, {
+              title: "打开 Markdown 文件",
+              filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
+              properties: ["openFile"],
+            });
+            if (!result.canceled && result.filePaths.length > 0) {
+              sendOpenFilePath(result.filePaths[0]);
+            }
+          },
+        },
+        {
+          label: "打开目录...",
+          accelerator: "Ctrl+Shift+O",
+          click: () => sendMenuCommand("open-directory"),
+        },
+        { type: "separator" },
+        {
+          label: "保存",
+          accelerator: "Ctrl+S",
+          click: () => sendMenuCommand("save"),
+        },
+        {
+          label: "另存为...",
+          accelerator: "Ctrl+Shift+S",
+          click: () => sendMenuCommand("save-as"),
+        },
+        { type: "separator" },
+        {
+          label: "退出",
+          accelerator: isMac ? "Cmd+Q" : "Ctrl+Q",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.close();
+            } else {
+              app.quit();
+            }
+          },
+        },
       ],
     },
     {
@@ -55,6 +116,11 @@ function buildApplicationMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+function sendMenuCommand(command) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send("bookmd:menu-command", command);
+}
+
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1320,
@@ -72,6 +138,33 @@ async function createWindow() {
     },
   });
 
+  mainWindow.on("close", (event) => {
+    if (isAppQuitting) return;
+
+    if (documentState.isDirty) {
+      event.preventDefault();
+      closeRequestId += 1;
+      const reqId = closeRequestId;
+
+      mainWindow.webContents.send("bookmd:before-close", { requestId: reqId });
+
+      // Fallback timeout in case renderer does not respond
+      const timer = setTimeout(() => {
+        pendingCloseResolvers.delete(reqId);
+      }, 10000);
+
+      pendingCloseResolvers.set(reqId, (result) => {
+        clearTimeout(timer);
+        if (result === "proceed") {
+          isAppQuitting = true;
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.close();
+          }
+        }
+      });
+    }
+  });
+
   if (!app.isPackaged && devServerUrl) {
     await mainWindow.loadURL(devServerUrl);
     mainWindow.webContents.openDevTools({ mode: "detach" });
@@ -83,7 +176,7 @@ async function createWindow() {
 function findMarkdownPathFromArgs(argv) {
   for (const arg of argv) {
     const filePath = normalizeLaunchPath(arg);
-    if (filePath && markdownExtensions.has(path.extname(filePath).toLowerCase())) {
+    if (filePath && isValidMarkdownPath(filePath)) {
       return filePath;
     }
   }
@@ -128,6 +221,10 @@ app.on("activate", () => {
   }
 });
 
+app.on("before-quit", () => {
+  isAppQuitting = true;
+});
+
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
@@ -142,10 +239,28 @@ app.on("open-file", (event, filePath) => {
   }
 });
 
+// IPC handlers
 ipcMain.handle("bookmd:get-launch-file-path", async () => launchFilePath);
 
 ipcMain.handle("bookmd:set-native-theme", (_event, theme) => {
   nativeTheme.themeSource = theme;
+});
+
+ipcMain.handle("bookmd:set-document-state", (_event, state) => {
+  if (state && typeof state === "object") {
+    documentState = {
+      activePath: state.activePath ?? null,
+      isDirty: Boolean(state.isDirty),
+    };
+  }
+});
+
+ipcMain.handle("bookmd:resolve-before-close", (_event, { requestId, action }) => {
+  const resolver = pendingCloseResolvers.get(requestId);
+  if (resolver) {
+    pendingCloseResolvers.delete(requestId);
+    resolver(action);
+  }
 });
 
 ipcMain.handle("bookmd:open-directory", async () => {
@@ -159,90 +274,136 @@ ipcMain.handle("bookmd:open-directory", async () => {
   }
 
   const rootPath = result.filePaths[0];
-  const files = await collectMarkdownFiles(rootPath, rootPath);
-  files.sort((a, b) => a.relativePath.localeCompare(b.relativePath, "zh-Hans-CN", { numeric: true }));
+  const manifest = await buildDirectoryManifest(rootPath);
   return {
     canceled: false,
-    directory: {
-      id: `directory:${rootPath}`,
-      title: path.basename(rootPath) || rootPath,
-      rootPath,
-      chapters: files.map((file, index) => ({
-        id: `chapter-${index + 1}`,
-        title: titleFromRelativePath(file.relativePath),
-        src: file.relativePath,
-        absolutePath: file.absolutePath,
-        baseUrl: pathToFileURL(path.dirname(file.absolutePath) + path.sep).toString(),
-      })),
-    },
+    directory: manifest,
   };
+});
+
+ipcMain.handle("bookmd:refresh-directory", async (_event, rootPath) => {
+  if (typeof rootPath !== "string" || !rootPath) {
+    throw new Error("无效的目录路径。");
+  }
+  return await buildDirectoryManifest(rootPath);
 });
 
 ipcMain.handle("bookmd:read-markdown-file", async (_event, absolutePath) => {
-  if (typeof absolutePath !== "string" || !markdownExtensions.has(path.extname(absolutePath).toLowerCase())) {
-    throw new Error("只能读取 Markdown 文件。");
-  }
-  const markdown = await fs.readFile(absolutePath, "utf8");
-  return {
-    markdown,
-    baseUrl: pathToFileURL(path.dirname(absolutePath) + path.sep).toString(),
-  };
+  return await readMarkdownSource(absolutePath);
 });
 
 ipcMain.handle("bookmd:get-directory-for-file", async (_event, absolutePath) => {
-  if (typeof absolutePath !== "string" || !markdownExtensions.has(path.extname(absolutePath).toLowerCase())) {
+  if (typeof absolutePath !== "string" || !isValidMarkdownPath(absolutePath)) {
     throw new Error("只能读取 Markdown 文件。");
   }
-  const rootPath = path.dirname(absolutePath);
-  const files = await collectMarkdownFiles(rootPath, rootPath);
-  files.sort((a, b) => a.relativePath.localeCompare(b.relativePath, "zh-Hans-CN", { numeric: true }));
+  const rootPath = path.dirname(path.resolve(absolutePath));
+  const directory = await buildDirectoryManifest(rootPath);
 
-  const chapters = files.map((file, index) => ({
-    id: `chapter-${index + 1}`,
-    title: titleFromRelativePath(file.relativePath),
-    src: file.relativePath,
-    absolutePath: file.absolutePath,
-    baseUrl: pathToFileURL(path.dirname(file.absolutePath) + path.sep).toString(),
-  }));
-
-  const activeChapter = chapters.find(
+  const activeChapter = directory.chapters.find(
     (c) => path.resolve(c.absolutePath) === path.resolve(absolutePath)
   );
 
   return {
-    directory: {
-      id: `directory:${rootPath}`,
-      title: path.basename(rootPath) || rootPath,
-      rootPath,
-      chapters,
-    },
+    directory,
     activeChapterId: activeChapter ? activeChapter.id : null,
   };
 });
 
-async function collectMarkdownFiles(rootPath, basePath) {
-  const entries = await fs.readdir(rootPath, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    const absolutePath = path.join(rootPath, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...await collectMarkdownFiles(absolutePath, basePath));
-    } else if (entry.isFile() && markdownExtensions.has(path.extname(entry.name).toLowerCase())) {
-      files.push({
-        absolutePath,
-        relativePath: path.relative(basePath, absolutePath).replaceAll(path.sep, "/"),
-      });
-    }
+ipcMain.handle("bookmd:save-markdown-file", async (_event, request) => {
+  if (!request || typeof request.absolutePath !== "string") {
+    return { success: false, errorCode: "INVALID_PATH", message: "无效的文件路径。" };
   }
-  return files;
-}
+  return await saveMarkdownFile({
+    absolutePath: request.absolutePath,
+    content: request.content,
+    expectedVersion: request.expectedVersion,
+    force: Boolean(request.force),
+    hasBom: request.hasBom,
+    lineEnding: request.lineEnding,
+  });
+});
 
-function titleFromRelativePath(relativePath) {
-  const withoutExtension = relativePath.replace(/\.(md|markdown)$/i, "");
-  return withoutExtension
-    .split("/")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(" / ");
-}
+ipcMain.handle("bookmd:create-markdown-file", async (_event, options = {}) => {
+  let defaultDir = options.rootPath || app.getPath("documents");
+  let defaultName = options.defaultName || "未命名.md";
+  const defaultPath = path.join(defaultDir, defaultName);
+
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: "新建 Markdown 文件",
+    defaultPath,
+    filters: [
+      { name: "Markdown", extensions: ["md", "markdown"] },
+      { name: "所有文件", extensions: ["*"] },
+    ],
+  });
+
+  if (result.canceled || !result.filePath) {
+    return { canceled: true };
+  }
+
+  const targetPath = result.filePath;
+  const saveRes = await saveMarkdownFile({
+    absolutePath: targetPath,
+    content: options.initialContent ?? "# 未命名\n\n",
+    force: true,
+  });
+
+  if (!saveRes.success) {
+    return { canceled: false, success: false, message: saveRes.message, errorCode: saveRes.errorCode };
+  }
+
+  registerPath(targetPath);
+  const source = await readMarkdownSource(targetPath);
+  return {
+    canceled: false,
+    success: true,
+    absolutePath: targetPath,
+    source,
+    chapter: {
+      id: `chapter:path:${encodeURIComponent(path.basename(targetPath).toLowerCase())}`,
+      title: path.basename(targetPath).replace(/\.(md|markdown)$/i, ""),
+      src: path.basename(targetPath),
+      absolutePath: targetPath,
+      baseUrl: pathToFileURL(path.dirname(targetPath) + path.sep).toString(),
+    },
+  };
+});
+
+ipcMain.handle("bookmd:save-markdown-file-as", async (_event, request = {}) => {
+  const defaultPath = request.currentPath || path.join(app.getPath("documents"), "未命名.md");
+
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: "另存为 Markdown 文件",
+    defaultPath,
+    filters: [
+      { name: "Markdown", extensions: ["md", "markdown"] },
+      { name: "所有文件", extensions: ["*"] },
+    ],
+  });
+
+  if (result.canceled || !result.filePath) {
+    return { canceled: true };
+  }
+
+  const targetPath = result.filePath;
+  const saveRes = await saveMarkdownFile({
+    absolutePath: targetPath,
+    content: request.content ?? "",
+    force: true,
+  });
+
+  if (!saveRes.success) {
+    return { canceled: false, success: false, message: saveRes.message, errorCode: saveRes.errorCode };
+  }
+
+  registerPath(targetPath);
+  const source = await readMarkdownSource(targetPath);
+  return {
+    canceled: false,
+    success: true,
+    absolutePath: targetPath,
+    baseUrl: pathToFileURL(path.dirname(targetPath) + path.sep).toString(),
+    diskVersion: source.diskVersion,
+    cacheKey: source.cacheKey,
+  };
+});

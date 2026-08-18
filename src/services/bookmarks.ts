@@ -4,6 +4,7 @@ import type { Bookmark, BookmarkResolution, Heading } from "../core/types";
 export function createBookmark(input: {
   bookId: string;
   chapterId: string;
+  chapterSrc?: string;
   activeHeading?: Heading;
   scrollRatio: number;
   excerpt: string;
@@ -14,6 +15,7 @@ export function createBookmark(input: {
     id: createId("bookmark"),
     bookId: input.bookId,
     chapterId: input.chapterId,
+    chapterSrc: input.chapterSrc,
     headingId: input.activeHeading?.id,
     headingText: input.activeHeading?.text,
     scrollRatio: clampRatio(input.scrollRatio),

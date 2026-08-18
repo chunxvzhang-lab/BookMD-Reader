@@ -11,6 +11,20 @@
 /.agents
 /.agenteam
 /.codex
+/.playwright-cli
+/__pycache__
+*.pyc
+
+# Scratch and unrelated local folders
+/ai_quality_inspection_ppt
+/galv_color_ai_qc_ppt
+/galv_color_ai_qc_ppt_render
+/render_ai_book
+/template_media_extract
+/canvas
+/tools
+/papers
+/docs/park_agent_solution
 
 # Logs
 *.log

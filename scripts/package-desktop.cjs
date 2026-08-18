@@ -15,13 +15,24 @@ async function main() {
   await assertExists(path.join(electronDist, "electron.exe"), "Electron runtime is missing.");
   await assertExists(path.join(root, "dist", "index.html"), "dist is missing. Run npm run build first.");
 
-  await fs.rm(appDir, { recursive: true, force: true });
-  await fs.rm(portableZip, { force: true });
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await fs.rm(appDir, { recursive: true, force: true });
+      break;
+    } catch (err) {
+      if (attempt === 4) {
+        console.warn("Could not completely remove appDir, attempting to overwrite files directly:", err.message);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+  }
+  await fs.rm(portableZip, { force: true }).catch(() => {});
   await fs.mkdir(releaseRoot, { recursive: true });
 
   await copyDirectory(electronDist, appDir);
-  await fs.rename(path.join(appDir, "electron.exe"), path.join(appDir, "BookMD Reader.exe"));
-  await fs.rm(path.join(appDir, "resources", "default_app.asar"), { force: true });
+  await fs.rename(path.join(appDir, "electron.exe"), path.join(appDir, "BookMD Reader.exe")).catch(() => {});
+  await fs.rm(path.join(appDir, "resources", "default_app.asar"), { force: true }).catch(() => {});
 
   const rceditPath = path.join(root, "node_modules", "electron-winstaller", "vendor", "rcedit.exe");
   const iconIcoPath = path.join(root, "electron", "icon.ico");
@@ -121,6 +132,7 @@ async function writePortableReadme() {
 2. 点击“打开”读取单个 .md / .markdown 文件。
 3. 点击“目录”读取包含多个 Markdown 文件的文件夹。
 4. 也可以在 Windows 中右键 Markdown 文件，选择“打开方式”，指定 BookMD Reader.exe。
+5. Markdown 中的 \`\`\`mermaid、\`\`\`mmd、\`\`\`mindmap 和 \`\`\`mermind 代码块会渲染为图表。
 
 注意：
 - 不需要安装 Node.js、npm、Electron 或其他运行环境。
@@ -137,6 +149,7 @@ How to use:
 2. Use "Open" to load a single .md / .markdown file.
 3. Use "Directory" to load a folder of Markdown files.
 4. You can also right-click a Markdown file in Windows, choose "Open with", and select BookMD Reader.exe.
+5. Mermaid code fences render as diagrams. Supported tags: \`\`\`mermaid, \`\`\`mmd, \`\`\`mindmap, and \`\`\`mermind.
 
 Notes:
 - Node.js, npm, Electron, and development tools are not required on the target computer.
@@ -152,6 +165,7 @@ async function validatePortableApp() {
     path.join("resources", "app", "dist", "index.html"),
     path.join("resources", "app", "electron", "main.cjs"),
     path.join("resources", "app", "electron", "preload.cjs"),
+    path.join("resources", "app", "electron", "markdown-files.cjs"),
     "icudtl.dat",
     "ffmpeg.dll",
     "v8_context_snapshot.bin",

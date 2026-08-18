@@ -1,23 +1,26 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookmarkPanel } from "./components/BookmarkPanel";
 import { ChapterList } from "./components/ChapterList";
-import { ReaderPane } from "./components/ReaderPane";
+import { DocumentWorkspace } from "./components/DocumentWorkspace";
+import { FileConflictDialog } from "./components/FileConflictDialog";
 import { SearchPanel } from "./components/SearchPanel";
 import { TocPanel } from "./components/TocPanel";
 import { Toolbar } from "./components/Toolbar";
+import { UnsavedChangesDialog } from "./components/UnsavedChangesDialog";
 import type {
   BookManifest,
   Bookmark,
-  RenderedChapter,
+  ChapterManifest,
+  EditorViewMode,
   SearchResult,
   SidebarTab,
   ThemeMode,
 } from "./core/types";
+import { useDocumentSession } from "./hooks/useDocumentSession";
 import { useReadingTracker } from "./hooks/useReadingTracker";
 import { createBookmark, resolveBookmark } from "./services/bookmarks";
-import { loadChapterMarkdown } from "./services/bookSource";
-import { findInChapter, extractExcerpt, renderMarkdown } from "./services/markdown";
-import { renderMermaid } from "./services/mermaid";
+import { loadChapterMarkdown, loadPackagedBook } from "./services/bookSource";
+import { extractExcerpt, findInChapter } from "./services/markdown";
 import {
   loadBookmarks,
   loadPreferences,
@@ -27,23 +30,25 @@ import {
   saveReadingPosition,
 } from "./services/storage";
 
-type UploadedMarkdown = {
-  bookId: string;
-  chapterId: string;
-  markdown: string;
-  baseUrl: string;
-};
-
-type BookSourceMode = "empty" | "packaged" | "single-file" | "directory";
+type PendingAction =
+  | { type: "select-chapter"; chapterId: string }
+  | { type: "open-file"; file: File }
+  | { type: "open-desktop-file"; absolutePath: string }
+  | { type: "open-directory" }
+  | { type: "new-file" }
+  | { type: "close-window"; requestId: number };
 
 export function App() {
   const readerRef = useRef<HTMLElement | null>(null);
   const pendingBookmarkRef = useRef<Bookmark | null>(null);
   const activeHeadingRef = useRef<string | undefined>(undefined);
+  const preferencesRef = useRef(loadPreferences());
   const scrollRatioRef = useRef(0);
+  const openRequestRef = useRef(0);
+  const pendingActionRef = useRef<PendingAction | null>(null);
+
   const [manifest, setManifest] = useState<BookManifest | null>(null);
   const [chapterId, setChapterId] = useState<string>("");
-  const [chapter, setChapter] = useState<RenderedChapter | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [directoryOpen, setDirectoryOpen] = useState(true);
@@ -51,19 +56,38 @@ export function App() {
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [preferences, setPreferences] = useState(loadPreferences);
-  const [uploadedMarkdown, setUploadedMarkdown] = useState<UploadedMarkdown | null>(null);
-  const [sourceMode, setSourceMode] = useState<BookSourceMode>("empty");
+  const [preferences, setPreferences] = useState(preferencesRef.current);
+  const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+
+  const {
+    session,
+    renderedChapter,
+    viewMode,
+    isDirty,
+    isSaving,
+    isLargeDocument,
+    autoPreviewPaused,
+    conflict,
+    openSession,
+    updateSource,
+    renderPreviewNow,
+    setViewMode,
+    saveSession,
+    saveSessionAs,
+    reloadFromDisk,
+    discardChanges,
+    clearConflict,
+  } = useDocumentSession();
 
   const activeChapter = manifest?.chapters.find((item) => item.id === chapterId);
-  const activeHeading = chapter?.headings.find((heading) => heading.id === activeHeadingId);
+  const activeHeading = renderedChapter?.headings.find((heading) => heading.id === activeHeadingId);
   const activeIndex = manifest?.chapters.findIndex((item) => item.id === chapterId) ?? -1;
+
   const searchResults = useMemo(
-    () => (chapter ? findInChapter(searchQuery, chapter.plainText, chapter.headings) : []),
-    [chapter, searchQuery],
+    () => (renderedChapter ? findInChapter(searchQuery, renderedChapter.plainText, renderedChapter.headings) : []),
+    [renderedChapter, searchQuery],
   );
+
   const bookmarkedHeadingIds = useMemo(() => {
     const ids = new Set<string>();
     for (const bookmark of bookmarks) {
@@ -83,6 +107,10 @@ export function App() {
     [manifest],
   );
 
+  const handleMermaidError = useCallback(() => {
+    setNotice("Mermaid 图表渲染失败，请检查语法。");
+  }, []);
+
   const jumpToHeading = useCallback((headingId: string, behavior: ScrollBehavior = "smooth") => {
     const container = readerRef.current;
     const target = container?.querySelector(`#${CSS.escape(headingId)}`);
@@ -99,15 +127,106 @@ export function App() {
     container.scrollTo({ top: Math.max(0, max * ratio), behavior: "smooth" });
   }, []);
 
-  const selectChapter = useCallback((nextChapterId: string) => {
-    startTransition(() => {
-      setChapterId(nextChapterId);
-      setSearchQuery("");
-      setSidebarTab("toc");
-    });
+  // Safe navigation execution after guard passes
+  const executeAction = useCallback(
+    async (action: PendingAction) => {
+      switch (action.type) {
+        case "select-chapter": {
+          startTransition(() => {
+            setChapterId(action.chapterId);
+            setSearchQuery("");
+            setSidebarTab("toc");
+          });
+          break;
+        }
+        case "open-file": {
+          await doOpenMarkdownFile(action.file);
+          break;
+        }
+        case "open-desktop-file": {
+          await doOpenDesktopMarkdownPath(action.absolutePath);
+          break;
+        }
+        case "open-directory": {
+          await doOpenMarkdownDirectory();
+          break;
+        }
+        case "new-file": {
+          await doCreateNewFile();
+          break;
+        }
+        case "close-window": {
+          if (window.bookMDDesktop?.resolveBeforeClose) {
+            window.bookMDDesktop.resolveBeforeClose({
+              requestId: action.requestId,
+              action: "proceed",
+            });
+          }
+          break;
+        }
+      }
+    },
+    []
+  );
+
+  // Unsaved guard interceptor
+  const guardAction = useCallback(
+    (action: PendingAction) => {
+      if (isDirty) {
+        pendingActionRef.current = action;
+        setUnsavedDialogOpen(true);
+      } else {
+        executeAction(action);
+      }
+    },
+    [isDirty, executeAction]
+  );
+
+  const handleDialogSave = useCallback(async () => {
+    const res = await saveSession();
+    if (res.success) {
+      setUnsavedDialogOpen(false);
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      if (action) {
+        executeAction(action);
+      }
+    } else {
+      setNotice(res.message || "保存文件失败。");
+    }
+  }, [saveSession, executeAction]);
+
+  const handleDialogDiscard = useCallback(() => {
+    discardChanges();
+    setUnsavedDialogOpen(false);
+    const action = pendingActionRef.current;
+    pendingActionRef.current = null;
+    if (action) {
+      executeAction(action);
+    }
+  }, [discardChanges, executeAction]);
+
+  const handleDialogCancel = useCallback(() => {
+    if (pendingActionRef.current?.type === "close-window") {
+      window.bookMDDesktop?.resolveBeforeClose?.({
+        requestId: pendingActionRef.current.requestId,
+        action: "cancel",
+      });
+    }
+    pendingActionRef.current = null;
+    setUnsavedDialogOpen(false);
   }, []);
 
-  const openMarkdownFile = useCallback(async (file: File) => {
+  const selectChapter = useCallback(
+    (nextChapterId: string) => {
+      if (nextChapterId === chapterId) return;
+      guardAction({ type: "select-chapter", chapterId: nextChapterId });
+    },
+    [chapterId, guardAction]
+  );
+
+  const doOpenMarkdownFile = async (file: File) => {
+    openRequestRef.current += 1;
     const extensionOk = /\.(md|markdown)$/i.test(file.name);
     const typeOk = file.type === "text/markdown";
     if (!extensionOk && !typeOk) {
@@ -115,8 +234,6 @@ export function App() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
     try {
       const markdown = await file.text();
       const baseName = file.name.replace(/\.(md|markdown)$/i, "") || "本地 Markdown";
@@ -127,60 +244,90 @@ export function App() {
         description: "本地单文件 Markdown",
         chapters: [{ id: "uploaded", title: baseName, src: file.name }],
       };
-      setUploadedMarkdown({ bookId: localId, chapterId: "uploaded", markdown, baseUrl: window.location.href });
-      setSourceMode("single-file");
+
       pendingBookmarkRef.current = null;
       setManifest(localManifest);
-      setBookmarks(loadBookmarks(localId));
+      setBookmarks(loadBookmarks(localId, localManifest.chapters));
       setChapterId("uploaded");
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
-      setNotice("Markdown 文件已打开。相对图片需要使用网络地址或内嵌资源。");
+
+      openSession({
+        chapterId: "uploaded",
+        absolutePath: null,
+        fileName: file.name,
+        baseUrl: window.location.href,
+        source: markdown,
+        diskVersion: null,
+        writable: false,
+      });
+
+      setNotice("Markdown 文件已打开（浏览器环境为只读模式）。");
     } catch (cause: unknown) {
       setNotice(cause instanceof Error ? cause.message : "无法读取 Markdown 文件。");
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  };
 
-  const openDesktopMarkdownPath = useCallback(async (absolutePath: string) => {
+  const doOpenDesktopMarkdownPath = async (absolutePath: string) => {
     if (!window.bookMDDesktop) return;
     if (!/\.(md|markdown)$/i.test(absolutePath)) {
       setNotice("请选择 .md 或 .markdown 文件。");
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    const requestId = openRequestRef.current + 1;
+    openRequestRef.current = requestId;
+
     try {
-      const result = await window.bookMDDesktop.getDirectoryForFile(absolutePath);
-      setSourceMode("directory");
-      setUploadedMarkdown(null);
+      const directoryPromise = window.bookMDDesktop.getDirectoryForFile(absolutePath);
+      const source = await window.bookMDDesktop.readMarkdownFile(absolutePath);
+      if (openRequestRef.current !== requestId) return;
+
+      const fileName = absolutePath.split(/[\\/]/).pop() ?? "Markdown.md";
+      const baseName = fileName.replace(/\.(md|markdown)$/i, "") || "本地 Markdown";
+
+      const dirResult = await directoryPromise;
+      if (openRequestRef.current !== requestId) return;
+
+      const activeChap = dirResult.directory.chapters.find(
+        (c) => c.absolutePath && c.absolutePath.toLowerCase() === absolutePath.toLowerCase()
+      );
+      const activeId = activeChap ? activeChap.id : (dirResult.activeChapterId ?? dirResult.directory.chapters[0]?.id ?? "uploaded");
+
       pendingBookmarkRef.current = null;
-      setManifest(result.directory);
-      setBookmarks(loadBookmarks(result.directory.id));
-      setChapterId(result.activeChapterId ?? result.directory.chapters[0]?.id ?? "");
+      setManifest(dirResult.directory);
+      setBookmarks(loadBookmarks(dirResult.directory.id, dirResult.directory.chapters));
+      setChapterId(activeId);
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
-      const fileName = absolutePath.split(/[\\/]/).pop() ?? "Markdown.md";
-      setNotice(`已打开目录并定位到：${fileName}`);
+
+      openSession({
+        chapterId: activeId,
+        absolutePath,
+        fileName,
+        baseUrl: source.baseUrl,
+        source: source.markdown,
+        diskVersion: source.diskVersion ?? null,
+        writable: true,
+        hasBom: source.hasBom,
+        lineEnding: source.lineEnding,
+      });
+
+      setNotice(`已打开：${fileName}`);
     } catch (cause: unknown) {
       setNotice(cause instanceof Error ? cause.message : "无法读取 Markdown 文件。");
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  };
 
-  const openMarkdownDirectory = useCallback(async () => {
+  const doOpenMarkdownDirectory = async () => {
     if (!window.bookMDDesktop) {
       setNotice("目录打开功能仅在桌面版可用。");
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    openRequestRef.current += 1;
     try {
       const result = await window.bookMDDesktop.openDirectory();
       if (result.canceled) return;
@@ -188,34 +335,124 @@ export function App() {
         setNotice("该目录中没有 .md 或 .markdown 文件。");
         return;
       }
-      const saved = loadReadingPosition(result.directory.id);
-      setSourceMode("directory");
-      setUploadedMarkdown(null);
-      pendingBookmarkRef.current = null;
+      const saved = loadReadingPosition(result.directory.id, result.directory.chapters);
+      const targetChapterId = saved?.chapterId ?? result.directory.chapters[0].id;
+      const targetChapter = result.directory.chapters.find((c) => c.id === targetChapterId) ?? result.directory.chapters[0];
+
       setManifest(result.directory);
-      setBookmarks(loadBookmarks(result.directory.id));
-      setChapterId(saved?.chapterId ?? result.directory.chapters[0].id);
+      setBookmarks(loadBookmarks(result.directory.id, result.directory.chapters));
+      setChapterId(targetChapter.id);
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
       setNotice(`已打开目录：${result.directory.title}`);
+
+      if (targetChapter.absolutePath) {
+        const source = await window.bookMDDesktop.readMarkdownFile(targetChapter.absolutePath);
+        openSession({
+          chapterId: targetChapter.id,
+          absolutePath: targetChapter.absolutePath,
+          fileName: targetChapter.src.split("/").pop() ?? targetChapter.title,
+          baseUrl: source.baseUrl,
+          source: source.markdown,
+          diskVersion: source.diskVersion ?? null,
+          writable: true,
+          hasBom: source.hasBom,
+          lineEnding: source.lineEnding,
+        });
+      }
     } catch (cause: unknown) {
       setNotice(cause instanceof Error ? cause.message : "无法打开 Markdown 目录。");
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  };
+
+  const doCreateNewFile = async () => {
+    if (!window.bookMDDesktop) {
+      setNotice("新建文件功能仅在桌面版可用。");
+      return;
+    }
+
+    try {
+      const rootPath = manifest?.rootPath;
+      const result = await window.bookMDDesktop.createMarkdownFile({ rootPath });
+      if (result.canceled || !result.success) {
+        if (!result.canceled && result.message) setNotice(result.message);
+        return;
+      }
+
+      let nextManifest = manifest;
+      if (rootPath && window.bookMDDesktop.refreshDirectory) {
+        nextManifest = await window.bookMDDesktop.refreshDirectory(rootPath);
+      } else {
+        const newChapter = result.chapter;
+        nextManifest = {
+          id: manifest?.id ?? `directory:${result.absolutePath}`,
+          title: manifest?.title ?? result.chapter.title,
+          rootPath: manifest?.rootPath,
+          chapters: manifest ? [...manifest.chapters, newChapter] : [newChapter],
+        };
+      }
+
+      const activeChap = nextManifest.chapters.find(
+        (c) => c.absolutePath && c.absolutePath.toLowerCase() === result.absolutePath.toLowerCase()
+      ) ?? result.chapter;
+
+      setManifest(nextManifest);
+      setChapterId(activeChap.id);
+      setSidebarOpen(true);
+      setSidebarTab("toc");
+      setViewMode("split");
+
+      openSession({
+        chapterId: activeChap.id,
+        absolutePath: result.absolutePath,
+        fileName: activeChap.src.split("/").pop() ?? activeChap.title,
+        baseUrl: result.source.baseUrl,
+        source: result.source.markdown,
+        diskVersion: result.source.diskVersion ?? null,
+        writable: true,
+        hasBom: result.source.hasBom,
+        lineEnding: result.source.lineEnding,
+      });
+
+      setNotice(`已新建文件：${activeChap.title}`);
+    } catch (cause: unknown) {
+      setNotice(cause instanceof Error ? cause.message : "新建文件失败。");
+    }
+  };
+
+  const openMarkdownFile = useCallback(
+    (file: File) => {
+      guardAction({ type: "open-file", file });
+    },
+    [guardAction]
+  );
+
+  const openDesktopMarkdownPath = useCallback(
+    (absolutePath: string) => {
+      guardAction({ type: "open-desktop-file", absolutePath });
+    },
+    [guardAction]
+  );
+
+  const openMarkdownDirectory = useCallback(() => {
+    guardAction({ type: "open-directory" });
+  }, [guardAction]);
+
+  const createNewFile = useCallback(() => {
+    guardAction({ type: "new-file" });
+  }, [guardAction]);
 
   const jumpBookmark = useCallback(
     (bookmark: Bookmark) => {
       if (bookmark.chapterId !== chapterId) {
         pendingBookmarkRef.current = bookmark;
-        setChapterId(bookmark.chapterId);
+        selectChapter(bookmark.chapterId);
         return;
       }
       pendingBookmarkRef.current = null;
-      if (!chapter) return;
-      const resolution = resolveBookmark(bookmark, chapter.headings, chapter.checksum);
+      if (!renderedChapter) return;
+      const resolution = resolveBookmark(bookmark, renderedChapter.headings, renderedChapter.checksum);
       if (resolution.message) setNotice(resolution.message);
       if (resolution.targetHeadingId) {
         jumpToHeading(resolution.targetHeadingId);
@@ -223,24 +460,25 @@ export function App() {
         jumpToRatio(resolution.scrollRatio);
       }
     },
-    [chapter, chapterId, jumpToHeading, jumpToRatio],
+    [renderedChapter, chapterId, jumpToHeading, jumpToRatio, selectChapter],
   );
 
   const addBookmark = useCallback(() => {
-    if (!manifest || !chapter || !chapterId || !readerRef.current) return;
+    if (!manifest || !renderedChapter || !chapterId || !readerRef.current) return;
     const bookmark = createBookmark({
       bookId: manifest.id,
       chapterId,
+      chapterSrc: activeChapter?.src,
       activeHeading,
       scrollRatio: scrollRatioRef.current,
       excerpt: extractExcerpt(readerRef.current, activeHeading?.id),
-      chapterChecksum: chapter.checksum,
+      chapterChecksum: renderedChapter.checksum,
     });
     persistBookmarks([bookmark, ...bookmarks]);
     setSidebarOpen(true);
     setSidebarTab("toc");
     setNotice("书签已保存。");
-  }, [activeHeading, bookmarks, chapter, chapterId, manifest, persistBookmarks]);
+  }, [activeChapter?.src, activeHeading, bookmarks, chapterId, manifest, persistBookmarks, renderedChapter]);
 
   const focusSearch = useCallback(() => {
     setSidebarOpen(true);
@@ -255,11 +493,12 @@ export function App() {
     saveReadingPosition({
       bookId: manifest.id,
       chapterId,
+      chapterSrc: activeChapter?.src,
       headingId: activeHeadingRef.current,
       scrollRatio: scrollRatioRef.current,
       updatedAt: new Date().toISOString(),
     });
-  }, [chapterId, manifest]);
+  }, [activeChapter?.src, chapterId, manifest]);
 
   const goPrevious = useCallback(() => {
     if (!manifest || activeIndex <= 0) return;
@@ -273,17 +512,19 @@ export function App() {
 
   useReadingTracker({
     containerRef: readerRef,
-    headings: chapter?.headings ?? [],
+    headings: renderedChapter?.headings ?? [],
     activeHeadingRef,
     scrollRatioRef,
     onActiveHeadingChange: setActiveHeadingId,
     onScrollIdle: saveCurrentReadingPosition,
   });
 
+  // Handle launch path and file open events
   useEffect(() => {
     if (!window.bookMDDesktop) return undefined;
     let cancelled = false;
-    window.bookMDDesktop.getLaunchFilePath()
+    window.bookMDDesktop
+      .getLaunchFilePath()
       .then((filePath) => {
         if (!cancelled && filePath) {
           openDesktopMarkdownPath(filePath);
@@ -292,62 +533,79 @@ export function App() {
       .catch((cause: unknown) => {
         setNotice(cause instanceof Error ? cause.message : "无法读取启动文件。");
       });
-    const unsubscribe = window.bookMDDesktop.onOpenFilePath((filePath) => {
+
+    const unsubscribeOpen = window.bookMDDesktop.onOpenFilePath((filePath) => {
       openDesktopMarkdownPath(filePath);
     });
+
+    const unsubscribeMenu = window.bookMDDesktop.onMenuCommand?.((command) => {
+      if (command === "new-file") createNewFile();
+      else if (command === "open-directory") openMarkdownDirectory();
+      else if (command === "save") saveSession();
+      else if (command === "save-as") saveSessionAs();
+    });
+
+    const unsubscribeClose = window.bookMDDesktop.onBeforeClose?.(({ requestId }) => {
+      guardAction({ type: "close-window", requestId });
+    });
+
     return () => {
       cancelled = true;
-      unsubscribe();
+      unsubscribeOpen();
+      unsubscribeMenu?.();
+      unsubscribeClose?.();
     };
-  }, [openDesktopMarkdownPath]);
+  }, [createNewFile, guardAction, openDesktopMarkdownPath, openMarkdownDirectory, saveSession, saveSessionAs]);
 
+  // Load chapter content when chapterId changes
   useEffect(() => {
     if (!manifest || !chapterId) return;
+    // If the active session is already this chapter, skip reloading
+    if (session?.chapterId === chapterId) return;
+
     let cancelled = false;
-    setLoading(true);
-    const chapterSource =
-      uploadedMarkdown?.bookId === manifest.id && uploadedMarkdown.chapterId === chapterId
-        ? Promise.resolve({
-            markdown: uploadedMarkdown.markdown,
-            baseUrl: uploadedMarkdown.baseUrl,
-          })
-        : sourceMode === "directory"
-          ? loadDirectoryChapter(manifest, chapterId)
+    const targetChapter = manifest.chapters.find((item) => item.id === chapterId);
+    if (!targetChapter) return;
+
+    const loadPromise =
+      targetChapter.absolutePath && window.bookMDDesktop
+        ? window.bookMDDesktop.readMarkdownFile(targetChapter.absolutePath)
         : loadChapterMarkdown(manifest, chapterId);
-    chapterSource
-      .then((source) => renderMarkdown(source.markdown, source.baseUrl))
-      .then((rendered) => {
+
+    loadPromise
+      .then((source) => {
         if (cancelled) return;
-        setChapter(rendered);
-        activeHeadingRef.current = rendered.headings[0]?.id;
-        scrollRatioRef.current = 0;
-        setActiveHeadingId(rendered.headings[0]?.id);
-        requestAnimationFrame(() => {
-          const reader = readerRef.current;
-          if (!reader) return;
-          reader.scrollTo({ top: 0 });
-          if (rendered.hasMermaid) {
-            renderMermaid(reader).catch(() => setNotice("Mermaid 图表渲染失败。"));
-          }
+        const fileName = targetChapter.src.split("/").pop() ?? targetChapter.title;
+        openSession({
+          chapterId,
+          absolutePath: targetChapter.absolutePath ?? null,
+          fileName,
+          baseUrl: source.baseUrl,
+          source: source.markdown,
+          diskVersion: source.diskVersion ?? null,
+          writable: Boolean(targetChapter.absolutePath && window.bookMDDesktop),
+          hasBom: source.hasBom,
+          lineEnding: source.lineEnding,
         });
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : "无法加载章节。");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setNotice(cause instanceof Error ? cause.message : "无法加载章节内容。");
+        }
       });
+
     return () => {
       cancelled = true;
     };
-  }, [chapterId, manifest, sourceMode, uploadedMarkdown]);
+  }, [chapterId, manifest, openSession, session?.chapterId]);
 
+  // Restore reading position or bookmark position
   useEffect(() => {
-    if (!manifest || !chapter || !chapterId) return;
+    if (!manifest || !renderedChapter || !chapterId) return;
     const pending = pendingBookmarkRef.current;
     if (pending) {
       pendingBookmarkRef.current = null;
-      const resolution = resolveBookmark(pending, chapter.headings, chapter.checksum);
+      const resolution = resolveBookmark(pending, renderedChapter.headings, renderedChapter.checksum);
       if (resolution.message) setNotice(resolution.message);
       requestAnimationFrame(() => {
         if (resolution.targetHeadingId) {
@@ -359,18 +617,19 @@ export function App() {
       return;
     }
 
-    const saved = loadReadingPosition(manifest.id);
+    const saved = loadReadingPosition(manifest.id, manifest.chapters);
     if (saved?.chapterId === chapterId) {
       requestAnimationFrame(() => {
-        if (saved.headingId && chapter.headings.some((heading) => heading.id === saved.headingId)) {
+        if (saved.headingId && renderedChapter.headings.some((heading) => heading.id === saved.headingId)) {
           jumpToHeading(saved.headingId, "auto");
         } else {
           jumpToRatio(saved.scrollRatio);
         }
       });
     }
-  }, [chapter, chapterId, jumpToHeading, jumpToRatio, manifest]);
+  }, [renderedChapter, chapterId, jumpToHeading, jumpToRatio, manifest]);
 
+  // Periodic position save
   useEffect(() => {
     if (!manifest || !chapterId) return;
     const handle = window.setTimeout(() => {
@@ -379,12 +638,15 @@ export function App() {
     return () => window.clearTimeout(handle);
   }, [activeHeadingId, chapterId, manifest, saveCurrentReadingPosition]);
 
+  // Update theme
   useEffect(() => {
+    preferencesRef.current = preferences;
     savePreferences(preferences);
     document.documentElement.dataset.theme = preferences.theme;
     window.bookMDDesktop?.setNativeTheme?.(preferences.theme);
   }, [preferences]);
 
+  // Global keybindings
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -392,8 +654,38 @@ export function App() {
         target instanceof HTMLInputElement ||
         target instanceof HTMLTextAreaElement ||
         target instanceof HTMLSelectElement ||
-        target?.isContentEditable;
+        target?.isContentEditable ||
+        target?.closest(".cm-editor");
+
+      if (event.ctrlKey && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        if (event.shiftKey) {
+          saveSessionAs();
+        } else {
+          saveSession();
+        }
+        return;
+      }
+
+      if (event.ctrlKey && event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        createNewFile();
+        return;
+      }
+
+      if (event.ctrlKey && event.key.toLowerCase() === "o") {
+        event.preventDefault();
+        if (event.shiftKey) {
+          openMarkdownDirectory();
+        } else {
+          // Open single file
+          document.querySelector<HTMLInputElement>(".toolbar input[type='file']")?.click();
+        }
+        return;
+      }
+
       if (isEditing) return;
+
       if (event.ctrlKey && event.key.toLowerCase() === "b") {
         event.preventDefault();
         addBookmark();
@@ -417,8 +709,9 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [addBookmark, focusSearch, goNext, goPrevious]);
+  }, [addBookmark, createNewFile, focusSearch, goNext, goPrevious, openMarkdownDirectory, saveSession, saveSessionAs]);
 
+  // Toast auto-clear
   useEffect(() => {
     if (!notice) return;
     const handle = window.setTimeout(() => setNotice(null), 3000);
@@ -427,20 +720,14 @@ export function App() {
 
   const shellClass = `app-shell${sidebarOpen ? " sidebar-open" : ""}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}`;
 
-  if (error) {
-    return (
-      <main className="center-state">
-        <h1>书籍无法加载</h1>
-        <p>{error}</p>
-      </main>
-    );
-  }
-
   return (
     <div className={shellClass}>
       <Toolbar
         title={manifest?.title ?? "Markdown Viewer"}
         chapterTitle={activeChapter?.title ?? "打开 Markdown 文件或目录"}
+        isDirty={isDirty}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         canGoPrevious={activeIndex > 0}
         canGoNext={Boolean(manifest && activeIndex >= 0 && activeIndex < manifest.chapters.length - 1)}
         sidebarOpen={sidebarOpen}
@@ -452,21 +739,31 @@ export function App() {
         onToggleSidebar={() => setSidebarOpen((open) => !open)}
         onToggleDirectory={() => setDirectoryOpen((open) => !open)}
         onAddBookmark={addBookmark}
+        onNewFile={window.bookMDDesktop ? createNewFile : undefined}
+        onSave={() => saveSession()}
+        canSave={Boolean(session?.writable)}
         onOpenMarkdown={openMarkdownFile}
         onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
         onFocusSearch={focusSearch}
         onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
         onFontScaleChange={(fontScale) => setPreferences((current) => ({ ...current, fontScale }))}
       />
+
       <div className="workspace">
         {manifest ? (
-          <ChapterList manifest={manifest} activeChapterId={chapterId} onSelectChapter={selectChapter} />
+          <ChapterList
+            manifest={manifest}
+            activeChapterId={chapterId}
+            isDirty={isDirty}
+            onSelectChapter={selectChapter}
+          />
         ) : (
           <aside className="chapter-list empty-library" aria-label="文档目录">
             <div className="tree-heading">DOCUMENT</div>
-            <p>打开一个 Markdown 文件，或在桌面版中打开文件目录。</p>
+            <p>打开一个 Markdown 文件，新建文件，或在桌面版中打开文件目录。</p>
           </aside>
         )}
+
         {sidebarOpen && manifest ? (
           <aside className="side-panel">
             <div className="tabs" role="tablist" aria-label="侧栏区域">
@@ -487,7 +784,7 @@ export function App() {
             {sidebarTab === "toc" ? (
               <section id="toc-panel" role="tabpanel" aria-labelledby="toc-tab">
                 <TocPanel
-                  headings={chapter?.headings ?? []}
+                  headings={renderedChapter?.headings ?? []}
                   activeHeadingId={activeHeadingId}
                   bookmarkedHeadingIds={bookmarkedHeadingIds}
                   onJump={jumpToHeading}
@@ -512,27 +809,62 @@ export function App() {
                   onQueryChange={setSearchQuery}
                   onJump={(result: SearchResult) => {
                     if (result.headingId) jumpToHeading(result.headingId);
-                    else jumpToRatio(result.index / Math.max(1, chapter?.plainText.length ?? 1));
+                    else jumpToRatio(result.index / Math.max(1, renderedChapter?.plainText.length ?? 1));
                   }}
                 />
               </section>
             ) : null}
           </aside>
         ) : null}
-        <section className="reader-frame" aria-busy={loading}>
-          {loading ? <div className="loading-strip">正在加载章节...</div> : null}
-          {manifest ? (
-            <ReaderPane chapter={chapter} containerRef={readerRef} fontScale={preferences.fontScale} />
+
+        <section className="reader-frame">
+          {session ? (
+            <DocumentWorkspace
+              viewMode={viewMode}
+              source={session.source}
+              onSourceChange={updateSource}
+              renderedChapter={renderedChapter}
+              containerRef={readerRef}
+              theme={preferences.theme}
+              fontScale={preferences.fontScale}
+              mermaidTheme={resolveMermaidTheme(preferences.theme)}
+              onMermaidError={handleMermaidError}
+              onSave={() => saveSession()}
+              isLargeDocument={isLargeDocument}
+              autoPreviewPaused={autoPreviewPaused}
+              onRefreshPreview={renderPreviewNow}
+              readOnly={!session.writable}
+            />
           ) : (
             <main className="empty-reader" ref={readerRef}>
               <div>
-                <h1>选择要阅读的 Markdown</h1>
-                <p>使用右上角“打开”载入单个文件，或在桌面版使用“目录”载入整个文档文件夹。</p>
+                <h1>选择或新建 Markdown 文档</h1>
+                <p>使用右上角“新建”创建新文件，使用“打开”载入文件，或使用“目录”载入整个文档文件夹。</p>
               </div>
             </main>
           )}
         </section>
       </div>
+
+      {/* Unsaved Changes Guard Dialog */}
+      <UnsavedChangesDialog
+        isOpen={unsavedDialogOpen}
+        fileName={session?.fileName ?? "当前文件"}
+        onSave={handleDialogSave}
+        onDiscard={handleDialogDiscard}
+        onCancel={handleDialogCancel}
+      />
+
+      {/* File Conflict Dialog */}
+      <FileConflictDialog
+        isOpen={Boolean(conflict)}
+        fileName={session?.fileName ?? "当前文件"}
+        onReload={reloadFromDisk}
+        onOverwrite={() => saveSession({ force: true })}
+        onSaveAs={saveSessionAs}
+        onCancel={clearConflict}
+      />
+
       {notice ? (
         <div className="toast" role="status" aria-live="polite">
           {notice}
@@ -550,13 +882,8 @@ const tabLabels: Record<SidebarTab, string> = {
   search: "搜索",
 };
 
-async function loadDirectoryChapter(manifest: BookManifest, chapterId: string) {
-  if (!window.bookMDDesktop) {
-    throw new Error("目录章节只能在桌面版读取。");
-  }
-  const chapter = manifest.chapters.find((item) => item.id === chapterId);
-  if (!chapter?.absolutePath) {
-    throw new Error("目录章节缺少文件路径。");
-  }
-  return window.bookMDDesktop.readMarkdownFile(chapter.absolutePath);
+function resolveMermaidTheme(theme: ThemeMode): "default" | "dark" {
+  if (theme === "dark") return "dark";
+  if (theme === "light") return "default";
+  return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "default";
 }

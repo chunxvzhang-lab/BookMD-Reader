@@ -5,6 +5,7 @@ import type { BookManifest, ChapterManifest } from "../core/types";
 type ChapterListProps = {
   manifest: BookManifest;
   activeChapterId: string;
+  isDirty?: boolean;
   onSelectChapter: (chapterId: string) => void;
 };
 
@@ -15,7 +16,12 @@ type TreeNode = {
   chapter?: ChapterManifest;
 };
 
-export function ChapterList({ manifest, activeChapterId, onSelectChapter }: ChapterListProps) {
+export function ChapterList({
+  manifest,
+  activeChapterId,
+  isDirty = false,
+  onSelectChapter,
+}: ChapterListProps) {
   const tree = useMemo(() => buildTree(manifest.chapters), [manifest.chapters]);
   const activeChapter = useMemo(
     () => manifest.chapters.find((chapter) => chapter.id === activeChapterId),
@@ -60,6 +66,7 @@ export function ChapterList({ manifest, activeChapterId, onSelectChapter }: Chap
               node={node}
               depth={0}
               activeChapterId={activeChapterId}
+              isDirty={isDirty}
               openFolders={openFolders}
               onToggleFolder={toggleFolder}
               onSelectChapter={onSelectChapter}
@@ -77,6 +84,7 @@ function TreeRow({
   node,
   depth,
   activeChapterId,
+  isDirty,
   openFolders,
   onToggleFolder,
   onSelectChapter,
@@ -84,16 +92,22 @@ function TreeRow({
   node: TreeNode;
   depth: number;
   activeChapterId: string;
+  isDirty: boolean;
   openFolders: Set<string>;
   onToggleFolder: (path: string) => void;
   onSelectChapter: (chapterId: string) => void;
 }) {
   const isFolder = node.children.length > 0 && !node.chapter;
   const isOpen = openFolders.has(node.path);
+
   if (isFolder) {
     return (
       <div>
-        <button className="tree-row folder-row" style={{ "--tree-depth": depth } as React.CSSProperties} onClick={() => onToggleFolder(node.path)}>
+        <button
+          className="tree-row folder-row"
+          style={{ "--tree-depth": depth } as React.CSSProperties}
+          onClick={() => onToggleFolder(node.path)}
+        >
           <ChevronRight className={isOpen ? "folder-caret open" : "folder-caret"} size={12} />
           {isOpen ? <FolderOpen size={13} /> : <Folder size={13} />}
           <span>{node.name}</span>
@@ -105,6 +119,7 @@ function TreeRow({
                 node={child}
                 depth={depth + 1}
                 activeChapterId={activeChapterId}
+                isDirty={isDirty}
                 openFolders={openFolders}
                 onToggleFolder={onToggleFolder}
                 onSelectChapter={onSelectChapter}
@@ -116,15 +131,18 @@ function TreeRow({
   }
 
   if (!node.chapter) return null;
+  const isActive = node.chapter.id === activeChapterId;
+
   return (
     <button
-      className={node.chapter.id === activeChapterId ? "tree-row file-row active" : "tree-row file-row"}
+      className={isActive ? "tree-row file-row active" : "tree-row file-row"}
       style={{ "--tree-depth": depth } as React.CSSProperties}
       onClick={() => onSelectChapter(node.chapter!.id)}
       title={node.chapter.src}
     >
       <FileText size={13} />
       <span>{fileLabel(node.name)}</span>
+      {isActive && isDirty && <span className="tree-dirty-dot" title="未保存" />}
     </button>
   );
 }

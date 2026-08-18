@@ -1,5 +1,11 @@
 export type SidebarTab = "toc" | "bookmarks" | "search";
 export type ThemeMode = "system" | "light" | "dark";
+export type EditorViewMode = "read" | "split" | "source";
+
+export type DiskVersion = {
+  size: number;
+  mtimeMs: number;
+};
 
 export type ChapterManifest = {
   id: string;
@@ -13,6 +19,7 @@ export type BookManifest = {
   id: string;
   title: string;
   description?: string;
+  rootPath?: string;
   chapters: ChapterManifest[];
 };
 
@@ -35,6 +42,7 @@ export type Bookmark = {
   id: string;
   bookId: string;
   chapterId: string;
+  chapterSrc?: string;
   headingId?: string;
   headingText?: string;
   scrollRatio: number;
@@ -55,6 +63,7 @@ export type BookmarkResolution = {
 export type ReadingPosition = {
   bookId: string;
   chapterId: string;
+  chapterSrc?: string;
   headingId?: string;
   scrollRatio: number;
   updatedAt: string;
@@ -70,4 +79,24 @@ export type SearchResult = {
 export type ChapterSource = {
   markdown: string;
   baseUrl: string;
+  cacheKey?: string;
+  diskVersion?: DiskVersion;
+  hasBom?: boolean;
+  lineEnding?: string;
+  absolutePath?: string;
+};
+
+export type DocumentSession = {
+  chapterId: string;
+  absolutePath: string | null;
+  fileName: string;
+  baseUrl: string;
+  source: string;
+  savedSource: string;
+  diskVersion: DiskVersion | null;
+  sourceRevision: number;
+  savedRevision: number;
+  writable: boolean;
+  hasBom?: boolean;
+  lineEnding?: string;
 };
