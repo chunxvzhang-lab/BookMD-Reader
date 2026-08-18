@@ -68,9 +68,9 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               <img src={appLogo} alt="BookMD Logo" className="about-logo-img" />
             </div>
             <div>
-              <div className="about-title-row">
-                <h2 id="about-dialog-title" className="about-title">BookMD Reader</h2>
-                <span className="about-version-badge">v1.0.0</span>
+              <div className="about-header-title-row">
+                <span className="about-app-name">BookMD Reader</span>
+                <span className="about-version-badge">v1.2.0</span>
               </div>
               <p className="about-tagline">现代化高颜值本地优先 Markdown 阅读与编辑工作台</p>
             </div>

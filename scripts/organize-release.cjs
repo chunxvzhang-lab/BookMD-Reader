@@ -3,6 +3,8 @@ const path = require("node:path");
 
 async function main() {
   const rootDir = path.resolve(__dirname, "..");
+  const pkg = require("../package.json");
+  const appVersion = pkg.version || "1.2.0";
   const releaseRoot = path.join(rootDir, "release");
   const targetDir = path.join(releaseRoot, "BookMD-Reader-win-x64");
   const releaseSubDir = path.join(targetDir, "release");
@@ -15,13 +17,15 @@ async function main() {
 
   // Move newly built MSI to release subdirectory
   const possibleMsiSources = [
+    path.join(releaseRoot, `BookMD Reader ${appVersion}.msi`),
+    path.join(releaseRoot, `BookMD-Reader-${appVersion}.msi`),
+    path.join(targetDir, `BookMD-Reader-${appVersion}.msi`),
+    path.join(targetDir, `BookMD Reader ${appVersion}.msi`),
     path.join(releaseRoot, "BookMD Reader 1.0.0.msi"),
     path.join(releaseRoot, "BookMD-Reader-1.0.0.msi"),
-    path.join(targetDir, "BookMD-Reader-1.0.0.msi"),
-    path.join(targetDir, "BookMD Reader 1.0.0.msi"),
   ];
 
-  const targetMsi = path.join(releaseSubDir, "BookMD-Reader-1.0.0.msi");
+  const targetMsi = path.join(releaseSubDir, `BookMD-Reader-${appVersion}.msi`);
   for (const src of possibleMsiSources) {
     try {
       await fs.copyFile(src, targetMsi);
@@ -43,7 +47,7 @@ async function main() {
     await fs.copyFile(path.join(rootDir, "LICENSE"), path.join(docsDir, "LICENSE"));
   } catch (e) {}
   try {
-    const readmeTxt = `BookMD Reader v1.0.0\nModern Local-First Markdown Reader & Editor\n\nDirect Run: Double-click 'BookMD Reader.exe'\nInstaller: Locate MSI in 'release/BookMD-Reader-1.0.0.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
+    const readmeTxt = `BookMD Reader v${appVersion}\nModern Local-First Markdown Reader & Editor\n\nDirect Run: Double-click 'BookMD Reader.exe'\nInstaller: Locate MSI in 'release/BookMD-Reader-${appVersion}.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
     await fs.writeFile(path.join(docsDir, "README.txt"), readmeTxt, "utf8");
   } catch (e) {}
 
@@ -62,7 +66,7 @@ async function main() {
     } catch (e) {}
   }
 
-  console.log("Cleaned and organized release directory.");
+  console.log(`Organized ${targetDir} for release v${appVersion}`);
 }
 
 main().catch(console.error);

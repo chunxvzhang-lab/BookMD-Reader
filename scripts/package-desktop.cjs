@@ -34,6 +34,8 @@ async function main() {
   await copyDirectory(winUnpacked, appDir);
 
   console.log("3.5 Embedding icon & PE version info into BookMD Reader.exe...");
+  const pkg = require("../package.json");
+  const appVersion = pkg.version || "1.2.0";
   const rcedit = path.join(root, "node_modules", "electron-winstaller", "vendor", "rcedit.exe");
   const targetExe = path.join(appDir, "BookMD Reader.exe");
   const iconIco = path.join(root, "build", "icon.ico");
@@ -41,14 +43,14 @@ async function main() {
     await execFileAsync(rcedit, [
       targetExe,
       "--set-icon", iconIco,
-      "--set-file-version", "1.0.0",
-      "--set-product-version", "1.0.0",
+      "--set-file-version", appVersion,
+      "--set-product-version", appVersion,
       "--set-version-string", "CompanyName", "摸鱼Lab",
       "--set-version-string", "LegalCopyright", "Copyright © 2026 摸鱼Lab",
       "--set-version-string", "FileDescription", "BookMD Reader",
       "--set-version-string", "ProductName", "BookMD Reader",
     ]);
-    console.log("Successfully embedded icon and PE metadata into BookMD Reader.exe.");
+    console.log(`Successfully embedded icon and PE metadata (v${appVersion}) into BookMD Reader.exe.`);
   } catch (err) {
     console.warn("rcedit notice:", err.message);
   }
@@ -64,13 +66,15 @@ async function main() {
 
   // Copy MSI if exists
   const possibleMsiSources = [
+    path.join(releaseRoot, `BookMD Reader ${appVersion}.msi`),
+    path.join(releaseRoot, `BookMD-Reader-${appVersion}.msi`),
     path.join(releaseRoot, "BookMD Reader 1.0.0.msi"),
     path.join(releaseRoot, "BookMD-Reader-1.0.0.msi"),
   ];
   for (const src of possibleMsiSources) {
     try {
-      await fs.copyFile(src, path.join(releaseSubDir, "BookMD-Reader-1.0.0.msi"));
-      console.log(`Included MSI installer: ${src}`);
+      await fs.copyFile(src, path.join(releaseSubDir, `BookMD-Reader-${appVersion}.msi`));
+      console.log(`Included MSI installer: ${src} -> BookMD-Reader-${appVersion}.msi`);
       break;
     } catch (e) {}
   }
@@ -86,7 +90,7 @@ async function main() {
     await fs.copyFile(path.join(root, "LICENSE"), path.join(docsDir, "LICENSE"));
   } catch (e) {}
   try {
-    const readmeTxt = `BookMD Reader v1.0.0\nModern Local-First Markdown Reader & Editor\n\nDirect Run: Double-click 'BookMD Reader.exe'\nInstaller: Locate MSI in 'release/BookMD-Reader-1.0.0.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
+    const readmeTxt = `BookMD Reader v${appVersion}\nModern Local-First Markdown Reader & Editor\n\nDirect Run: Double-click 'BookMD Reader.exe'\nInstaller: Locate MSI in 'release/BookMD-Reader-${appVersion}.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
     await fs.writeFile(path.join(docsDir, "README.txt"), readmeTxt, "utf8");
   } catch (e) {}
   try {

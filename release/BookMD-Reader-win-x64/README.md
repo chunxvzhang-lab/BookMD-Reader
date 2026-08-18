@@ -99,7 +99,7 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **安装包位置**：[`release/BookMD-Reader-win-x64/release/BookMD-Reader-1.0.0.msi`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64/release/BookMD-Reader-1.0.0.msi)
+- **安装包位置**：[`release/BookMD-Reader-win-x64/release/BookMD-Reader-1.2.0.msi`](file:///C:/Users/chunxvzhang/Desktop/codex/release/BookMD-Reader-win-x64/release/BookMD-Reader-1.2.0.msi)
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版
@@ -210,7 +210,7 @@ release/                        # 便携版与 MSI 安装包发布输出目录
 - **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, auto-closing brackets, and undo/redo history.
 - **Safe Atomic Saving & Conflict Detection**: Same-directory temporary write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings. Automatically detects external modifications before writing.
 - **Status Bar Dock**: Real-time word count, character count, estimated read time, dirty status indicator badge, line ending format, and encoding.
-- **Distribution Packages**: Windows MSI installer (`BookMD-Reader-1.0.0.msi`) and zero-dependency portable package (`BookMD-Reader-win-x64-portable.zip`).
+- **Distribution Packages**: Windows MSI installer (`BookMD-Reader-1.2.0.msi`) and zero-dependency portable package (`BookMD-Reader-win-x64-portable.zip`).
 
 ---
 
