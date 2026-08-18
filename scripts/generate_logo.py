@@ -146,9 +146,8 @@ def main():
         final_512.save(p, format="PNG")
         print(f"Saved PNG: {p}")
 
-    # Generate multi-resolution Windows ICO (Largest 256x256 first for electron-builder)
+    # Generate multi-resolution Windows ICO using explicit multi-frame approach
     ico_sizes = [(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (24, 24), (16, 16)]
-    ico_images = [master.resize(s, Image.Resampling.LANCZOS) for s in ico_sizes]
 
     ico_paths = [
         "C:/Users/chunxvzhang/Desktop/codex/electron/icon.ico",
@@ -157,8 +156,19 @@ def main():
     ]
     for ip in ico_paths:
         os.makedirs(os.path.dirname(ip), exist_ok=True)
-        ico_images[0].save(ip, format="ICO", sizes=ico_sizes, append_images=ico_images[1:])
-        print(f"Saved Multi-res ICO: {ip}")
+        # Build each frame as RGBA PNG in memory, then save as proper multi-res ICO
+        frames = []
+        for sz in ico_sizes:
+            frame = master.resize(sz, Image.Resampling.LANCZOS).convert("RGBA")
+            frames.append(frame)
+        # Save using first frame with append_images — each already correct size
+        frames[0].save(
+            ip,
+            format="ICO",
+            append_images=frames[1:],
+            sizes=[(f.width, f.height) for f in frames],
+        )
+        print(f"Saved Multi-res ICO ({len(frames)} frames): {ip}")
 
 if __name__ == "__main__":
     main()
