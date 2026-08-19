@@ -136,7 +136,8 @@ async function createWindow() {
     minHeight: 640,
     title: "BookMD 阅读器",
     icon: windowIcon,
-    backgroundColor: "#f6f7f4",
+    autoHideMenuBar: true,
+    backgroundColor: nativeTheme.shouldUseDarkColors ? "#000000" : "#f6f7f4",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -254,7 +255,12 @@ ipcMain.handle("bookmd:get-launch-file-path", async () => {
 });
 
 ipcMain.handle("bookmd:set-native-theme", (_event, theme) => {
-  nativeTheme.themeSource = theme;
+  const isDark = theme === "twitter" || theme === "dark";
+  const isLight = theme === "light";
+  nativeTheme.themeSource = isDark ? "dark" : (isLight ? "light" : "system");
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setBackgroundColor(isDark ? "#000000" : "#f6f7f4");
+  }
 });
 
 ipcMain.handle("bookmd:set-document-state", (_event, state) => {
