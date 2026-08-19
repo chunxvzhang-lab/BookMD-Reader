@@ -54,8 +54,8 @@ export function ActivityBar({
   };
 
   const getThemeTitle = (current: ThemeMode): string => {
-    if (current === "twitter") return "当前: Twitter 极客暗黑 (点击切换日光浅色)";
-    return "当前: 日光浅色 (点击切换 Twitter 极客暗黑)";
+    if (current === "twitter") return "当前: 极客暗黑 (点击切换日光浅色)";
+    return "当前: 日光浅色 (点击切换极客暗黑)";
   };
 
   return (

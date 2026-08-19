@@ -69,7 +69,7 @@ def main():
     # Glow dot
     draw.ellipse([pill_x + 22, pill_y + 18, pill_x + 34, pill_y + 30], fill=(29, 155, 240, 255))
     draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.3.0", fill=(231, 233, 234), font=font_pill_title)
-    draw.text((pill_x + 335, pill_y + 12), "•  21st.dev Twitter 极客主题  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
+    draw.text((pill_x + 335, pill_y + 12), "•  现代极客暗黑主题  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
 
     # Left & Right Top Badges
     draw_rounded_rect(draw, [120, 42, 380, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
@@ -138,7 +138,7 @@ def main():
         width=1
     )
     draw.text((doc_pill_x + 22, win_y + 15), "02-AST双向零延迟同步.md", fill=(231, 233, 234), font=font_tab)
-    draw.text((doc_pill_x + 360, win_y + 16), "[Twitter Dark 极客版]", fill=(29, 155, 240), font=font_subtab)
+    draw.text((doc_pill_x + 360, win_y + 16), "[极客暗黑版]", fill=(29, 155, 240), font=font_subtab)
 
     # Right Window Control Buttons (View Switcher Pills)
     v_pill_x = win_x + win_w - 260
@@ -420,9 +420,9 @@ def main():
     font_dock_bold = get_font(13, bold=True)
     draw.text((win_x + 20, dock_y + 10), "● 已安全保存 (原子落盘)", fill=(74, 222, 128), font=font_dock_bold)
     draw.text((win_x + 210, dock_y + 10), "2,840 字符  •  约 6 分钟阅读", fill=(160, 166, 172), font=font_dock)
-    draw.text((win_x + win_w - 480, dock_y + 10), "LF  •  UTF-8  •  BookMD Engine v1.3.0  •  Twitter Dark", fill=(113, 118, 123), font=font_dock)
+    draw.text((win_x + win_w - 460, dock_y + 10), "LF  •  UTF-8  •  BookMD Engine v1.3.0  •  极客暗黑", fill=(113, 118, 123), font=font_dock)
 
-    # 4. Floating Feature Showcase Cards around the main window (Twitter/21st.dev Style)
+    # 4. Floating Feature Showcase Cards around the main window
     # Left Floating Badge Card
     fc1_x = 45
     fc1_y = 600
@@ -438,7 +438,7 @@ def main():
     fc2_w = 250
     fc2_h = 140
     draw_rounded_rect(draw, [fc2_x, fc2_y, fc2_x + fc2_w, fc2_y + fc2_h], radius=16, fill=(15, 20, 25, 240), outline=(29, 155, 240, 160), width=2)
-    draw.text((fc2_x + 20, fc2_y + 18), "★ 21st.dev Twitter", fill=(29, 155, 240), font=get_font(18, bold=True))
+    draw.text((fc2_x + 20, fc2_y + 18), "★ 极客暗黑主题", fill=(29, 155, 240), font=get_font(18, bold=True))
     draw.text((fc2_x + 20, fc2_y + 50), "• Lights Out 纯黑底色\n• 电光蓝 #1D9BF0 重点\n• 极客暗黑卡片排版", fill=(200, 205, 210), font=get_font(14))
 
     # 5. Save image to all required target paths
