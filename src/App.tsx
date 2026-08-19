@@ -856,7 +856,6 @@ export function App() {
           onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
           onOpenAbout={() => setAboutOpen(true)}
           onFocusSearch={focusSearch}
-          onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
           onFontScaleChange={(fontScale) => setPreferences((current) => ({ ...current, fontScale }))}
         />
 
@@ -1054,7 +1053,7 @@ const tabLabels: Record<SidebarTab, string> = {
 };
 
 function resolveMermaidTheme(theme: ThemeMode): "default" | "dark" {
-  if (theme === "dark" || theme === "twitter") return "dark";
+  if (theme === "twitter") return "dark";
   if (theme === "light") return "default";
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "default";
 }

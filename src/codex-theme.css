@@ -21,27 +21,6 @@
   font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", sans-serif;
 }
 
-:root[data-theme="dark"] {
-  --bg: #1d1d1b;
-  --surface: #242422;
-  --surface-2: #2b2b28;
-  --text: #efefe9;
-  --muted: #a4a49d;
-  --border: #3a3a36;
-  --accent: #e68a66;
-  --accent-2: #e68a66;
-  --shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
-  --toolbar-surface: #21211f;
-  --sidebar-surface: #242422;
-  --panel-surface: #20201e;
-  --reader-canvas: #1d1d1b;
-  --control-hover: #343430;
-  --control-strong: #efefe9;
-  --control-strong-text: #252523;
-  --code-surface: #252523;
-  --selection: rgba(230, 138, 102, 0.24);
-}
-
 :root[data-theme="twitter"] {
   --bg: #000000;
   --surface: #0f1419;
@@ -65,24 +44,24 @@
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
-    --bg: #1d1d1b;
-    --surface: #242422;
-    --surface-2: #2b2b28;
-    --text: #efefe9;
-    --muted: #a4a49d;
-    --border: #3a3a36;
-    --accent: #e68a66;
-    --accent-2: #e68a66;
-    --shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
-    --toolbar-surface: #21211f;
-    --sidebar-surface: #242422;
-    --panel-surface: #20201e;
-    --reader-canvas: #1d1d1b;
-    --control-hover: #343430;
-    --control-strong: #efefe9;
-    --control-strong-text: #252523;
-    --code-surface: #252523;
-    --selection: rgba(230, 138, 102, 0.24);
+    --bg: #000000;
+    --surface: #0f1419;
+    --surface-2: #16181c;
+    --text: #e7e9ea;
+    --muted: #71767b;
+    --border: #2f3336;
+    --accent: #1d9bf0;
+    --accent-2: #1a8cd8;
+    --shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    --toolbar-surface: #0b0e14;
+    --sidebar-surface: #0a0d12;
+    --panel-surface: #0f1419;
+    --reader-canvas: #000000;
+    --control-hover: #181818;
+    --control-strong: #eff3f4;
+    --control-strong-text: #0f1419;
+    --code-surface: #16181c;
+    --selection: rgba(29, 155, 240, 0.28);
   }
 }
 
@@ -523,8 +502,7 @@ button {
   color: var(--muted);
 }
 
-.markdown-body pre,
-:root[data-theme="dark"] .markdown-body pre {
+.markdown-body pre {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--code-surface);

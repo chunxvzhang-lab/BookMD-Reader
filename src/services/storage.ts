@@ -66,7 +66,9 @@ export function saveReadingPosition(position: ReadingPosition): void {
 export function loadPreferences(): Preferences {
   const fallback: Preferences = { theme: "system", fontScale: 1 };
   try {
-    return { ...fallback, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
+    const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}");
+    const theme: ThemeMode = raw.theme === "dark" ? "twitter" : (raw.theme ?? "system");
+    return { ...fallback, ...raw, theme };
   } catch {
     return fallback;
   }

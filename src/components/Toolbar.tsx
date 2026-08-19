@@ -7,14 +7,11 @@ import {
   FileUp,
   FilePlus2,
   Save,
-  Monitor,
-  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
   Search,
-  Sun,
   Type,
   Info,
 } from "lucide-react";
@@ -31,7 +28,7 @@ type ToolbarProps = {
   canGoNext: boolean;
   sidebarOpen: boolean;
   directoryOpen: boolean;
-  theme: ThemeMode;
+  theme?: ThemeMode;
   fontScale: number;
   onPrevious: () => void;
   onNext: () => void;
@@ -44,7 +41,7 @@ type ToolbarProps = {
   onOpenMarkdown: (file: File) => void;
   onOpenDirectory?: () => void;
   onFocusSearch: () => void;
-  onThemeChange: (theme: ThemeMode) => void;
+  onThemeChange?: (theme: ThemeMode) => void;
   onFontScaleChange: (scale: number) => void;
   onOpenAbout?: () => void;
 };
@@ -181,21 +178,6 @@ export function Toolbar(props: ToolbarProps) {
           <span>书签</span>
         </button>
 
-        <button
-          className="icon-button"
-          onClick={() => props.onThemeChange(nextTheme(props.theme))}
-          aria-label="切换主题"
-          title="切换主题"
-        >
-          {props.theme === "dark" ? (
-            <Moon size={18} />
-          ) : props.theme === "system" ? (
-            <Monitor size={18} />
-          ) : (
-            <Sun size={18} />
-          )}
-        </button>
-
         {props.onOpenAbout && (
           <button
             className="icon-button"
@@ -222,13 +204,4 @@ export function Toolbar(props: ToolbarProps) {
       </div>
     </header>
   );
-}
-
-function nextTheme(theme: ThemeMode): ThemeMode {
-  const systemIsDark =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  if (theme === "system") return systemIsDark ? "light" : "dark";
-  if (theme === "light") return "dark";
-  return systemIsDark ? "light" : "system";
 }

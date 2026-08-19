@@ -141,7 +141,7 @@ def main():
     draw.text((doc_pill_x + 360, win_y + 16), "[Twitter Dark 极客版]", fill=(29, 155, 240), font=font_subtab)
 
     # Right Window Control Buttons (View Switcher Pills)
-    v_pill_x = win_x + win_w - 390
+    v_pill_x = win_x + win_w - 260
     draw_rounded_rect(
         draw,
         [v_pill_x, win_y + 10, v_pill_x + 230, win_y + title_h - 10],
@@ -160,17 +160,6 @@ def main():
     )
     draw.text((v_pill_x + 90, win_y + 16), "分屏", fill=(255, 255, 255), font=font_tab)
     draw.text((v_pill_x + 175, win_y + 16), "源码", fill=(113, 118, 123), font=font_subtab)
-
-    # Theme Switcher Pill
-    draw_rounded_rect(
-        draw,
-        [v_pill_x + 250, win_y + 10, v_pill_x + 370, win_y + title_h - 10],
-        radius=18,
-        fill=(29, 155, 240, 35),
-        outline=(29, 155, 240, 180),
-        width=1
-    )
-    draw.text((v_pill_x + 268, win_y + 16), "★ Twitter", fill=(29, 155, 240), font=font_tab)
 
     # 3.2 Activity Bar (Leftmost Column, 68px)
     act_w = 68

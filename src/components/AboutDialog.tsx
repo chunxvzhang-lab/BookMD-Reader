@@ -89,7 +89,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               <span>项目简介</span>
             </div>
             <p className="about-description">
-              BookMD Reader 是一款采用现代设计美学的本地优先（Local-First）Markdown 知识阅读与写作桌面应用。支持日光白 / 黑曜暗 / 21st.dev Twitter 极客暗黑主题，具备目录树结构化管理、多级大纲实时联动、双向高精度行号映射同步滚动、双侧选择联动高亮、CodeMirror 6 极客编辑、GFM 表格、KaTeX 数学公式、Mermaid 动态图表与事务级原子落盘保护机制。
+              BookMD Reader 是一款采用现代设计美学的本地优先（Local-First）Markdown 知识阅读与写作桌面应用。支持日光浅色 / 21st.dev Twitter 极客暗黑双主题，具备目录树结构化管理、多级大纲实时联动、双向高精度行号映射同步滚动、双侧选择联动高亮、CodeMirror 6 极客编辑、GFM 表格、KaTeX 数学公式、Mermaid 动态图表与事务级原子落盘保护机制。
             </p>
           </div>
 

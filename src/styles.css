@@ -36,7 +36,7 @@
   color-scheme: light;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="twitter"] {
   color-scheme: dark;
   --bg: #090a0f;
   --surface: #11141c;

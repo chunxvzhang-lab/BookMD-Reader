@@ -6,7 +6,6 @@ import {
   FilePlus2,
   FolderOpen,
   ListTree,
-  Moon,
   Search,
   Sun,
   Sparkles,
@@ -50,15 +49,13 @@ export function ActivityBar({
   isDirty = false,
 }: ActivityBarProps) {
   const getNextTheme = (current: ThemeMode): ThemeMode => {
-    if (current === "light") return "dark";
-    if (current === "dark") return "twitter";
-    return "light";
+    if (current === "twitter") return "light";
+    return "twitter";
   };
 
   const getThemeTitle = (current: ThemeMode): string => {
-    if (current === "twitter") return "当前: Twitter 极客暗黑 (点击切换浅色)";
-    if (current === "dark") return "当前: 黑曜暗色 (点击切换 Twitter 极客暗黑)";
-    return "当前: 日光浅色 (点击切换黑曜暗色)";
+    if (current === "twitter") return "当前: Twitter 极客暗黑 (点击切换日光浅色)";
+    return "当前: 日光浅色 (点击切换 Twitter 极客暗黑)";
   };
 
   return (
@@ -192,8 +189,6 @@ export function ActivityBar({
         >
           {theme === "twitter" ? (
             <Sparkles size={18} color="#1d9bf0" />
-          ) : theme === "dark" ? (
-            <Moon size={18} />
           ) : (
             <Sun size={18} />
           )}
