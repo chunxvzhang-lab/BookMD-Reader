@@ -104,4 +104,20 @@ describe("electron/markdown-files.cjs", () => {
     expect(saveResult.success).toBe(false);
     expect(saveResult.errorCode).toBe("INVALID_EXTENSION");
   });
+
+  it("finds search matches with exact line numbers when sourceMarkdown is provided", async () => {
+    const { findInChapter } = await import("../services/markdown");
+    const sourceMarkdown = `# Chapter 1\n\nFirst line with react.\nSecond line with nothing.\n\nThird line with another react keyword.\n`;
+    const headings = [{ id: "chapter-1", text: "Chapter 1", level: 1 }];
+    const results = findInChapter("react", "Chapter 1 First line with react...", headings, sourceMarkdown);
+
+    expect(results.length).toBe(2);
+    expect(results[0].lineNumber).toBe(3);
+    expect(results[0].matchedText).toBe("react");
+    expect(results[0].excerpt).toContain("First line with react");
+
+    expect(results[1].lineNumber).toBe(6);
+    expect(results[1].matchedText).toBe("react");
+    expect(results[1].excerpt).toContain("Third line with another react keyword");
+  });
 });

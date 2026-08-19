@@ -184,25 +184,62 @@ export function findInChapter(
   query: string,
   plainText: string,
   headings: Heading[],
+  sourceMarkdown?: string,
 ): SearchResult[] {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (!q) return [];
-  const lower = plainText.toLowerCase();
+  const qLower = q.toLowerCase();
   const results: SearchResult[] = [];
+
+  if (sourceMarkdown) {
+    const lines = sourceMarkdown.split("\n");
+    let matchCount = 0;
+    for (let lineIdx = 0; lineIdx < lines.length && results.length < 50; lineIdx++) {
+      const lineText = lines[lineIdx];
+      const lineLower = lineText.toLowerCase();
+      let pos = 0;
+      while ((pos = lineLower.indexOf(qLower, pos)) !== -1 && results.length < 50) {
+        const start = Math.max(0, pos - 40);
+        const end = Math.min(lineText.length, pos + q.length + 50);
+        const heading = nearestHeadingForOffset(headings, plainText, matchCount * 10);
+        results.push({
+          id: `match-${lineIdx + 1}-${pos}`,
+          index: pos,
+          matchIndex: matchCount++,
+          lineNumber: lineIdx + 1,
+          lineOffset: pos,
+          query: q,
+          title: heading?.text ?? `第 ${lineIdx + 1} 行`,
+          headingId: heading?.id,
+          excerpt: compactWhitespace(lineText.slice(start, end)),
+          matchedText: lineText.slice(pos, pos + q.length),
+        });
+        pos += Math.max(1, q.length);
+      }
+    }
+    if (results.length > 0) return results;
+  }
+
+  const lower = plainText.toLowerCase();
   let cursor = 0;
+  let matchCount = 0;
   while (results.length < 50) {
-    const index = lower.indexOf(q, cursor);
+    const index = lower.indexOf(qLower, cursor);
     if (index === -1) break;
     const start = Math.max(0, index - 70);
     const end = Math.min(plainText.length, index + q.length + 90);
     const heading = nearestHeadingForOffset(headings, plainText, index);
     results.push({
+      id: `match-${matchCount}`,
       index,
+      matchIndex: matchCount++,
       headingId: heading?.id,
-    title: heading?.text ?? "章节匹配",
+      query: q,
+      title: heading?.text ?? "章节匹配",
       excerpt: compactWhitespace(plainText.slice(start, end)),
+      matchedText: plainText.slice(index, index + q.length),
     });
-    cursor = index + q.length;
+    cursor = index + Math.max(1, q.length);
   }
   return results;
 }

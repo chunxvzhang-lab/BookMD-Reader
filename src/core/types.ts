@@ -70,10 +70,16 @@ export type ReadingPosition = {
 };
 
 export type SearchResult = {
+  id?: string;
   index: number;
+  matchIndex?: number;
   headingId?: string;
   title: string;
   excerpt: string;
+  lineNumber?: number;
+  lineOffset?: number;
+  query?: string;
+  matchedText?: string;
 };
 
 export type ChapterSource = {

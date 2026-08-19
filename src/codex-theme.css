@@ -789,3 +789,16 @@ button {
   }
 }
 
+/* Search Jump Highlight Overrides */
+.markdown-body .search-highlight-active {
+  background: rgba(29, 155, 240, 0.18) !important;
+  box-shadow: 0 0 0 2px #1d9bf0, 0 4px 20px rgba(29, 155, 240, 0.35) !important;
+  border-radius: 6px !important;
+}
+
+.markdown-body li.search-highlight-active {
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -4px;
+}
+

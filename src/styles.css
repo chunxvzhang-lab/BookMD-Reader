@@ -974,12 +974,18 @@ button {
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   transition: all 0.18s var(--ease-spring);
+  position: relative;
 }
 
 .search-box:focus-within {
   border-color: var(--accent);
   background: var(--surface);
   box-shadow: 0 0 0 2px var(--accent-surface);
+}
+
+.search-box-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .search-box input {
@@ -995,6 +1001,34 @@ button {
   outline: none;
 }
 
+.search-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--surface-3);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.search-clear-btn:hover {
+  background: var(--border-hover);
+  color: var(--text);
+}
+
+.search-count-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 2px 4px 6px;
+  font-weight: 550;
+}
+
 .search-results {
   display: grid;
   gap: 6px;
@@ -1002,11 +1036,11 @@ button {
 
 .search-result {
   display: grid;
-  gap: 4px;
+  gap: 5px;
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   background: var(--surface);
   text-align: left;
   cursor: pointer;
@@ -1020,16 +1054,65 @@ button {
   transform: translateY(-1px);
 }
 
-.search-result strong {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
+.search-result.active {
+  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface)) !important;
+  box-shadow: 0 0 0 1.5px var(--accent), 0 4px 14px rgba(29, 155, 240, 0.25) !important;
 }
 
-.search-result span {
+.search-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.search-result strong {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-result.active strong {
+  color: var(--accent) !important;
+}
+
+.search-line-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface-3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+  line-height: 1.3;
+}
+
+.search-result.active .search-line-tag {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.search-result-excerpt {
   color: var(--text-muted);
   font-size: 11.5px;
   line-height: 1.45;
+  word-break: break-word;
+}
+
+.search-excerpt-match {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--accent);
+  font-weight: 700;
+  padding: 1px 3px;
+  border-radius: 3px;
 }
 
 /* ==========================================================================
@@ -1844,6 +1927,42 @@ button {
 
 .document-workspace.view-split .markdown-body [data-source-line] {
   cursor: text;
+}
+
+/* ==========================================================================
+   Search Result Navigation & Highlighting
+   ========================================================================== */
+.markdown-body .search-highlight-active {
+  background: rgba(29, 155, 240, 0.18) !important;
+  box-shadow: 0 0 0 2px #1d9bf0, 0 4px 20px rgba(29, 155, 240, 0.35) !important;
+  border-radius: 6px !important;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.markdown-body li.search-highlight-active {
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -4px;
+}
+
+:root[data-theme="light"] .markdown-body .search-highlight-active {
+  background: rgba(29, 155, 240, 0.14) !important;
+  box-shadow: 0 0 0 2px #1d9bf0, 0 4px 16px rgba(29, 155, 240, 0.25) !important;
+}
+
+@keyframes searchPulse {
+  0% {
+    box-shadow: 0 0 0 4px #1d9bf0, 0 0 24px rgba(29, 155, 240, 0.7);
+    background: rgba(29, 155, 240, 0.32);
+  }
+  50% {
+    box-shadow: 0 0 0 2px #1d9bf0, 0 4px 18px rgba(29, 155, 240, 0.35);
+    background: rgba(29, 155, 240, 0.18);
+  }
+  100% {
+    box-shadow: 0 0 0 2px #1d9bf0, 0 4px 18px rgba(29, 155, 240, 0.35);
+    background: rgba(29, 155, 240, 0.18);
+  }
 }
 
 /* ==========================================================================

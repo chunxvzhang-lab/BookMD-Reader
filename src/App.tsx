@@ -60,6 +60,7 @@ export function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearchMatchId, setActiveSearchMatchId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [preferences, setPreferences] = useState(preferencesRef.current);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
@@ -90,8 +91,8 @@ export function App() {
   const activeIndex = manifest?.chapters.findIndex((item) => item.id === chapterId) ?? -1;
 
   const searchResults = useMemo(
-    () => (renderedChapter ? findInChapter(searchQuery, renderedChapter.plainText, renderedChapter.headings) : []),
-    [renderedChapter, searchQuery],
+    () => (renderedChapter ? findInChapter(searchQuery, renderedChapter.plainText, renderedChapter.headings, session?.source) : []),
+    [renderedChapter, searchQuery, session?.source],
   );
 
   const bookmarkedHeadingIds = useMemo(() => {
@@ -132,6 +133,69 @@ export function App() {
     const max = container.scrollHeight - container.clientHeight;
     container.scrollTo({ top: Math.max(0, max * ratio), behavior: "smooth" });
   }, []);
+
+  const handleSearchJump = useCallback((result: SearchResult) => {
+    setActiveSearchMatchId(result.id ?? `match-${result.index}`);
+    const container = readerRef.current;
+    if (!container) return;
+
+    // Clear previous search highlights
+    const prevHighlights = container.querySelectorAll(".search-highlight-active");
+    prevHighlights.forEach((el) => {
+      el.classList.remove("search-highlight-active");
+    });
+
+    let targetElement: HTMLElement | null = null;
+
+    // 1. Try finding by source line number if available
+    if (result.lineNumber) {
+      const lineElements = Array.from(container.querySelectorAll<HTMLElement>("[data-source-line]"));
+      const matched = lineElements.filter((el) => {
+        const start = parseInt(el.getAttribute("data-source-line") || "0", 10);
+        const end = parseInt(el.getAttribute("data-source-line-end") || String(start), 10);
+        return result.lineNumber! >= start && result.lineNumber! <= end;
+      });
+      if (matched.length > 0) {
+        // Pick the innermost matching element to avoid container conflicts
+        targetElement = matched.find((el) => !matched.some((other) => other !== el && el.contains(other))) || matched[0];
+      }
+    }
+
+    // 2. Fallback: Search for element containing matched keyword or excerpt
+    if (!targetElement && (result.matchedText || searchQuery)) {
+      const queryText = (result.matchedText || searchQuery).trim().toLowerCase();
+      const candidateBlocks = Array.from(container.querySelectorAll<HTMLElement>(
+        ".markdown-body p, .markdown-body li, .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6, .markdown-body pre, .markdown-body blockquote, .markdown-body tr, .markdown-body td"
+      ));
+      targetElement = candidateBlocks.find((el) => el.textContent?.toLowerCase().includes(queryText)) || null;
+    }
+
+    // 3. Fallback: Search by headingId
+    if (!targetElement && result.headingId) {
+      targetElement = container.querySelector(`#${CSS.escape(result.headingId)}`);
+    }
+
+    if (targetElement) {
+      targetElement.classList.add("search-highlight-active");
+
+      // Smoothly scroll element to comfortable upper-middle view
+      const containerRect = container.getBoundingClientRect();
+      const elRect = targetElement.getBoundingClientRect();
+      const targetScrollTop = container.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 3);
+
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: "smooth",
+      });
+
+      // Trigger pulse animation
+      targetElement.style.animation = "none";
+      void targetElement.offsetHeight; // Force reflow
+      targetElement.style.animation = "searchPulse 1.8s cubic-bezier(0.16, 1, 0.3, 1)";
+    } else {
+      jumpToRatio(result.index / Math.max(1, renderedChapter?.plainText.length ?? 1));
+    }
+  }, [jumpToRatio, renderedChapter, searchQuery]);
 
   // Safe navigation execution after guard passes
   const executeAction = useCallback(
@@ -974,11 +1038,12 @@ export function App() {
                 <SearchPanel
                   query={searchQuery}
                   results={searchResults}
-                  onQueryChange={setSearchQuery}
-                  onJump={(result: SearchResult) => {
-                    if (result.headingId) jumpToHeading(result.headingId);
-                    else jumpToRatio(result.index / Math.max(1, renderedChapter?.plainText.length ?? 1));
+                  activeResultId={activeSearchMatchId}
+                  onQueryChange={(q) => {
+                    setSearchQuery(q);
+                    setActiveSearchMatchId(null);
                   }}
+                  onJump={handleSearchJump}
                 />
               </section>
             ) : null}
