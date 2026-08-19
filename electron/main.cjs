@@ -173,6 +173,18 @@ async function createWindow() {
     }
   });
 
+  mainWindow.on("enter-full-screen", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("bookmd:fullscreen-changed", true);
+    }
+  });
+
+  mainWindow.on("leave-full-screen", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("bookmd:fullscreen-changed", false);
+    }
+  });
+
   if (!app.isPackaged && devServerUrl) {
     await mainWindow.loadURL(devServerUrl);
     mainWindow.webContents.openDevTools({ mode: "detach" });
@@ -432,3 +444,16 @@ ipcMain.handle("bookmd:save-markdown-file-as", async (_event, request = {}) => {
     cacheKey: source.cacheKey,
   };
 });
+
+ipcMain.handle("bookmd:toggle-fullscreen", () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  const next = !mainWindow.isFullScreen();
+  mainWindow.setFullScreen(next);
+  return next;
+});
+
+ipcMain.handle("bookmd:is-fullscreen", () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  return mainWindow.isFullScreen();
+});
+

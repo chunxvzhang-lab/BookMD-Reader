@@ -16,7 +16,12 @@ async function main() {
   await assertExists(path.join(root, "dist", "index.html"), "dist is missing. Run npm run build first.");
 
   console.log("2. Generating unpacked application via electron-builder with custom icon...");
-  await execPromise("npx electron-builder --win dir", { cwd: root });
+  const hasWinUnpacked = await fs.access(path.join(winUnpacked, "BookMD Reader.exe")).then(() => true).catch(() => false);
+  if (!hasWinUnpacked) {
+    await execPromise("npx electron-builder --win dir", { cwd: root });
+  } else {
+    console.log("Found existing valid win-unpacked directory, using it directly.");
+  }
 
   console.log("3. Copying unpacked binaries into release/BookMD-Reader-win-x64...");
   await fs.mkdir(releaseRoot, { recursive: true });

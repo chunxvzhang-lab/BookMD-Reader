@@ -14,6 +14,8 @@ import {
   Search,
   Type,
   Info,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import type { EditorViewMode, ThemeMode } from "../core/types";
 import { ViewModeControl } from "./ViewModeControl";
@@ -30,6 +32,8 @@ type ToolbarProps = {
   directoryOpen: boolean;
   theme?: ThemeMode;
   fontScale: number;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   onPrevious: () => void;
   onNext: () => void;
   onToggleSidebar: () => void;
@@ -186,6 +190,17 @@ export function Toolbar(props: ToolbarProps) {
             title="关于 BookMD Reader"
           >
             <Info size={18} />
+          </button>
+        )}
+
+        {props.onToggleFullscreen && (
+          <button
+            className={`icon-button ${props.isFullscreen ? "active" : ""}`}
+            onClick={props.onToggleFullscreen}
+            aria-label={props.isFullscreen ? "退出全屏" : "全屏模式"}
+            title={props.isFullscreen ? "退出全屏 (F11 / Esc)" : "全屏模式 (F11)"}
+          >
+            {props.isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
         )}
 

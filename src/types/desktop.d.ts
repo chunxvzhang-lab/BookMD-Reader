@@ -98,9 +98,13 @@ declare global {
       saveMarkdownFileAs: (request?: SaveMarkdownAsRequest) => Promise<SaveMarkdownAsResult>;
       setDocumentState: (state: { activePath: string | null; isDirty: boolean }) => Promise<void>;
       resolveBeforeClose: (result: { requestId: number; action: "proceed" | "cancel" }) => Promise<void>;
+      openExternal?: (url: string) => Promise<boolean>;
+      toggleFullScreen?: () => Promise<boolean>;
+      isFullScreen?: () => Promise<boolean>;
       onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
       onMenuCommand: (callback: (command: string) => void) => () => void;
       onBeforeClose: (callback: (data: BeforeCloseData) => void) => () => void;
+      onFullScreenChanged?: (callback: (isFullscreen: boolean) => void) => () => void;
     };
   }
 }

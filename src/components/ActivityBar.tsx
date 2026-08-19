@@ -11,6 +11,8 @@ import {
   Sparkles,
   FileText,
   Info,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import appLogo from "../assets/icon.png";
 import type { EditorViewMode, ThemeMode } from "../core/types";
@@ -27,6 +29,8 @@ type ActivityBarProps = {
   onViewModeChange: (mode: EditorViewMode) => void;
   theme: ThemeMode;
   onThemeChange: (theme: ThemeMode) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   onNewFile?: () => void;
   onOpenDirectory?: () => void;
   onOpenAbout?: () => void;
@@ -43,6 +47,8 @@ export function ActivityBar({
   onViewModeChange,
   theme,
   onThemeChange,
+  isFullscreen = false,
+  onToggleFullscreen,
   onNewFile,
   onOpenDirectory,
   onOpenAbout,
@@ -61,7 +67,7 @@ export function ActivityBar({
   return (
     <nav className="activity-bar" aria-label="快捷工具栏">
       {/* Top Brand Logo */}
-      <div className="activity-brand" title="BookMD Reader">
+      <div className="activity-brand" data-tooltip="BookMD Reader (摸鱼Lab)">
         <div className="brand-badge">
           <img src={appLogo} alt="BookMD Logo" className="brand-logo-img" />
         </div>
@@ -73,7 +79,7 @@ export function ActivityBar({
           type="button"
           className={`activity-btn ${directoryOpen ? "active" : ""}`}
           onClick={onToggleDirectory}
-          title="文件目录列表 (Ctrl+\)"
+          data-tooltip="文档目录 (Ctrl+\)"
           aria-label="文档目录"
         >
           <FolderOpen size={18} />
@@ -84,7 +90,7 @@ export function ActivityBar({
           type="button"
           className={`activity-btn ${sidebarOpen && activeSidebarTab === "toc" ? "active" : ""}`}
           onClick={() => onSelectSidebarTab("toc")}
-          title="大纲目录"
+          data-tooltip="大纲目录"
           aria-label="大纲目录"
         >
           <ListTree size={18} />
@@ -94,7 +100,7 @@ export function ActivityBar({
           type="button"
           className={`activity-btn ${sidebarOpen && activeSidebarTab === "bookmarks" ? "active" : ""}`}
           onClick={() => onSelectSidebarTab("bookmarks")}
-          title="书签列表 (Ctrl+B)"
+          data-tooltip="精选书签 (Ctrl+B)"
           aria-label="书签列表"
         >
           <Bookmark size={18} />
@@ -104,7 +110,7 @@ export function ActivityBar({
           type="button"
           className={`activity-btn ${sidebarOpen && activeSidebarTab === "search" ? "active" : ""}`}
           onClick={() => onSelectSidebarTab("search")}
-          title="全文搜索 (Ctrl+F)"
+          data-tooltip="全文搜索 (Ctrl+F)"
           aria-label="全文搜索"
         >
           <Search size={18} />
@@ -119,7 +125,7 @@ export function ActivityBar({
             type="button"
             className="activity-btn"
             onClick={onNewFile}
-            title="新建 Markdown 文件 (Ctrl+N)"
+            data-tooltip="新建文件 (Ctrl+N)"
             aria-label="新建文件"
           >
             <FilePlus2 size={18} />
@@ -131,7 +137,7 @@ export function ActivityBar({
             type="button"
             className="activity-btn"
             onClick={onOpenDirectory}
-            title="打开文件夹 (Ctrl+Shift+O)"
+            data-tooltip="打开目录 (Ctrl+Shift+O)"
             aria-label="打开文件夹"
           >
             <FileText size={18} />
@@ -139,14 +145,14 @@ export function ActivityBar({
         )}
       </div>
 
-      {/* Bottom Controls: View Mode & Theme Switch & About */}
+      {/* Bottom Controls: View Mode & Fullscreen & Theme Switch & About */}
       <div className="activity-bottom">
         <div className="activity-viewmodes" role="group" aria-label="视图模式">
           <button
             type="button"
             className={`activity-btn mini ${viewMode === "read" ? "active" : ""}`}
             onClick={() => onViewModeChange("read")}
-            title="阅读模式"
+            data-tooltip="阅读模式"
           >
             <BookOpen size={16} />
           </button>
@@ -154,7 +160,7 @@ export function ActivityBar({
             type="button"
             className={`activity-btn mini ${viewMode === "split" ? "active" : ""}`}
             onClick={() => onViewModeChange("split")}
-            title="分屏模式"
+            data-tooltip="分屏模式"
           >
             <Columns size={16} />
           </button>
@@ -162,18 +168,30 @@ export function ActivityBar({
             type="button"
             className={`activity-btn mini ${viewMode === "source" ? "active" : ""}`}
             onClick={() => onViewModeChange("source")}
-            title="源码模式"
+            data-tooltip="源码模式"
           >
             <Code2 size={16} />
           </button>
         </div>
+
+        {onToggleFullscreen && (
+          <button
+            type="button"
+            className={`activity-btn ${isFullscreen ? "active" : ""}`}
+            onClick={onToggleFullscreen}
+            data-tooltip={isFullscreen ? "退出全屏 (F11 / Esc)" : "全屏模式 (F11)"}
+            aria-label="全屏切换"
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        )}
 
         {onOpenAbout && (
           <button
             type="button"
             className="activity-btn"
             onClick={onOpenAbout}
-            title="关于 BookMD Reader"
+            data-tooltip="关于应用"
             aria-label="关于应用"
           >
             <Info size={18} />
@@ -184,7 +202,7 @@ export function ActivityBar({
           type="button"
           className={`activity-btn ${theme === "twitter" ? "theme-twitter-active" : ""}`}
           onClick={() => onThemeChange(getNextTheme(theme))}
-          title={getThemeTitle(theme)}
+          data-tooltip={getThemeTitle(theme)}
           aria-label="切换主题"
         >
           {theme === "twitter" ? (

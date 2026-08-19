@@ -57,6 +57,7 @@ export function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [directoryOpen, setDirectoryOpen] = useState(true);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("toc");
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -572,6 +573,44 @@ export function App() {
     guardActionRef.current = guardAction;
   });
 
+  const toggleFullscreen = useCallback(async () => {
+    if (window.bookMDDesktop?.toggleFullScreen) {
+      const next = await window.bookMDDesktop.toggleFullScreen();
+      setIsFullscreen(Boolean(next));
+    } else if (typeof document !== "undefined") {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen?.().catch(() => {});
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen?.().catch(() => {});
+        setIsFullscreen(false);
+      }
+    }
+  }, []);
+
+  const toggleFullscreenRef = useRef(toggleFullscreen);
+  toggleFullscreenRef.current = toggleFullscreen;
+
+  // Sync fullscreen state
+  useEffect(() => {
+    if (window.bookMDDesktop?.isFullScreen) {
+      window.bookMDDesktop.isFullScreen().then((full) => {
+        setIsFullscreen(Boolean(full));
+      });
+    }
+    const unsubDesktop = window.bookMDDesktop?.onFullScreenChanged?.((full) => {
+      setIsFullscreen(Boolean(full));
+    });
+    const handleDocFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleDocFullscreenChange);
+    return () => {
+      unsubDesktop?.();
+      document.removeEventListener("fullscreenchange", handleDocFullscreenChange);
+    };
+  }, []);
+
   // Handle launch path once on startup and register global event listeners
   useEffect(() => {
     if (!window.bookMDDesktop) return undefined;
@@ -597,6 +636,7 @@ export function App() {
       else if (command === "open-directory") openMarkdownDirectoryRef.current();
       else if (command === "save") saveSessionRef.current();
       else if (command === "save-as") saveSessionAsRef.current();
+      else if (command === "toggle-fullscreen" || command === "togglefullscreen") toggleFullscreenRef.current();
     });
 
     const unsubscribeClose = window.bookMDDesktop.onBeforeClose?.(({ requestId }) => {
@@ -741,6 +781,18 @@ export function App() {
         target?.isContentEditable ||
         target?.closest(".cm-editor");
 
+      if (event.key === "F11") {
+        event.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+
+      if (event.key === "Escape" && isFullscreen) {
+        event.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+
       if (event.ctrlKey && event.key.toLowerCase() === "s") {
         event.preventDefault();
         if (event.shiftKey) {
@@ -793,13 +845,15 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [addBookmark, createNewFile, focusSearch, goNext, goPrevious, openMarkdownDirectory, saveSession, saveSessionAs]);
+  }, [addBookmark, createNewFile, focusSearch, goNext, goPrevious, isFullscreen, openMarkdownDirectory, saveSession, saveSessionAs, toggleFullscreen]);
 
   // Toast auto-clear
   useEffect(() => {
     if (!notice) return;
-    const handle = window.setTimeout(() => setNotice(null), 3000);
-    return () => window.clearTimeout(handle);
+    const timer = setTimeout(() => {
+      setNotice(null);
+    }, 4500);
+    return () => clearTimeout(timer);
   }, [notice]);
 
   const handleSelectSidebarTab = useCallback((tab: SidebarTab) => {
@@ -811,10 +865,10 @@ export function App() {
     }
   }, [sidebarOpen, sidebarTab]);
 
-  const shellClass = `app-shell${sidebarOpen ? " sidebar-open" : ""}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}`;
-
   return (
-    <div className={shellClass}>
+    <div
+      className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}`}
+    >
       <ActivityBar
         directoryOpen={directoryOpen}
         onToggleDirectory={() => setDirectoryOpen((open) => !open)}
@@ -825,6 +879,8 @@ export function App() {
         onViewModeChange={setViewMode}
         theme={preferences.theme}
         onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
         onNewFile={window.bookMDDesktop ? createNewFile : undefined}
         onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
         onOpenAbout={() => setAboutOpen(true)}
@@ -844,6 +900,8 @@ export function App() {
           directoryOpen={directoryOpen}
           theme={preferences.theme}
           fontScale={preferences.fontScale}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
           onPrevious={goPrevious}
           onNext={goNext}
           onToggleSidebar={() => setSidebarOpen((open) => !open)}

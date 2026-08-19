@@ -68,8 +68,8 @@ def main():
     )
     # Glow dot
     draw.ellipse([pill_x + 22, pill_y + 18, pill_x + 34, pill_y + 30], fill=(29, 155, 240, 255))
-    draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.3.0", fill=(231, 233, 234), font=font_pill_title)
-    draw.text((pill_x + 335, pill_y + 12), "•  现代极客暗黑主题  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
+    draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.4.0", fill=(231, 233, 234), font=font_pill_title)
+    draw.text((pill_x + 335, pill_y + 12), "•  全屏沉浸 & Dock-Two 微动效  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
 
     # Left & Right Top Badges
     draw_rounded_rect(draw, [120, 42, 380, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)

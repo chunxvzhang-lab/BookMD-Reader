@@ -141,10 +141,7 @@ button {
 .command-button,
 .font-control {
   height: 32px;
-  border-color: transparent;
-  border-radius: 6px;
-  background: transparent;
-  box-shadow: none;
+  border-radius: 8px;
 }
 
 .icon-button {
@@ -156,43 +153,30 @@ button {
   stroke-width: 1.8;
 }
 
-.icon-button:hover,
-.command-button.secondary:hover,
-.font-control:hover {
-  border-color: transparent;
-  background: var(--control-hover);
-  color: var(--text);
-  filter: none;
-}
-
-.icon-button:active,
-.command-button:active {
-  background: color-mix(in srgb, var(--control-hover) 78%, var(--text));
-}
-
 .icon-button:disabled {
   opacity: 0.32;
 }
 
 .command-button {
   padding: 0 11px;
-  border-color: var(--control-strong);
-  background: var(--control-strong);
-  color: var(--control-strong-text);
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
   font-size: 11.5px;
-  font-weight: 650;
-}
-
-.command-button:hover {
-  border-color: color-mix(in srgb, var(--control-strong) 82%, var(--surface));
-  background: color-mix(in srgb, var(--control-strong) 82%, var(--surface));
-  filter: none;
+  font-weight: 600;
 }
 
 .command-button.secondary {
   border-color: var(--border);
   background: var(--surface);
   color: var(--text);
+}
+
+.command-button.primary,
+.command-button.highlight {
+  background: linear-gradient(180deg, #1d9bf0 0%, #1a8cd8 100%);
+  border-color: #1d9bf0;
+  color: #ffffff;
 }
 
 .font-control {

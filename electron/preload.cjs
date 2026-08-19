@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld("bookMDDesktop", {
   setDocumentState: (state) => ipcRenderer.invoke("bookmd:set-document-state", state),
   resolveBeforeClose: (result) => ipcRenderer.invoke("bookmd:resolve-before-close", result),
   openExternal: (url) => ipcRenderer.invoke("bookmd:open-external", url),
+  toggleFullScreen: () => ipcRenderer.invoke("bookmd:toggle-fullscreen"),
+  isFullScreen: () => ipcRenderer.invoke("bookmd:is-fullscreen"),
 
   onOpenFilePath: (callback) => {
     const listener = (_event, filePath) => callback(filePath);
@@ -28,5 +30,10 @@ contextBridge.exposeInMainWorld("bookMDDesktop", {
     const listener = (_event, data) => callback(data);
     ipcRenderer.on("bookmd:before-close", listener);
     return () => ipcRenderer.removeListener("bookmd:before-close", listener);
+  },
+  onFullScreenChanged: (callback) => {
+    const listener = (_event, isFull) => callback(isFull);
+    ipcRenderer.on("bookmd:fullscreen-changed", listener);
+    return () => ipcRenderer.removeListener("bookmd:fullscreen-changed", listener);
   },
 });
