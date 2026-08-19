@@ -753,3 +753,34 @@ button {
     padding: 22px 16px 48px;
   }
 }
+
+/* ==========================================================================
+   Synchronized Selection Highlighting (Split Mode Theme Overrides)
+   ========================================================================== */
+.markdown-body [data-source-line].sync-highlight-active {
+  background: rgba(29, 155, 240, 0.10) !important;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.45), 0 3px 14px rgba(29, 155, 240, 0.15) !important;
+  border-left: 3.5px solid var(--accent, #1d9bf0) !important;
+  border-radius: 4px 8px 8px 4px;
+  padding-left: 8px;
+}
+
+:root[data-theme="twitter"] .markdown-body [data-source-line].sync-highlight-active,
+:root[data-theme="dark"] .markdown-body [data-source-line].sync-highlight-active {
+  background: rgba(29, 155, 240, 0.18) !important;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75), 0 4px 20px rgba(29, 155, 240, 0.28) !important;
+  border-left: 3.5px solid #1d9bf0 !important;
+  border-radius: 4px 8px 8px 4px;
+  padding-left: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .markdown-body [data-source-line].sync-highlight-active {
+    background: rgba(29, 155, 240, 0.18) !important;
+    box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75), 0 4px 20px rgba(29, 155, 240, 0.28) !important;
+    border-left: 3.5px solid #1d9bf0 !important;
+    border-radius: 4px 8px 8px 4px;
+    padding-left: 8px;
+  }
+}
+

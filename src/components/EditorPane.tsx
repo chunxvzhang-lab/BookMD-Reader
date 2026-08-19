@@ -39,6 +39,70 @@ type EditorPaneProps = {
   onEditorViewReady?: (view: EditorView | null) => void;
 };
 
+function buildCustomTheme(isDarkMode: boolean, fontScale: number) {
+  return EditorView.theme(
+    {
+      "&": {
+        height: "100%",
+        fontSize: `${14 * fontScale}px`,
+        fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
+        backgroundColor: isDarkMode ? "#000000" : "#ffffff",
+        color: isDarkMode ? "#f1f5f9" : "#0f172a",
+      },
+      ".cm-scroller": {
+        overflow: "auto",
+        fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
+        lineHeight: "1.65",
+      },
+      ".cm-content": {
+        padding: "16px 14px",
+        caretColor: "#1d9bf0",
+      },
+      ".cm-cursor, .cm-dropCursor": {
+        borderLeftColor: "#1d9bf0 !important",
+        borderLeftWidth: "2.5px !important",
+      },
+      ".cm-gutters": {
+        backgroundColor: isDarkMode ? "#0a0d12" : "#f8fafc",
+        color: isDarkMode ? "#71767b" : "#94a3b8",
+        borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
+        paddingRight: "6px",
+      },
+      // Active line: distinct luminous electric blue background with inset accent edge
+      ".cm-activeLine": {
+        backgroundColor: isDarkMode
+          ? "rgba(29, 155, 240, 0.16) !important"
+          : "rgba(29, 155, 240, 0.08) !important",
+        boxShadow: "inset 3.5px 0 0 0 #1d9bf0 !important",
+      },
+      // Active line gutter line number
+      ".cm-activeLineGutter": {
+        backgroundColor: isDarkMode
+          ? "rgba(29, 155, 240, 0.22) !important"
+          : "rgba(29, 155, 240, 0.12) !important",
+        color: "#1d9bf0 !important",
+        fontWeight: "bold",
+      },
+      // Selection highlight
+      ".cm-selectionBackground, .cm-selectionLayer .cm-selectionBackground, ::selection": {
+        backgroundColor: isDarkMode
+          ? "rgba(29, 155, 240, 0.35) !important"
+          : "rgba(29, 155, 240, 0.22) !important",
+      },
+      // Selection search match
+      ".cm-selectionMatch": {
+        backgroundColor: isDarkMode
+          ? "rgba(29, 155, 240, 0.25) !important"
+          : "rgba(29, 155, 240, 0.16) !important",
+        outline: isDarkMode
+          ? "1px solid rgba(29, 155, 240, 0.6) !important"
+          : "1px solid rgba(29, 155, 240, 0.4) !important",
+      },
+    },
+    { dark: isDarkMode }
+  );
+}
+
 export function EditorPane({
   value,
   onChange,
@@ -75,43 +139,7 @@ export function EditorPane({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const customBaseTheme = EditorView.theme(
-      {
-        "&": {
-          height: "100%",
-          fontSize: `${14 * fontScale}px`,
-          fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
-          backgroundColor: isDarkMode ? "#000000" : "#ffffff",
-          color: isDarkMode ? "#f1f5f9" : "#0f172a",
-        },
-        ".cm-scroller": {
-          overflow: "auto",
-          fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
-          lineHeight: "1.65",
-        },
-        ".cm-content": {
-          padding: "16px 14px",
-          caretColor: isDarkMode ? "#1d9bf0" : "#2563eb",
-        },
-        ".cm-gutters": {
-          backgroundColor: isDarkMode ? "#0a0d12" : "#f1f5f9",
-          color: isDarkMode ? "#71767b" : "#94a3b8",
-          borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
-          paddingRight: "6px",
-        },
-        ".cm-activeLine": {
-          backgroundColor: isDarkMode ? "rgba(56, 189, 248, 0.06)" : "rgba(37, 99, 235, 0.04)",
-        },
-        ".cm-activeLineGutter": {
-          backgroundColor: isDarkMode ? "rgba(56, 189, 248, 0.12)" : "rgba(37, 99, 235, 0.08)",
-          color: isDarkMode ? "#38bdf8" : "#2563eb",
-        },
-        ".cm-selectionBackground, ::selection": {
-          backgroundColor: isDarkMode ? "rgba(56, 189, 248, 0.22) !important" : "rgba(37, 99, 235, 0.16) !important",
-        },
-      },
-      { dark: isDarkMode }
-    );
+    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale);
 
     const saveKeyBinding = keymap.of([
       {
@@ -213,25 +241,11 @@ export function EditorPane({
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
-    const customBaseTheme = EditorView.theme(
-      {
-        "&": {
-          height: "100%",
-          backgroundColor: isDarkMode ? "#000000" : "#ffffff",
-          color: isDarkMode ? "#f1f5f9" : "#0f172a",
-        },
-        ".cm-gutters": {
-          backgroundColor: isDarkMode ? "#0a0d12" : "#f1f5f9",
-          color: isDarkMode ? "#71767b" : "#94a3b8",
-          borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
-        },
-      },
-      { dark: isDarkMode }
-    );
+    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale);
     view.dispatch({
       effects: themeCompartment.current.reconfigure(isDarkMode ? [oneDark, customBaseTheme] : [customBaseTheme]),
     });
-  }, [isDarkMode]);
+  }, [isDarkMode, fontScale]);
 
   // Update font scale dynamically
   useEffect(() => {

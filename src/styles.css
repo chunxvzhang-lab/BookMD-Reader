@@ -1670,19 +1670,37 @@ button {
 .markdown-body [data-source-line] {
   transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              padding 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 4px;
 }
 
 .markdown-body [data-source-line].sync-highlight-active {
-  background: rgba(255, 77, 0, 0.08) !important;
-  box-shadow: 0 0 0 2px rgba(255, 77, 0, 0.38), 0 2px 10px rgba(255, 77, 0, 0.1) !important;
-  border-radius: 6px;
+  background: rgba(29, 155, 240, 0.10) !important;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.45), 0 3px 14px rgba(29, 155, 240, 0.15) !important;
+  border-left: 3.5px solid #1d9bf0 !important;
+  border-radius: 4px 8px 8px 4px;
+  padding-left: 8px;
 }
 
-[data-theme="dark"] .markdown-body [data-source-line].sync-highlight-active {
-  background: rgba(255, 107, 53, 0.14) !important;
-  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.5), 0 2px 14px rgba(255, 77, 0, 0.18) !important;
+[data-theme="twitter"] .markdown-body [data-source-line].sync-highlight-active,
+[data-theme="dark"] .markdown-body [data-source-line].sync-highlight-active,
+:root[data-theme="twitter"] .markdown-body [data-source-line].sync-highlight-active {
+  background: rgba(29, 155, 240, 0.18) !important;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75), 0 4px 20px rgba(29, 155, 240, 0.28) !important;
+  border-left: 3.5px solid #1d9bf0 !important;
+  border-radius: 4px 8px 8px 4px;
+  padding-left: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .markdown-body [data-source-line].sync-highlight-active {
+    background: rgba(29, 155, 240, 0.18) !important;
+    box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75), 0 4px 20px rgba(29, 155, 240, 0.28) !important;
+    border-left: 3.5px solid #1d9bf0 !important;
+    border-radius: 4px 8px 8px 4px;
+    padding-left: 8px;
+  }
 }
 
 .document-workspace.view-split .markdown-body [data-source-line] {
