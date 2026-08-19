@@ -3,7 +3,6 @@ import {
   ExternalLink,
   Github,
   User,
-  FolderGit2,
   Cpu,
   Check,
   Copy,
@@ -22,7 +21,6 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
 
   const repoUrl = "https://github.com/chunxvzhang-lab/BookMD-Reader";
   const authorUrl = "https://github.com/chunxvzhang";
-  const projectPath = "C:\\Users\\chunxvzhang\\Desktop\\codex";
 
   const handleOpenExternal = useCallback((url: string) => {
     if (typeof window !== "undefined") {
@@ -70,7 +68,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div>
               <div className="about-header-title-row">
                 <span className="about-app-name">BookMD Reader</span>
-                <span className="about-version-badge">v1.3.0</span>
+                <span className="about-version-badge">v1.4.0</span>
               </div>
               <p className="about-tagline">现代化高颜值本地优先 Markdown 阅读与编辑工作台</p>
             </div>
@@ -144,17 +142,13 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </div>
           </div>
 
-          {/* 4. 项目地址与环境 */}
+          {/* 4. 运行环境与开源许可 */}
           <div className="about-card">
             <div className="about-card-title">
-              <FolderGit2 size={16} className="about-icon text-green" />
-              <span>项目本地地址与环境</span>
+              <Cpu size={16} className="about-icon text-green" />
+              <span>运行环境与开源许可</span>
             </div>
-            <div className="about-item-row">
-              <span className="about-label">项目路径：</span>
-              <code className="about-code-path">{projectPath}</code>
-            </div>
-            <div className="about-grid-two" style={{ marginTop: "8px" }}>
+            <div className="about-grid-two">
               <div className="about-item-row">
                 <Cpu size={14} className="text-muted" />
                 <span className="about-label">运行架构：</span>
