@@ -7,13 +7,20 @@ from datetime import datetime
 
 def main():
     root = r"C:\Users\chunxvzhang\Desktop\codex"
-    desktop = r"C:\Users\chunxvzhang\Desktop"
+    
+    # Target backup location: Prefer F:\ drive, fallback to Desktop
+    if os.path.exists(r"F:\ "):
+        target_base = r"F:\BookMD-Reader-Backup"
+    elif os.path.exists(r"F:\\"):
+        target_base = r"F:\BookMD-Reader-Backup"
+    else:
+        target_base = r"C:\Users\chunxvzhang\Desktop\BookMD-Reader-Backup"
+        
+    os.makedirs(target_base, exist_ok=True)
     now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    backup_dir_name = f"BookMD-Reader-Backup-{now_str}"
-    backup_dir = os.path.join(desktop, backup_dir_name)
-    backup_zip = os.path.join(desktop, f"{backup_dir_name}.zip")
-    git_bundle = os.path.join(desktop, f"BookMD-Reader-{now_str}.bundle")
+    backup_zip = os.path.join(target_base, f"BookMD-Reader-Backup-{now_str}.zip")
+    git_bundle = os.path.join(target_base, f"BookMD-Reader-{now_str}.bundle")
     
     # Set stdout encoding if possible
     if sys.stdout.encoding != 'utf-8':
@@ -93,7 +100,7 @@ def main():
     print(f"   [OK] Compressed ZIP size: {zip_size_mb:.2f} MB")
     
     # 3. Create a backup report manifest
-    manifest_file = os.path.join(desktop, f"BookMD-Reader-Backup-{now_str}-MANIFEST.txt")
+    manifest_file = os.path.join(target_base, f"BookMD-Reader-Backup-{now_str}-MANIFEST.txt")
     with open(manifest_file, "w", encoding="utf-8") as f:
         f.write(f"BookMD Reader 项目备份清单\n")
         f.write(f"=========================================\n")
