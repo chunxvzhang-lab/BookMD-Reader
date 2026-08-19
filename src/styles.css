@@ -162,7 +162,7 @@ button {
   background: var(--bg);
 }
 
-/* Activity Bar (Left Vertical Dock inspired by 21st.dev Dock-Two) */
+/* Activity Bar (Left Vertical Dock) */
 .activity-bar {
   width: 52px;
   height: 100%;
@@ -246,7 +246,7 @@ button {
   border: 1px solid var(--border);
 }
 
-/* Dock-Two Button System */
+/* Activity Bar Button System */
 .activity-btn {
   position: relative;
   display: flex;
@@ -306,7 +306,7 @@ button {
   animation: pulse-dot 2.4s ease-in-out infinite;
 }
 
-/* Dock-Two Floating Tooltips */
+/* Floating Tooltips */
 .activity-btn[data-tooltip],
 .activity-brand[data-tooltip] {
   position: relative;
@@ -483,7 +483,7 @@ button {
   flex-shrink: 0;
 }
 
-/* Action Buttons with Dock-Two Micro-Interactions */
+/* Action Buttons with Spring Micro-Interactions */
 .icon-button,
 .command-button {
   display: inline-flex;

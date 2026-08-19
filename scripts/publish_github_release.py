@@ -36,7 +36,7 @@ def main():
     owner = "chunxvzhang-lab"
     repo = "BookMD-Reader"
     tag = "v1.4.0"
-    title = "BookMD Reader v1.4.0 - 全屏沉浸模式与 21st.dev Dock-Two 交互动效升级"
+    title = "BookMD Reader v1.4.0 - 全屏沉浸模式与交互动效升级"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -73,10 +73,10 @@ def main():
     except Exception as e:
         print(f"Notice: {e}")
 
-    # 3. Create Release Body if not found
+    # 3. Create Release Body
     body_md = """# 🚀 BookMD Reader v1.4.0
 
-BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读与写作支持**，并参考 **[21st.dev Dock-Two](https://21st.dev/@anurag-mishra22/components/dock-two)** 全面重构并美化了交互按键与动效微交互体系。
+BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读与写作支持**，并全面重构美化了交互按键与拟物悬浮微动效体系。
 
 ---
 
@@ -87,11 +87,11 @@ BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读
    - **双端按键联动**：在顶部工具栏（`Toolbar`）与左侧活动栏（`ActivityBar`）分别新增动态全屏切换按钮，带有图标状态自适应（`Maximize2` ↔ `Minimize2`）与即时状态同步。
    - **双向 IPC 架构**：Electron 桌面主进程与渲染层无缝联动全屏生命周期事件。
 
-2. **✨ 21st.dev Dock-Two 风格按键与微交互美化**：
+2. **✨ 悬浮微交互按键与动效美化**：
    - **弹性悬浮放大（Spring Magnification）**：按键在鼠标悬停时平滑缩放 `scale(1.15)` 并微上浮，按下时具备 `scale(0.92)` 紧致触觉回弹。
    - **拟物微边框与极客电光蓝辉光**：激活按钮注入发丝高光微边框与 `box-shadow: 0 0 16px rgba(29, 155, 240, 0.35)` 极客辉光。
-   - **悬浮气泡提示（Dock-Two Tooltips）**：左侧活动栏与工具栏按钮配备零延迟毛玻璃悬浮气泡提示，摆脱原生浏览器 Title 延迟。
-   - **视口切换器胶囊化**：“阅读 / 分屏 / 源码”三段式切换升级为现代 Dock 风格滑动胶囊卡片。
+   - **悬浮气泡提示（Floating Tooltips）**：左侧活动栏与工具栏按钮配备零延迟毛玻璃悬浮气泡提示，摆脱原生浏览器 Title 延迟。
+   - **视口切换器胶囊化**：“阅读 / 分屏 / 源码”三段式切换升级为现代滑动胶囊卡片。
 
 3. **🎨 极客暗黑 & 日光浅色 双主题美学升华**：
    - 完美适配 Lights Out 纯黑底色 (`#000000`) 与日光浅色，界面更加通透优雅。
@@ -131,6 +131,20 @@ BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读
         )
         with urllib.request.urlopen(req) as resp:
             rel_data = json.loads(resp.read().decode("utf-8"))
+    else:
+        update_payload = {
+            "name": title,
+            "body": body_md,
+        }
+        print("2. Updating existing GitHub Release title and body...")
+        req = urllib.request.Request(
+            f"https://api.github.com/repos/{owner}/{repo}/releases/{rel_data['id']}",
+            data=json.dumps(update_payload).encode("utf-8"),
+            headers={**headers, "Content-Type": "application/json; charset=utf-8"},
+            method="PATCH"
+        )
+        with urllib.request.urlopen(req) as resp:
+            rel_data = json.loads(resp.read().decode("utf-8"))
     
     upload_url_template = rel_data["upload_url"]
     upload_base_url = upload_url_template.split("{")[0]
@@ -157,10 +171,19 @@ BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读
             print(f"Warning: file not found {file_path}")
             continue
         
-        # Check if already uploaded
+        # Delete existing asset to upload fresh build
         if name in existing_assets:
-            print(f"Asset {name} already uploaded on release, skipping...")
-            continue
+            print(f"Asset {name} already exists (ID: {existing_assets[name]}), deleting to replace with fresh build...")
+            del_asset_req = urllib.request.Request(
+                f"https://api.github.com/repos/{owner}/{repo}/releases/assets/{existing_assets[name]}",
+                headers=headers,
+                method="DELETE"
+            )
+            try:
+                with urllib.request.urlopen(del_asset_req) as del_resp:
+                    print(f"Deleted old asset {name} (HTTP {del_resp.status}).")
+            except Exception as e:
+                print(f"Notice deleting asset: {e}")
 
         size_mb = os.path.getsize(file_path) / (1024 * 1024)
         print(f"Uploading asset: {name} ({size_mb:.2f} MB)...")
