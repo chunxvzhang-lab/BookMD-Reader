@@ -743,28 +743,49 @@ button {
    ========================================================================== */
 .markdown-body [data-source-line].sync-highlight-active {
   background: rgba(29, 155, 240, 0.10) !important;
-  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.45), 0 3px 14px rgba(29, 155, 240, 0.15) !important;
-  border-left: 3.5px solid var(--accent, #1d9bf0) !important;
-  border-radius: 4px 8px 8px 4px;
-  padding-left: 8px;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.55), 0 3px 12px rgba(29, 155, 240, 0.12) !important;
+  border-radius: 6px !important;
+}
+
+.markdown-body li[data-source-line].sync-highlight-active {
+  background: rgba(29, 155, 240, 0.12) !important;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.55) !important;
+  border-radius: 6px !important;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -4px;
 }
 
 :root[data-theme="twitter"] .markdown-body [data-source-line].sync-highlight-active,
 :root[data-theme="dark"] .markdown-body [data-source-line].sync-highlight-active {
-  background: rgba(29, 155, 240, 0.18) !important;
-  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75), 0 4px 20px rgba(29, 155, 240, 0.28) !important;
-  border-left: 3.5px solid #1d9bf0 !important;
-  border-radius: 4px 8px 8px 4px;
-  padding-left: 8px;
+  background: rgba(29, 155, 240, 0.16) !important;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.70), 0 4px 18px rgba(29, 155, 240, 0.22) !important;
+  border-radius: 6px !important;
+}
+
+:root[data-theme="twitter"] .markdown-body li[data-source-line].sync-highlight-active,
+:root[data-theme="dark"] .markdown-body li[data-source-line].sync-highlight-active {
+  background: rgba(29, 155, 240, 0.20) !important;
+  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75) !important;
+  border-radius: 6px !important;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -4px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] .markdown-body [data-source-line].sync-highlight-active {
-    background: rgba(29, 155, 240, 0.18) !important;
-    box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75), 0 4px 20px rgba(29, 155, 240, 0.28) !important;
-    border-left: 3.5px solid #1d9bf0 !important;
-    border-radius: 4px 8px 8px 4px;
-    padding-left: 8px;
+    background: rgba(29, 155, 240, 0.16) !important;
+    box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.70), 0 4px 18px rgba(29, 155, 240, 0.22) !important;
+    border-radius: 6px !important;
+  }
+  :root[data-theme="system"] .markdown-body li[data-source-line].sync-highlight-active {
+    background: rgba(29, 155, 240, 0.20) !important;
+    box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.75) !important;
+    border-radius: 6px !important;
+    padding-left: 6px;
+    padding-right: 6px;
+    margin-left: -4px;
   }
 }
 

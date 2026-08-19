@@ -19,7 +19,7 @@ export function findMatchingPreviewElements(
     container.querySelectorAll<HTMLElement>("[data-source-line]")
   );
 
-  const matched: HTMLElement[] = [];
+  const rawMatched: HTMLElement[] = [];
 
   for (let i = 0; i < elements.length; i += 1) {
     const el = elements[i];
@@ -34,11 +34,18 @@ export function findMatchingPreviewElements(
 
     // Check interval overlap: [startLine, endLine] intersects with [elemStart, elemEnd]
     if (Math.max(startLine, elemStart) <= Math.min(endLine, elemEnd)) {
-      matched.push(el);
+      rawMatched.push(el);
     }
   }
 
-  return matched;
+  // Filter out ancestor elements if any of their descendants are also matched.
+  // This avoids double-highlighting container blocks (e.g. <ol>, <ul>, <table>, <blockquote>)
+  // when an inner child element (e.g. <li>, <p>, <tr>) is already matched and highlighted.
+  const filtered = rawMatched.filter((el) => {
+    return !rawMatched.some((other) => other !== el && el.contains(other));
+  });
+
+  return filtered.length > 0 ? filtered : rawMatched;
 }
 
 /**

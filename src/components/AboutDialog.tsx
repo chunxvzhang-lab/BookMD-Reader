@@ -91,13 +91,13 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </p>
           </div>
 
-          {/* 2. GitHub 主页与仓库 */}
+          {/* 2. GitHub 主页与开源仓库 */}
           <div className="about-card">
             <div className="about-card-title">
               <Github size={16} className="about-icon text-purple" />
               <span>GitHub 主页与开源仓库</span>
             </div>
-            <div className="about-item-row">
+            <div className="about-info-row">
               <span className="about-label">项目主页：</span>
               <a
                 href={repoUrl}
@@ -114,14 +114,14 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </div>
           </div>
 
-          {/* 3. 账号信息 */}
+          {/* 3. 账号与作者信息 */}
           <div className="about-card">
             <div className="about-card-title">
               <User size={16} className="about-icon text-blue" />
               <span>账号与作者信息</span>
             </div>
-            <div className="about-grid-two">
-              <div className="about-item-row">
+            <div className="about-info-grid">
+              <div className="about-info-row">
                 <span className="about-label">开发者账号：</span>
                 <a
                   href={authorUrl}
@@ -130,12 +130,13 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                     e.preventDefault();
                     handleOpenExternal(authorUrl);
                   }}
+                  title="访问作者 GitHub 主页"
                 >
                   <span>chunxvzhang</span>
                   <ExternalLink size={12} />
                 </a>
               </div>
-              <div className="about-item-row">
+              <div className="about-info-row">
                 <span className="about-label">研发团队：</span>
                 <span className="about-value">摸鱼Lab</span>
               </div>
@@ -148,13 +149,17 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               <Cpu size={16} className="about-icon text-green" />
               <span>运行环境与开源许可</span>
             </div>
-            <div className="about-grid-two">
-              <div className="about-item-row">
-                <Cpu size={14} className="text-muted" />
+            <div className="about-info-list">
+              <div className="about-info-row">
                 <span className="about-label">运行架构：</span>
-                <span className="about-value">Electron 42 • React 19 • Vite 7</span>
+                <div className="about-tech-badges">
+                  <span className="about-tech-tag">Electron 42</span>
+                  <span className="about-tech-tag">React 19</span>
+                  <span className="about-tech-tag">Vite 7</span>
+                  <span className="about-tech-tag">CodeMirror 6</span>
+                </div>
               </div>
-              <div className="about-item-row">
+              <div className="about-info-row">
                 <span className="about-label">开源许可：</span>
                 <span className="about-value">MIT License</span>
               </div>

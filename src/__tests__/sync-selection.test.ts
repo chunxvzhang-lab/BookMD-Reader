@@ -74,4 +74,21 @@ const b = 2;
     clearAllHighlights(container);
     expect(container.querySelectorAll(".sync-highlight-active").length).toBe(0);
   });
+
+  it("filters out ancestor containers when child elements match (e.g. list items)", () => {
+    container.innerHTML = `
+      <ol data-source-line="1" data-source-line-end="8">
+        <li data-source-line="1" data-source-line-end="1">Item 1</li>
+        <li data-source-line="2" data-source-line-end="2">Item 2</li>
+        <li data-source-line="3" data-source-line-end="3">Item 3</li>
+        <li data-source-line="4" data-source-line-end="4">Item 4</li>
+      </ol>
+    `;
+
+    // When selecting line 4, only li[data-source-line="4"] should match, NOT the outer ol
+    const matchesLine4 = findMatchingPreviewElements(container, 4, 4);
+    expect(matchesLine4.length).toBe(1);
+    expect(matchesLine4[0].tagName.toLowerCase()).toBe("li");
+    expect(matchesLine4[0].textContent).toBe("Item 4");
+  });
 });
