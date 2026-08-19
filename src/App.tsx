@@ -1054,7 +1054,7 @@ const tabLabels: Record<SidebarTab, string> = {
 };
 
 function resolveMermaidTheme(theme: ThemeMode): "default" | "dark" {
-  if (theme === "dark") return "dark";
+  if (theme === "dark" || theme === "twitter") return "dark";
   if (theme === "light") return "default";
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "default";
 }

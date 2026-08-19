@@ -9,13 +9,17 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Version-v1.3.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.3.0" />
+  <img src="https://img.shields.io/badge/Theme-21st.dev_Twitter-1D9BF0?style=flat-square&logo=twitter&logoColor=white" alt="21st.dev Twitter Theme" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
   <img src="https://img.shields.io/badge/Electron_42-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron 42" />
-  <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3" />
-  <img src="https://img.shields.io/badge/PowerShell-5391FE?style=flat-square&logo=powershell&logoColor=white" alt="PowerShell" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
   <img src="https://img.shields.io/badge/Team-摸鱼Lab-orange?style=flat-square" alt="摸鱼Lab" />
+</p>
+
+<p align="center">
+  <img src="screenshot.png" alt="BookMD Reader Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);" />
 </p>
 
 <p align="center">
@@ -29,18 +33,21 @@
 
 ---
 
-BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，采用现代设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
+BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入 **21st.dev Twitter** 现代极客设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
 
 ---
 
 ## 🌟 核心功能特性
 
-### 1. 现代视觉与交互系统（Dribbble & Antigravity 风格）
+### 1. 现代视觉与多主题交互系统（21st.dev Twitter & Dribbble 风格）
+- **全新 21st.dev Twitter 极客暗黑主题**：
+  - 参考 [21st.dev Twitter 主题](https://21st.dev/@serafimcloud/themes/twitter) 设计，采用 Lights Out 纯黑底色 (`#000000`)、电光蓝高亮 (`#1D9BF0`) 与发丝微边框 (`#2F3336`)。
+  - 支持 **☀️ 日光白 / 🌙 黑曜暗 / ✨ Twitter 极客暗黑** 三重主题一键平滑切换。
 - **左侧 Activity Bar 功能活动栏**：
   - 顶部品牌专属 BookMD 橙光书卷 Logo 徽章（摸鱼Lab 研发出品）。
   - 快捷切换：📁 **文档目录树**、📑 **文档大纲 (TOC)**、⭐ **精选书签**、🔍 **全文即时检索**。
   - 快速操作：➕ **新建文档** (`Ctrl+N`)、📂 **打开目录** (`Ctrl+Shift+O`)。
-  - 底部控制：微型三段式视图切换器、日/夜间主题无缝切换（☀️ 日光白 / 🌙 黑曜暗）。
+  - 底部控制：微型三段式视图切换器、多主题无缝切换（☀️ 日光白 / 🌙 黑曜暗 / ✨ Twitter 极客暗黑）。
 - **高质感卡片排版**：
   - 阅读正文采用悬浮卡片构型，具备抗重力柔和阴影与精细边框。
   - 重磅黑体标题搭配底部品牌强调色分割线，引用块渐变强调条，暗黑极客代码块。

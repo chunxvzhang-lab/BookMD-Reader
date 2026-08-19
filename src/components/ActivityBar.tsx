@@ -9,6 +9,7 @@ import {
   Moon,
   Search,
   Sun,
+  Sparkles,
   FileText,
   Info,
 } from "lucide-react";
@@ -48,11 +49,17 @@ export function ActivityBar({
   onOpenAbout,
   isDirty = false,
 }: ActivityBarProps) {
-  const isDarkMode =
-    theme === "dark" ||
-    (theme === "system" &&
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+  const getNextTheme = (current: ThemeMode): ThemeMode => {
+    if (current === "light") return "dark";
+    if (current === "dark") return "twitter";
+    return "light";
+  };
+
+  const getThemeTitle = (current: ThemeMode): string => {
+    if (current === "twitter") return "当前: Twitter 极客暗黑 (点击切换浅色)";
+    if (current === "dark") return "当前: 黑曜暗色 (点击切换 Twitter 极客暗黑)";
+    return "当前: 日光浅色 (点击切换黑曜暗色)";
+  };
 
   return (
     <nav className="activity-bar" aria-label="快捷工具栏">
@@ -178,12 +185,18 @@ export function ActivityBar({
 
         <button
           type="button"
-          className="activity-btn"
-          onClick={() => onThemeChange(isDarkMode ? "light" : "dark")}
-          title={`切换为${isDarkMode ? "浅色" : "深色"}主题`}
+          className={`activity-btn ${theme === "twitter" ? "theme-twitter-active" : ""}`}
+          onClick={() => onThemeChange(getNextTheme(theme))}
+          title={getThemeTitle(theme)}
           aria-label="切换主题"
         >
-          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+          {theme === "twitter" ? (
+            <Sparkles size={18} color="#1d9bf0" />
+          ) : theme === "dark" ? (
+            <Moon size={18} />
+          ) : (
+            <Sun size={18} />
+          )}
         </button>
       </div>
     </nav>

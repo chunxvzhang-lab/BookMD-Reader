@@ -42,6 +42,27 @@
   --selection: rgba(230, 138, 102, 0.24);
 }
 
+:root[data-theme="twitter"] {
+  --bg: #000000;
+  --surface: #0f1419;
+  --surface-2: #16181c;
+  --text: #e7e9ea;
+  --muted: #71767b;
+  --border: #2f3336;
+  --accent: #1d9bf0;
+  --accent-2: #1a8cd8;
+  --shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  --toolbar-surface: #0b0e14;
+  --sidebar-surface: #0a0d12;
+  --panel-surface: #0f1419;
+  --reader-canvas: #000000;
+  --control-hover: #181818;
+  --control-strong: #eff3f4;
+  --control-strong-text: #0f1419;
+  --code-surface: #16181c;
+  --selection: rgba(29, 155, 240, 0.28);
+}
+
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
     --bg: #1d1d1b;

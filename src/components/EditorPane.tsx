@@ -68,9 +68,11 @@ export function EditorPane({
 
   const isDarkMode =
     theme === "dark" ||
+    theme === "twitter" ||
     (theme === "system" &&
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+  const isTwitterTheme = theme === "twitter";
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -81,7 +83,7 @@ export function EditorPane({
           height: "100%",
           fontSize: `${14 * fontScale}px`,
           fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
-          backgroundColor: isDarkMode ? "#0f1520" : "#ffffff",
+          backgroundColor: isTwitterTheme ? "#000000" : isDarkMode ? "#0f1520" : "#ffffff",
           color: isDarkMode ? "#f1f5f9" : "#0f172a",
         },
         ".cm-scroller": {
@@ -217,12 +219,12 @@ export function EditorPane({
       {
         "&": {
           height: "100%",
-          backgroundColor: isDarkMode ? "#0f1520" : "#ffffff",
+          backgroundColor: isTwitterTheme ? "#000000" : isDarkMode ? "#0f1520" : "#ffffff",
           color: isDarkMode ? "#f1f5f9" : "#0f172a",
         },
         ".cm-gutters": {
-          backgroundColor: isDarkMode ? "#0b1018" : "#f1f5f9",
-          color: isDarkMode ? "#64748b" : "#94a3b8",
+          backgroundColor: isTwitterTheme ? "#0a0d12" : isDarkMode ? "#0b1018" : "#f1f5f9",
+          color: isDarkMode ? "#71767b" : "#94a3b8",
           borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
         },
       },
@@ -231,7 +233,7 @@ export function EditorPane({
     view.dispatch({
       effects: themeCompartment.current.reconfigure(isDarkMode ? [oneDark, customBaseTheme] : [customBaseTheme]),
     });
-  }, [isDarkMode]);
+  }, [isDarkMode, isTwitterTheme]);
 
   // Update font scale dynamically
   useEffect(() => {

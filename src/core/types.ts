@@ -1,5 +1,5 @@
 export type SidebarTab = "toc" | "bookmarks" | "search";
-export type ThemeMode = "system" | "light" | "dark";
+export type ThemeMode = "system" | "light" | "dark" | "twitter";
 export type EditorViewMode = "read" | "split" | "source";
 
 export type DiskVersion = {
