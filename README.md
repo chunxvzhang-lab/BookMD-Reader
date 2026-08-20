@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.4.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.4.0" />
+  <img src="https://img.shields.io/badge/Version-v1.4.2-1D9BF0?style=flat-square&logo=github" alt="Version 1.4.2" />
   <img src="https://img.shields.io/badge/Theme-Geek_Dark-1D9BF0?style=flat-square" alt="Geek Dark Theme" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
@@ -33,7 +33,7 @@
 
 ---
 
-BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入现代极客设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
+BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入现代极客设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、界面分栏自由拖拽缩放、正文预览行号显示、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
 
 ---
 
@@ -43,14 +43,15 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 - **全新极客暗黑主题**：
   - 采用 Lights Out 纯黑底色 (`#000000`)、电光蓝高亮 (`#1D9BF0`) 与发丝微边框 (`#2F3336`)。
   - 支持 **☀️ 日光浅色 / ✨ 极客暗黑** 双重主题一键平滑切换。
+- **📐 界面多栏边界自由鼠标拖拽调整（Resizable Splitters）**：
+  - **文档目录栏**（`ChapterList`，160px ~ 480px）、**大纲/书签/搜索侧栏**（`side-panel`，180px ~ 520px）以及**分屏模式下编辑器与预览窗口**（`DocumentWorkspace`，15% ~ 85%）均支持鼠标自由拖拽调整。
+  - 分栏处配备专属 `.layout-resizer` 分隔线，鼠标悬停即变双向调整箭头（`col-resize`），拖拽时光晕高亮反馈，并锁定文字划选（`user-select: none`），体验极致丝滑。
+  - 用户自定义分栏宽度与比例自动保存至本地 `localStorage`，重启软件自动恢复。
 - **左侧 Activity Bar 功能活动栏**：
   - 顶部品牌专属 BookMD 橙光书卷 Logo 徽章（摸鱼Lab 研发出品）。
   - 快捷切换：📁 **文档目录树**、📑 **文档大纲 (TOC)**、⭐ **精选书签**、🔍 **全文即时检索**。
   - 快速操作：➕ **新建文档** (`Ctrl+N`)、📂 **打开目录** (`Ctrl+Shift+O`)。
   - 底部控制：微型三段式视图切换器、精选双主题无缝切换（☀️ 日光浅色 / ✨ 极客暗黑）。
-- **高质感卡片排版**：
-  - 阅读正文采用悬浮卡片构型，具备抗重力柔和阴影与精细边框。
-  - 重磅黑体标题搭配底部品牌强调色分割线，引用块渐变强调条，暗黑极客代码块。
 - **底部实时状态信息栏（Footer Dock Bar）**：
   - **保存状态徽章**：绿色已保存（`● 已保存`）、橙色修改中（`● 未保存`）、青色只读标识。
   - **实时文档统计**：字数、词数统计及阅读预估时长（例如 `2,450 字符 • 约 6 分钟阅读`）。
@@ -62,6 +63,10 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
   - 📖 **阅读模式**：纯净无干扰的书籍沉浸式排版阅读。
   - 🪟 **分屏模式**：左侧 CodeMirror 6 源码编辑、右侧实时渲染预览；支持鼠标自由拖拽分割线调整比例，在窄屏（`<980px`）下自适应垂直分屏。
   - 💻 **源码模式**：全屏纯源码极客专注编写。
+- **🔢 正文预览区行号自动显示（Automatic Preview Line Numbers）**：
+  - 利用 Markdown 编译阶段 AST 元数据 `data-source-line`，在正文标题、段落、列表项、代码块、引用块及表格左侧槽位自动显示源码行号。
+  - 采用等宽字体（`JetBrains Mono` / `Consolas`）右对齐排版，鼠标悬停该文段时行号自动点亮为电光蓝（`#1d9bf0`），与源码侧行号精准对齐。
+  - 顶部工具栏提供快捷显隐切换按钮（`#`），随心一键切换开启或关闭。
 - **双向高精度同步滚动（Synchronized Scrolling）**：
   - 基于 AST 块级源码行号标记（`data-source-line`）与分段线性插值算法，彻底消除富文本与源码高度差异产生的滚动漂移。
   - 支持编辑器顶部一键开启/关闭同步滚动胶囊徽章（`🔗 同步滚动`）。
@@ -73,8 +78,11 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 - **单文件与多层级文档库**：打开单个 `.md` 文件，或载入整套技术文档/书籍文件夹自动构建树状目录。
 - **稳定章节标识符**：基于相对路径哈希生成稳定 ID，文件夹增删改或文档重命名不丢失已有书签与阅读进度。
 - **动态大纲随动高亮**：正文滚动时多级大纲实时高亮当前小节，点击大纲平滑跳转。
-- **全文即时检索**：关键词上下文高亮预览，点击一键直达。
+- **全文即时检索与卡片聚合**：
+  - 同一文段多次命中聚合为 1 张卡片，展示行号徽标（如 `L4`）、关键词精准高亮匹配、匹配总数与一键清空。
+  - 点击卡片精准平滑跳转定位，正文触发 1.8 秒专属呼吸电光蓝微光聚焦（`searchPulse`）。
 - **丰富富文本渲染**：完美支持 GFM 表格、任务清单、Front Matter 元数据标签、KaTeX 数学公式与 Mermaid 动态图表。
+- **🖥️ 全屏沉浸模式**：支持 `F11` 快捷键沉浸全屏阅读写作与 `Esc` 退出。
 
 ### 4. 数据安全与防丢稿守卫
 - **原子事务落盘保存**：同目录临时文件写入 + `fsync` 物理落盘 + 原子重命名替换，杜绝断电或异常退出的文件截断损坏。
@@ -96,6 +104,7 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 | `Ctrl + \` | **折叠/展开目录栏** | 快捷切换左侧文件目录树显示状态 |
 | `Ctrl + F` | **搜索内容** | 呼出右侧搜索面板并快速定位关键词 |
 | `Ctrl + B` | **添加书签** | 快速记录当前小节与阅读百分比 |
+| `F11` | **全屏模式** | 切换沉浸式全屏阅读/写作（支持 `Esc` 退出） |
 | `Alt + ←` | **上一篇** | 切换到上一章节（未保存修改时自动拦截提醒） |
 | `Alt + →` | **下一篇** | 切换到下一章节（未保存修改时自动拦截提醒） |
 
@@ -106,10 +115,12 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
+- **文件**：`BookMD-Reader-1.4.2.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版
-- **直接运行**：`BookMD-Reader-win-x64-portable/BookMD Reader.exe`
+- **文件**：`BookMD-Reader-win-x64-portable.zip`
+- **直接运行**：解压后双击 `BookMD Reader.exe`
 - **特点**：解压即用，无需配置 Node.js、Electron 等任何运行时；支持右键"打开方式"关联 `.md` 文件。
 
 ---
@@ -174,7 +185,7 @@ src/
   │     ├── EditorPane.tsx          # CodeMirror 6 编辑器集成与选区监听
   │     ├── ReaderPane.tsx          # 渲染阅读面板与富文本交互
   │     ├── DocumentWorkspace.tsx   # 阅读/分屏/源码工作区与拖拽分割调度
-  │     ├── Toolbar.tsx             # 顶部工具栏（章节标题、保存、大纲/目录控制、关于）
+  │     ├── Toolbar.tsx             # 顶部工具栏（章节标题、保存、大纲/目录控制、行号切换、关于）
   │     ├── ChapterList.tsx         # 目录树列表
   │     ├── TocPanel.tsx            # 多级大纲侧栏
   │     ├── BookmarkPanel.tsx       # 书签侧栏
@@ -196,6 +207,7 @@ src/
         └── types.ts                # 全局核心类型定义
 scripts/
   ├── package-desktop.cjs       # Windows 便携版打包脚本
+  ├── publish_github_release.py # GitHub Release 自动化发布与资源上传脚本
   ├── build-msi.ps1             # WiX / Electron-Builder MSI 安装包自动化脚本
   ├── build-msi.cjs             # WiX MSI 编译链接配置
   └── extract-wix.cjs           # WiX 工具链环境解压准备脚本
@@ -209,12 +221,14 @@ release/                        # 便携版与 MSI 安装包发布输出目录
 ### Key Features
 
 - **Activity Bar & Dock Architecture**: Modern activity navigation rail with custom BookMD logo, sidebar panels (Directory Tree, TOC Outline, Bookmarks, and Full-Text Search), view mode switcher, and light/dark theme toggles.
+- **Resizable Layout Splitters**: Drag and resize the directory sidebar (160px~480px), side panels (180px~520px), and split editor/preview ratio (15%~85%) freely with persistent layout state saved in `localStorage`.
+- **Automatic Preview Line Numbers**: Zero-runtime-overhead gutter line numbering powered by Markdown AST `data-source-line` attributes with hover highlights and top bar toggle button (`#`).
 - **Three Editing & Reading Modes**: Read mode (clean reader), Split mode (side-by-side editing with live preview & draggable splitter, vertical responsive wrap on small screens), and Source mode (fullscreen code editor).
-- **Bidirectional Synchronized Scrolling & Highlighting**: Line-mapped piecewise linear keyframe interpolation using AST `data-source-line` attributes, paired with synchronized selection highlighting that smoothly scrolls highlighted content to the upper reading zone.
+- **Bidirectional Synchronized Scrolling & Selection Highlighting**: Line-mapped piecewise linear keyframe interpolation using AST `data-source-line` attributes, paired with frame-scheduled selection highlighting and smooth upper reading zone alignment.
 - **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, auto-closing brackets, and undo/redo history.
 - **Safe Atomic Saving & Conflict Detection**: Same-directory temporary write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings. Automatically detects external modifications before writing.
 - **Status Bar Dock**: Real-time word count, character count, estimated read time, dirty status indicator badge, line ending format, and encoding.
-- **Distribution Packages**: Windows MSI installer (`BookMD-Reader-1.2.0.msi`) and zero-dependency portable package (`BookMD-Reader-win-x64-portable.zip`).
+- **Distribution Packages**: Windows MSI installer (`BookMD-Reader-1.4.2.msi`) and zero-dependency portable package (`BookMD-Reader-win-x64-portable.zip`).
 
 ---
 
