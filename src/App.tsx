@@ -134,29 +134,94 @@ export function App() {
     container.scrollTo({ top: Math.max(0, max * ratio), behavior: "smooth" });
   }, []);
 
+  const clearSearchHighlights = useCallback(() => {
+    const container = readerRef.current;
+    if (!container) return;
+    const prevHighlights = container.querySelectorAll(".search-highlight-active");
+    prevHighlights.forEach((el) => el.classList.remove("search-highlight-active"));
+
+    const marks = container.querySelectorAll("mark.search-keyword-match");
+    marks.forEach((mark) => {
+      const parent = mark.parentNode;
+      if (parent) {
+        parent.replaceChild(document.createTextNode(mark.textContent || ""), mark);
+        parent.normalize();
+      }
+    });
+  }, []);
+
+  const highlightKeywordsInNode = useCallback((root: HTMLElement, query: string) => {
+    if (!query || !query.trim()) return;
+    const q = query.trim();
+    const qLower = q.toLowerCase();
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const textNodes: Text[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      if (
+        node.parentElement?.tagName.toLowerCase() === "mark" &&
+        node.parentElement.classList.contains("search-keyword-match")
+      ) {
+        continue;
+      }
+      if (node.nodeValue && node.nodeValue.toLowerCase().includes(qLower)) {
+        textNodes.push(node as Text);
+      }
+    }
+
+    for (const textNode of textNodes) {
+      const parent = textNode.parentNode;
+      if (!parent) continue;
+      const text = textNode.nodeValue || "";
+      const textLower = text.toLowerCase();
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      let idx = 0;
+
+      while ((idx = textLower.indexOf(qLower, lastIndex)) !== -1) {
+        if (idx > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, idx)));
+        }
+        const mark = document.createElement("mark");
+        mark.className = "search-keyword-match";
+        mark.textContent = text.slice(idx, idx + q.length);
+        fragment.appendChild(mark);
+        lastIndex = idx + q.length;
+      }
+
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+
+      parent.replaceChild(fragment, textNode);
+    }
+  }, []);
+
   const handleSearchJump = useCallback((result: SearchResult) => {
     setActiveSearchMatchId(result.id ?? `match-${result.index}`);
     const container = readerRef.current;
     if (!container) return;
 
-    // Clear previous search highlights
-    const prevHighlights = container.querySelectorAll(".search-highlight-active");
-    prevHighlights.forEach((el) => {
-      el.classList.remove("search-highlight-active");
-    });
+    // Clear previous search highlights & marks
+    clearSearchHighlights();
 
     let targetElement: HTMLElement | null = null;
 
     // 1. Try finding by source line number if available
     if (result.lineNumber) {
       const lineElements = Array.from(container.querySelectorAll<HTMLElement>("[data-source-line]"));
+      const targetStart = result.lineNumber;
+      const targetEnd = result.lineEndNumber ?? targetStart;
+
       const matched = lineElements.filter((el) => {
         const start = parseInt(el.getAttribute("data-source-line") || "0", 10);
         const end = parseInt(el.getAttribute("data-source-line-end") || String(start), 10);
-        return result.lineNumber! >= start && result.lineNumber! <= end;
+        return Math.max(targetStart, start) <= Math.min(targetEnd, end);
       });
+
       if (matched.length > 0) {
-        // Pick the innermost matching element to avoid container conflicts
+        // Pick the innermost matching block to accurately highlight the cohesive paragraph/element
         targetElement = matched.find((el) => !matched.some((other) => other !== el && el.contains(other))) || matched[0];
       }
     }
@@ -176,7 +241,11 @@ export function App() {
     }
 
     if (targetElement) {
+      // Highlight the entire block / paragraph (大片对应文段)
       targetElement.classList.add("search-highlight-active");
+
+      // Highlight all matching keywords inside the block
+      highlightKeywordsInNode(targetElement, searchQuery);
 
       // Smoothly scroll element to comfortable upper-middle view
       const containerRect = container.getBoundingClientRect();
@@ -195,7 +264,7 @@ export function App() {
     } else {
       jumpToRatio(result.index / Math.max(1, renderedChapter?.plainText.length ?? 1));
     }
-  }, [jumpToRatio, renderedChapter, searchQuery]);
+  }, [clearSearchHighlights, highlightKeywordsInNode, jumpToRatio, renderedChapter, searchQuery]);
 
   // Safe navigation execution after guard passes
   const executeAction = useCallback(
@@ -1042,6 +1111,9 @@ export function App() {
                   onQueryChange={(q) => {
                     setSearchQuery(q);
                     setActiveSearchMatchId(null);
+                    if (!q.trim()) {
+                      clearSearchHighlights();
+                    }
                   }}
                   onJump={handleSearchJump}
                 />

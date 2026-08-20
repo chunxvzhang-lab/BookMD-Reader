@@ -792,13 +792,29 @@ button {
 /* Search Jump Highlight Overrides */
 .markdown-body .search-highlight-active {
   background: rgba(29, 155, 240, 0.18) !important;
-  box-shadow: 0 0 0 2px #1d9bf0, 0 4px 20px rgba(29, 155, 240, 0.35) !important;
-  border-radius: 6px !important;
+  box-shadow: 0 0 0 2px #1d9bf0, 0 6px 26px rgba(29, 155, 240, 0.38) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .markdown-body li.search-highlight-active {
-  padding-left: 6px;
-  padding-right: 6px;
+  padding: 4px 8px !important;
   margin-left: -4px;
+}
+
+.markdown-body pre.search-highlight-active {
+  padding: 14px 16px !important;
+}
+
+.markdown-body mark.search-keyword-match {
+  background: #1d9bf0 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+  box-shadow: 0 0 8px rgba(29, 155, 240, 0.6) !important;
+  display: inline-block;
 }
 

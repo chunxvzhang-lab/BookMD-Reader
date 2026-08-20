@@ -120,4 +120,53 @@ describe("electron/markdown-files.cjs", () => {
     expect(results[1].matchedText).toBe("react");
     expect(results[1].excerpt).toContain("Third line with another react keyword");
   });
+
+  it("groups multiple keyword matches within the same paragraph into a single card with matchCountInBlock", async () => {
+    const { findInChapter } = await import("../services/markdown");
+    const sourceMarkdown = `# Guide
+
+BookMD is fast. With BookMD, you can read markdown. Yes, BookMD is great!
+
+## Next Section
+
+Another mention of BookMD here.
+`;
+    const headings = [
+      { id: "guide", text: "Guide", level: 1 },
+      { id: "next-section", text: "Next Section", level: 2 },
+    ];
+    const results = findInChapter("BookMD", "Guide BookMD is fast...", headings, sourceMarkdown);
+
+    // Should only have 2 cards: 1 for the first paragraph (3 matches inside), 1 for the second paragraph
+    expect(results.length).toBe(2);
+    expect(results[0].title).toBe("Guide");
+    expect(results[0].lineNumber).toBe(3);
+    expect(results[0].matchCountInBlock).toBe(3);
+    expect(results[0].excerpt).toContain("BookMD is fast");
+
+    expect(results[1].title).toBe("Next Section");
+    expect(results[1].lineNumber).toBe(7);
+    expect(results[1].matchCountInBlock).toBe(1);
+  });
+
+  it("groups matches inside a fenced code block into a single card", async () => {
+    const { findInChapter } = await import("../services/markdown");
+    const sourceMarkdown = `# Code Example
+
+\`\`\`typescript
+const electron = require('electron');
+function initElectron() {
+  console.log('electron app ready');
+}
+\`\`\`
+`;
+    const headings = [{ id: "code-example", text: "Code Example", level: 1 }];
+    const results = findInChapter("electron", "Code Example const electron...", headings, sourceMarkdown);
+
+    expect(results.length).toBe(1);
+    expect(results[0].title).toBe("Code Example");
+    expect(results[0].lineNumber).toBe(3);
+    expect(results[0].lineEndNumber).toBe(8);
+    expect(results[0].matchCountInBlock).toBe(4);
+  });
 });

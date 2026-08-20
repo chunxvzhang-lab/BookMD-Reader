@@ -77,9 +77,11 @@ export type SearchResult = {
   title: string;
   excerpt: string;
   lineNumber?: number;
+  lineEndNumber?: number;
   lineOffset?: number;
   query?: string;
   matchedText?: string;
+  matchCountInBlock?: number;
 };
 
 export type ChapterSource = {

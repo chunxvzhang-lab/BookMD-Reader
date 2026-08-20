@@ -92,12 +92,19 @@ export function SearchPanel({
             >
               <div className="search-result-header">
                 <strong>{result.title}</strong>
-                {result.lineNumber ? (
-                  <span className="search-line-tag">
-                    <Hash size={10} style={{ marginRight: 2 }} />
-                    L{result.lineNumber}
-                  </span>
-                ) : null}
+                <div className="search-result-meta-row">
+                  {result.matchCountInBlock && result.matchCountInBlock > 1 ? (
+                    <span className="search-block-count-tag" title={`该文段中包含 ${result.matchCountInBlock} 处匹配`}>
+                      {result.matchCountInBlock} 处匹配
+                    </span>
+                  ) : null}
+                  {result.lineNumber ? (
+                    <span className="search-line-tag">
+                      <Hash size={10} style={{ marginRight: 2 }} />
+                      L{result.lineNumber}{result.lineEndNumber && result.lineEndNumber > result.lineNumber ? `-${result.lineEndNumber}` : ""}
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <span className="search-result-excerpt">
                 {renderHighlightedText(result.excerpt, query)}

@@ -180,6 +180,124 @@ export async function renderMarkdown(source: string, baseUrl = window.location.h
   };
 }
 
+type SourceBlock = {
+  startLine: number;
+  endLine: number;
+  text: string;
+};
+
+function parseSourceBlocks(sourceMarkdown: string): SourceBlock[] {
+  const lines = sourceMarkdown.split("\n");
+  const blocks: SourceBlock[] = [];
+  let inCodeBlock = false;
+  let currentBlockLines: string[] = [];
+  let currentStartLine = 1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const lineNumber = i + 1;
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Check code fences
+    if (trimmed.startsWith("```")) {
+      if (!inCodeBlock) {
+        // Flush previous block
+        if (currentBlockLines.length > 0) {
+          blocks.push({
+            startLine: currentStartLine,
+            endLine: lineNumber - 1,
+            text: currentBlockLines.join("\n"),
+          });
+          currentBlockLines = [];
+        }
+        inCodeBlock = true;
+        currentStartLine = lineNumber;
+        currentBlockLines.push(line);
+      } else {
+        // Closing code fence
+        currentBlockLines.push(line);
+        blocks.push({
+          startLine: currentStartLine,
+          endLine: lineNumber,
+          text: currentBlockLines.join("\n"),
+        });
+        currentBlockLines = [];
+        inCodeBlock = false;
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      currentBlockLines.push(line);
+      continue;
+    }
+
+    // Blank line indicates paragraph boundary
+    if (trimmed === "") {
+      if (currentBlockLines.length > 0) {
+        blocks.push({
+          startLine: currentStartLine,
+          endLine: lineNumber - 1,
+          text: currentBlockLines.join("\n"),
+        });
+        currentBlockLines = [];
+      }
+      continue;
+    }
+
+    // Headings are independent single-line blocks
+    if (trimmed.startsWith("#")) {
+      if (currentBlockLines.length > 0) {
+        blocks.push({
+          startLine: currentStartLine,
+          endLine: lineNumber - 1,
+          text: currentBlockLines.join("\n"),
+        });
+        currentBlockLines = [];
+      }
+      blocks.push({
+        startLine: lineNumber,
+        endLine: lineNumber,
+        text: line,
+      });
+      continue;
+    }
+
+    // Regular line in paragraph/list/table
+    if (currentBlockLines.length === 0) {
+      currentStartLine = lineNumber;
+    }
+    currentBlockLines.push(line);
+  }
+
+  if (currentBlockLines.length > 0) {
+    blocks.push({
+      startLine: currentStartLine,
+      endLine: lines.length,
+      text: currentBlockLines.join("\n"),
+    });
+  }
+
+  return blocks;
+}
+
+function nearestHeadingForLine(lines: string[], headings: Heading[], targetLine: number): Heading | undefined {
+  for (let i = targetLine - 1; i >= 0; i--) {
+    const line = lines[i].trim();
+    if (line.startsWith("#")) {
+      const headingText = line.replace(/^#+\s*/, "").trim();
+      const matchedHeading = headings.find((h) => h.text.toLowerCase() === headingText.toLowerCase());
+      if (matchedHeading) return matchedHeading;
+      return {
+        id: uniqueSlug(headingText, new Map()),
+        text: headingText,
+        level: line.match(/^#+/)?.[0].length ?? 1,
+      };
+    }
+  }
+  return headings[0];
+}
+
 export function findInChapter(
   query: string,
   plainText: string,
@@ -193,53 +311,75 @@ export function findInChapter(
 
   if (sourceMarkdown) {
     const lines = sourceMarkdown.split("\n");
-    let matchCount = 0;
-    for (let lineIdx = 0; lineIdx < lines.length && results.length < 50; lineIdx++) {
-      const lineText = lines[lineIdx];
-      const lineLower = lineText.toLowerCase();
-      let pos = 0;
-      while ((pos = lineLower.indexOf(qLower, pos)) !== -1 && results.length < 50) {
-        const start = Math.max(0, pos - 40);
-        const end = Math.min(lineText.length, pos + q.length + 50);
-        const heading = nearestHeadingForOffset(headings, plainText, matchCount * 10);
-        results.push({
-          id: `match-${lineIdx + 1}-${pos}`,
-          index: pos,
-          matchIndex: matchCount++,
-          lineNumber: lineIdx + 1,
-          lineOffset: pos,
-          query: q,
-          title: heading?.text ?? `第 ${lineIdx + 1} 行`,
-          headingId: heading?.id,
-          excerpt: compactWhitespace(lineText.slice(start, end)),
-          matchedText: lineText.slice(pos, pos + q.length),
-        });
-        pos += Math.max(1, q.length);
+    const blocks = parseSourceBlocks(sourceMarkdown);
+    for (let bIdx = 0; bIdx < blocks.length && results.length < 50; bIdx++) {
+      const block = blocks[bIdx];
+      const blockText = block.text;
+      const blockLower = blockText.toLowerCase();
+
+      const firstPos = blockLower.indexOf(qLower);
+      if (firstPos === -1) continue;
+
+      // Count occurrences in this block
+      let occurrences = 0;
+      let p = 0;
+      while ((p = blockLower.indexOf(qLower, p)) !== -1) {
+        occurrences++;
+        p += Math.max(1, q.length);
       }
+
+      const heading = nearestHeadingForLine(lines, headings, block.startLine);
+      const start = Math.max(0, firstPos - 40);
+      const end = Math.min(blockText.length, firstPos + q.length + 100);
+
+      results.push({
+        id: `block-${block.startLine}-${block.endLine}`,
+        index: firstPos,
+        matchIndex: results.length,
+        lineNumber: block.startLine,
+        lineEndNumber: block.endLine,
+        lineOffset: firstPos,
+        query: q,
+        title: heading?.text ?? (block.startLine === block.endLine ? `第 ${block.startLine} 行` : `第 ${block.startLine}-${block.endLine} 行`),
+        headingId: heading?.id,
+        excerpt: compactWhitespace(blockText.length > 180 ? blockText.slice(start, end) : blockText),
+        matchedText: blockText.slice(firstPos, firstPos + q.length),
+        matchCountInBlock: occurrences,
+      });
     }
     if (results.length > 0) return results;
   }
 
-  const lower = plainText.toLowerCase();
-  let cursor = 0;
-  let matchCount = 0;
-  while (results.length < 50) {
-    const index = lower.indexOf(qLower, cursor);
-    if (index === -1) break;
-    const start = Math.max(0, index - 70);
-    const end = Math.min(plainText.length, index + q.length + 90);
-    const heading = nearestHeadingForOffset(headings, plainText, index);
-    results.push({
-      id: `match-${matchCount}`,
-      index,
-      matchIndex: matchCount++,
-      headingId: heading?.id,
-      query: q,
-      title: heading?.text ?? "章节匹配",
-      excerpt: compactWhitespace(plainText.slice(start, end)),
-      matchedText: plainText.slice(index, index + q.length),
-    });
-    cursor = index + Math.max(1, q.length);
+  const paragraphs = plainText.split(/\n+/);
+  let globalOffset = 0;
+  for (let pIdx = 0; pIdx < paragraphs.length && results.length < 50; pIdx++) {
+    const para = paragraphs[pIdx].trim();
+    if (!para) continue;
+    const paraLower = para.toLowerCase();
+    const firstPos = paraLower.indexOf(qLower);
+    if (firstPos !== -1) {
+      let occurrences = 0;
+      let p = 0;
+      while ((p = paraLower.indexOf(qLower, p)) !== -1) {
+        occurrences++;
+        p += Math.max(1, q.length);
+      }
+      const heading = nearestHeadingForOffset(headings, plainText, globalOffset + firstPos);
+      const start = Math.max(0, firstPos - 40);
+      const end = Math.min(para.length, firstPos + q.length + 100);
+      results.push({
+        id: `para-${pIdx}`,
+        index: globalOffset + firstPos,
+        matchIndex: results.length,
+        headingId: heading?.id,
+        query: q,
+        title: heading?.text ?? "章节匹配",
+        excerpt: compactWhitespace(para.length > 180 ? para.slice(start, end) : para),
+        matchedText: para.slice(firstPos, firstPos + q.length),
+        matchCountInBlock: occurrences,
+      });
+    }
+    globalOffset += paragraphs[pIdx].length + 1;
   }
   return results;
 }
