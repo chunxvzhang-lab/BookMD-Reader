@@ -54,7 +54,7 @@ def main():
     font_badge = get_font(18, bold=True)
 
     # Top Central Floating Pill
-    pill_w, pill_h = 760, 48
+    pill_w, pill_h = 820, 48
     pill_x = (W - pill_w) // 2
     pill_y = 40
     
@@ -68,17 +68,17 @@ def main():
     )
     # Glow dot
     draw.ellipse([pill_x + 22, pill_y + 18, pill_x + 34, pill_y + 30], fill=(29, 155, 240, 255))
-    draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.4.0", fill=(231, 233, 234), font=font_pill_title)
-    draw.text((pill_x + 335, pill_y + 12), "•  全屏沉浸 & 悬浮微动效  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
+    draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.4.2", fill=(231, 233, 234), font=font_pill_title)
+    draw.text((pill_x + 335, pill_y + 12), "•  自由拖拽分栏 & 正文预览行号  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
 
     # Left & Right Top Badges
-    draw_rounded_rect(draw, [120, 42, 380, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
+    draw_rounded_rect(draw, [120, 42, 390, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
     draw.ellipse([140, 60, 150, 70], fill=(29, 155, 240, 255))
-    draw.text((160, 52), "零延迟 AST 同步滚动", fill=(29, 155, 240), font=font_badge)
+    draw.text((160, 52), "📐 界面分栏自由拖拽", fill=(29, 155, 240), font=font_badge)
 
-    draw_rounded_rect(draw, [W - 390, 42, W - 120, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
-    draw.ellipse([W - 370, 60, W - 360, 70], fill=(74, 222, 128, 255))
-    draw.text((W - 350, 52), "事务级原子落盘保护", fill=(74, 222, 128), font=font_badge)
+    draw_rounded_rect(draw, [W - 400, 42, W - 120, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
+    draw.ellipse([W - 380, 60, W - 370, 70], fill=(74, 222, 128, 255))
+    draw.text((W - 360, 52), "🔢 正文预览行号显示", fill=(74, 222, 128), font=font_badge)
 
     # 3. Main Showcase Window Mockup (Twitter Lights Out #000000 + Surface #0f1419 + Border #2f3336)
     win_x = 120
@@ -140,26 +140,38 @@ def main():
     draw.text((doc_pill_x + 22, win_y + 15), "02-AST双向零延迟同步.md", fill=(231, 233, 234), font=font_tab)
     draw.text((doc_pill_x + 360, win_y + 16), "[极客暗黑版]", fill=(29, 155, 240), font=font_subtab)
 
-    # Right Window Control Buttons (View Switcher Pills)
-    v_pill_x = win_x + win_w - 260
+    # Right Window Control Buttons (View Switcher Pills + Hash line number button)
+    v_pill_x = win_x + win_w - 320
+    # Line number toggle button in titlebar
     draw_rounded_rect(
         draw,
-        [v_pill_x, win_y + 10, v_pill_x + 230, win_y + title_h - 10],
+        [v_pill_x, win_y + 10, v_pill_x + 38, win_y + title_h - 10],
+        radius=14,
+        fill=(29, 155, 240, 40),
+        outline=(29, 155, 240, 160),
+        width=1
+    )
+    draw.text((v_pill_x + 13, win_y + 14), "#", fill=(29, 155, 240), font=get_font(17, bold=True))
+
+    v_switch_x = v_pill_x + 50
+    draw_rounded_rect(
+        draw,
+        [v_switch_x, win_y + 10, v_switch_x + 230, win_y + title_h - 10],
         radius=18,
         fill=(22, 24, 28, 255),
         outline=(47, 51, 54, 255),
         width=1
     )
-    draw.text((v_pill_x + 20, win_y + 16), "阅读", fill=(113, 118, 123), font=font_subtab)
+    draw.text((v_switch_x + 20, win_y + 16), "阅读", fill=(113, 118, 123), font=font_subtab)
     # Active Split pill
     draw_rounded_rect(
         draw,
-        [v_pill_x + 72, win_y + 12, v_pill_x + 154, win_y + title_h - 12],
+        [v_switch_x + 72, win_y + 12, v_switch_x + 154, win_y + title_h - 12],
         radius=14,
         fill=(29, 155, 240, 255)
     )
-    draw.text((v_pill_x + 90, win_y + 16), "分屏", fill=(255, 255, 255), font=font_tab)
-    draw.text((v_pill_x + 175, win_y + 16), "源码", fill=(113, 118, 123), font=font_subtab)
+    draw.text((v_switch_x + 90, win_y + 16), "分屏", fill=(255, 255, 255), font=font_tab)
+    draw.text((v_switch_x + 175, win_y + 16), "源码", fill=(113, 118, 123), font=font_subtab)
 
     # 3.2 Activity Bar (Leftmost Column, 68px)
     act_w = 68
@@ -248,13 +260,20 @@ def main():
         else:
             draw.text((side_x + 22, ty), label, fill=(231, 233, 234) if is_folder else (160, 166, 172), font=font_side_item)
 
-    # 3.4 Main Workspace (Split View: Left CodeMirror 6 + Right Reader Canvas)
-    ws_x = side_x + side_w
+    # 3.4 Main Workspace (Split View: Left CodeMirror 6 + Right Reader Canvas + Draggable Splitter)
+    # Resizer 1: Between Sidebar and Workspace
+    resizer1_x = side_x + side_w
+    draw.rectangle([resizer1_x, act_y, resizer1_x + 6, act_y + act_h], fill=(22, 27, 34, 255))
+    draw.line([resizer1_x + 3, act_y, resizer1_x + 3, act_y + act_h], fill=(47, 51, 54, 255), width=1)
+    # Resizer handle glow in middle
+    mid_y = act_y + act_h // 2
+    draw_rounded_rect(draw, [resizer1_x + 1, mid_y - 20, resizer1_x + 5, mid_y + 20], radius=2, fill=(29, 155, 240, 220))
+
+    ws_x = resizer1_x + 6
     ws_w = win_x + win_w - ws_x
     ws_y = act_y
     ws_h = act_h
     editor_w = int(ws_w * 0.44)
-    reader_w = ws_w - editor_w
 
     # 3.4.1 Left Editor Workspace (CodeMirror 6)
     ed_x = ws_x
@@ -318,21 +337,35 @@ def main():
         # Code text
         draw.text((ed_x + 58, cy), text, fill=color, font=font_code_bold if is_active else font_code)
 
-    # 3.4.2 Right Reader Workspace (Rich Markdown Preview)
-    rd_x = ed_x + editor_w
+    # Resizer 2: Between Editor and Reader (Splitter Bar)
+    resizer2_x = ed_x + editor_w
+    draw.rectangle([resizer2_x, ws_y, resizer2_x + 6, ws_y + ws_h], fill=(22, 27, 34, 255))
+    draw.line([resizer2_x + 3, ws_y, resizer2_x + 3, ws_y + ws_h], fill=(47, 51, 54, 255), width=1)
+    # Active splitter glowing handle
+    draw_rounded_rect(draw, [resizer2_x + 1, mid_y - 25, resizer2_x + 5, mid_y + 25], radius=2, fill=(29, 155, 240, 255))
+
+    # 3.4.2 Right Reader Workspace (Rich Markdown Preview + Preview Line Numbers Gutter)
+    rd_x = resizer2_x + 6
+    reader_w = win_x + win_w - rd_x
     draw.rectangle([rd_x, ws_y, rd_x + reader_w, ws_y + ws_h], fill=(15, 20, 25, 255))
 
     # Reader Tab/Toolbar
     draw.rectangle([rd_x, ws_y, rd_x + reader_w, ws_y + etab_h], fill=(11, 14, 20, 255))
     draw.line([rd_x, ws_y + etab_h, rd_x + reader_w, ws_y + etab_h], fill=(47, 51, 54, 255), width=1)
-    draw.text((rd_x + 24, ws_y + 11), "渲染预览 (AST 双向联动)", fill=(231, 233, 234), font=get_font(14, bold=True))
-    draw.text((rd_x + reader_w - 180, ws_y + 11), "字号: 100% • UTF-8", fill=(113, 118, 123), font=get_font(13))
+    draw.text((rd_x + 24, ws_y + 11), "渲染预览 (正文行号自动显示)", fill=(231, 233, 234), font=get_font(14, bold=True))
+    draw.text((rd_x + reader_w - 240, ws_y + 11), "🔢 行号: 显示 • 字号: 100% • UTF-8", fill=(113, 118, 123), font=get_font(13))
+
+    # Preview Line Numbers Gutter Simulation
+    gutter_w = 48
+    draw.line([rd_x + gutter_w, ws_y + etab_h, rd_x + gutter_w, ws_y + ws_h], fill=(35, 40, 48, 180), width=1)
 
     # Reader Content Card
-    rcard_x = rd_x + 28
+    rcard_x = rd_x + gutter_w + 24
     rcard_y = ws_y + etab_h + 18
-    rcard_w = reader_w - 56
+    rcard_w = reader_w - gutter_w - 48
     
+    # Line number 1 (Title)
+    draw.text((rd_x + 14, rcard_y + 6), "1", fill=(29, 155, 240), font=get_font(12, bold=True))
     # Title
     font_h1 = get_font(28, bold=True)
     draw.text((rcard_x, rcard_y), "AST 双向零延迟同步架构", fill=(231, 233, 234), font=font_h1)
@@ -343,14 +376,18 @@ def main():
     draw_rounded_rect(draw, [rcard_x, tag_y, rcard_x + 130, tag_y + 28], radius=14, fill=(29, 155, 240, 30), outline=(29, 155, 240, 160), width=1)
     draw.text((rcard_x + 14, tag_y + 5), "● 摸鱼Lab 出品", fill=(29, 155, 240), font=get_font(13, bold=True))
 
-    draw_rounded_rect(draw, [rcard_x + 140, tag_y, rcard_x + 290, tag_y + 28], radius=14, fill=(74, 222, 128, 30), outline=(74, 222, 128, 160), width=1)
-    draw.text((rcard_x + 154, tag_y + 5), "● 零延迟双向映射", fill=(74, 222, 128), font=get_font(13, bold=True))
+    draw_rounded_rect(draw, [rcard_x + 140, tag_y, rcard_x + 305, tag_y + 28], radius=14, fill=(74, 222, 128, 30), outline=(74, 222, 128, 160), width=1)
+    draw.text((rcard_x + 154, tag_y + 5), "● 正文行号自动映射", fill=(74, 222, 128), font=get_font(13, bold=True))
 
+    # Line number 3 (Paragraph)
+    draw.text((rd_x + 14, tag_y + 44), "3", fill=(113, 118, 123), font=get_font(12))
     # Body paragraph
     font_body = get_font(16, bold=False)
     draw.text((rcard_x, tag_y + 42), "BookMD Reader 采用创新分段线性插值算法与 AST 语法节点映射，", fill=(200, 205, 210), font=font_body)
     draw.text((rcard_x, tag_y + 68), "无论包含复杂 KaTeX 数学公式还是动态 Mermaid 图表，均可实现像素级高精度双向同步。", fill=(200, 205, 210), font=font_body)
 
+    # Line number 5 (Callout Tip)
+    draw.text((rd_x + 14, tag_y + 110), "5", fill=(113, 118, 123), font=get_font(12))
     # Tip Callout Box (Twitter Blue Callout)
     tip_y = tag_y + 106
     draw_rounded_rect(
@@ -363,8 +400,10 @@ def main():
     )
     draw.line([rcard_x, tip_y + 2, rcard_x, tip_y + 68], fill=(29, 155, 240, 255), width=4)
     draw.text((rcard_x + 20, tip_y + 12), "核心优势 (Tip)", fill=(29, 155, 240), font=get_font(15, bold=True))
-    draw.text((rcard_x + 20, tip_y + 38), "原生多级目录树 + 大纲索引实时追踪，为长篇技术书籍与文档创作提供沉浸式体验。", fill=(160, 166, 172), font=get_font(14))
+    draw.text((rcard_x + 20, tip_y + 38), "多栏自由拖拽调整边界 + 正文行号自动映射，长篇技术书籍与文档创作更高效。", fill=(160, 166, 172), font=get_font(14))
 
+    # Line number 8 & 10 (Heading & Mermaid Diagram)
+    draw.text((rd_x + 14, tip_y + 94), "10", fill=(29, 155, 240), font=get_font(12, bold=True))
     # Rendered Mermaid Diagram Card
     diag_y = tip_y + 90
     diag_h = 240
@@ -420,7 +459,7 @@ def main():
     font_dock_bold = get_font(13, bold=True)
     draw.text((win_x + 20, dock_y + 10), "● 已安全保存 (原子落盘)", fill=(74, 222, 128), font=font_dock_bold)
     draw.text((win_x + 210, dock_y + 10), "2,840 字符  •  约 6 分钟阅读", fill=(160, 166, 172), font=font_dock)
-    draw.text((win_x + win_w - 460, dock_y + 10), "LF  •  UTF-8  •  BookMD Engine v1.3.0  •  极客暗黑", fill=(113, 118, 123), font=font_dock)
+    draw.text((win_x + win_w - 460, dock_y + 10), "LF  •  UTF-8  •  BookMD Engine v1.4.2  •  极客暗黑", fill=(113, 118, 123), font=font_dock)
 
     # 4. Floating Feature Showcase Cards around the main window
     # Left Floating Badge Card
@@ -429,8 +468,8 @@ def main():
     fc1_w = 250
     fc1_h = 140
     draw_rounded_rect(draw, [fc1_x, fc1_y, fc1_x + fc1_w, fc1_y + fc1_h], radius=16, fill=(15, 20, 25, 240), outline=(29, 155, 240, 160), width=2)
-    draw.text((fc1_x + 20, fc1_y + 18), "★ AST 双向同步", fill=(29, 155, 240), font=get_font(18, bold=True))
-    draw.text((fc1_x + 20, fc1_y + 50), "• 0-Lag 毫秒响应\n• 行号映射精确对齐\n• 双侧选区高亮联动", fill=(200, 205, 210), font=get_font(14))
+    draw.text((fc1_x + 20, fc1_y + 18), "★ 分栏自由拖拽", fill=(29, 155, 240), font=get_font(18, bold=True))
+    draw.text((fc1_x + 20, fc1_y + 50), "• 目录/侧栏/分屏自由调\n• 本地配置自动持久化\n• 双向光晕指示条", fill=(200, 205, 210), font=get_font(14))
 
     # Right Floating Badge Card
     fc2_x = W - 295
@@ -438,8 +477,8 @@ def main():
     fc2_w = 250
     fc2_h = 140
     draw_rounded_rect(draw, [fc2_x, fc2_y, fc2_x + fc2_w, fc2_y + fc2_h], radius=16, fill=(15, 20, 25, 240), outline=(29, 155, 240, 160), width=2)
-    draw.text((fc2_x + 20, fc2_y + 18), "★ 极客暗黑主题", fill=(29, 155, 240), font=get_font(18, bold=True))
-    draw.text((fc2_x + 20, fc2_y + 50), "• Lights Out 纯黑底色\n• 电光蓝 #1D9BF0 重点\n• 极客暗黑卡片排版", fill=(200, 205, 210), font=get_font(14))
+    draw.text((fc2_x + 20, fc2_y + 18), "★ 正文预览行号", fill=(29, 155, 240), font=get_font(18, bold=True))
+    draw.text((fc2_x + 20, fc2_y + 50), "• AST 零开销行号槽位\n• 等宽对齐与悬停发光\n• 工具栏一键显隐切换", fill=(200, 205, 210), font=get_font(14))
 
     # 5. Save image to all required target paths
     target_paths = [
