@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "BookMD-Reader"
-    tag = "v1.4.0"
-    title = "BookMD Reader v1.4.0 - 全屏沉浸模式与交互动效升级"
+    tag = "v1.4.1"
+    title = "BookMD Reader v1.4.1 - 修复分屏批量选择乱滚与搜索跳转高亮"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -74,27 +74,26 @@ def main():
         print(f"Notice: {e}")
 
     # 3. Create Release Body
-    body_md = """# 🚀 BookMD Reader v1.4.0
+    body_md = """# 🚀 BookMD Reader v1.4.1
 
-BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读与写作支持**，并全面重构美化了交互按键与拟物悬浮微动效体系。
+BookMD Reader v1.4.1 现已正式发布！本次更新重点优化了**分屏编辑模式下的选区同步与滚动体验**，并集成了**搜索卡片精准跳转与呼吸微光高亮**。
 
 ---
 
 ### ✨ 核心更新亮点
 
-1. **🖥️ 软件全屏沉浸模式（Zen Mode）**：
-   - **全局快捷键**：支持按 **`F11`** 一键即时进入/退出全屏；全屏状态下支持按 **`Esc`** 快速退出。
-   - **双端按键联动**：在顶部工具栏（`Toolbar`）与左侧活动栏（`ActivityBar`）分别新增动态全屏切换按钮，带有图标状态自适应（`Maximize2` ↔ `Minimize2`）与即时状态同步。
-   - **双向 IPC 架构**：Electron 桌面主进程与渲染层无缝联动全屏生命周期事件。
+1. **⚡ 修复分屏模式下批量选择代码乱滚问题**：
+   - **解耦选区与滚动竞争**：彻底重构 `useSyncSelection`，移除了选区变动时与 `useSyncScroll` 产生冲突的强制外部平滑滚动指令。
+   - **`requestAnimationFrame` 批量高亮调度**：鼠标大跨度连续拖拽选择或 Shift 连选时，高亮更新统一合入帧渲染周期，彻底根除视口来回拉扯与跳跃乱滚现象。
+   - **大跨度代码块选区精准覆盖**：支持跨段落、代码块、列表的多行连续批量选择与预览实时高亮。
 
-2. **✨ 悬浮微交互按键与动效美化**：
-   - **弹性悬浮放大（Spring Magnification）**：按键在鼠标悬停时平滑缩放 `scale(1.15)` 并微上浮，按下时具备 `scale(0.92)` 紧致触觉回弹。
-   - **拟物微边框与极客电光蓝辉光**：激活按钮注入发丝高光微边框与 `box-shadow: 0 0 16px rgba(29, 155, 240, 0.35)` 极客辉光。
-   - **悬浮气泡提示（Floating Tooltips）**：左侧活动栏与工具栏按钮配备零延迟毛玻璃悬浮气泡提示，摆脱原生浏览器 Title 延迟。
-   - **视口切换器胶囊化**：“阅读 / 分屏 / 源码”三段式切换升级为现代滑动胶囊卡片。
+2. **🔍 搜索结果卡片点击精准跳转与呼吸辉光高亮**：
+   - **精准行号与 AST 节点定位**：点击左侧搜索结果卡片即可平滑导航至文档精确段落/代码块并舒适居中。
+   - **呼吸微光聚焦（`searchPulse`）**：目标内容自动触发 1.8 秒专属极客电光蓝呼吸微光，一眼锁定目标。
+   - **搜索卡片交互增强**：展示行号徽标（如 `L4`）、关键词精准高亮匹配、匹配总数与一键清空。
 
-3. **🎨 极客暗黑 & 日光浅色 双主题美学升华**：
-   - 完美适配 Lights Out 纯黑底色 (`#000000`) 与日光浅色，界面更加通透优雅。
+3. **🖥️ 全屏沉浸阅读与写作模式**：
+   - 全局支持 `F11` 沉浸全屏与 `Esc` 退出，双端工具栏全屏按键实时状态同步。
 
 ---
 
@@ -102,7 +101,7 @@ BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`BookMD-Reader-1.4.0.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
+| **`BookMD-Reader-1.4.1.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
 | **`BookMD-Reader-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `BookMD Reader.exe` 即可运行 |
 
 ---
@@ -154,8 +153,8 @@ BookMD Reader v1.4.0 重磅发布！本次更新带来了**全屏沉浸式阅读
     # 4. Upload Assets
     assets_to_upload = [
         (
-            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.0.msi" if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.0.msi") else (r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.0.msi" if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.0.msi") else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\release\BookMD-Reader-1.4.0.msi"),
-            "BookMD-Reader-1.4.0.msi",
+            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.1.msi" if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.1.msi") else (r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.1.msi" if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.1.msi") else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\release\BookMD-Reader-1.4.1.msi"),
+            "BookMD-Reader-1.4.1.msi",
             "application/x-msi"
         ),
         (

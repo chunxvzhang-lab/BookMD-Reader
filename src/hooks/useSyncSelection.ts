@@ -65,6 +65,7 @@ export function useSyncSelection({
 }: SyncSelectionOptions) {
   const lockRef = useRef<"editor" | "preview" | null>(null);
   const lockTimerRef = useRef<number | null>(null);
+  const highlightRafRef = useRef<number | null>(null);
 
   const setLock = useCallback((source: "editor" | "preview") => {
     lockRef.current = source;
@@ -98,26 +99,22 @@ export function useSyncSelection({
 
       setLock("editor");
 
-      // Clear previous highlights
-      clearAllHighlights(readerElem);
-
-      const matched = findMatchingPreviewElements(readerElem, startLine, endLine);
-      if (matched.length > 0) {
-        matched.forEach((el) => {
-          el.classList.add("sync-highlight-active");
-        });
-
-        // Ensure the highlighted element is smoothly scrolled to the upper area of the preview (~40px margin)
-        const first = matched[0];
-        const containerRect = readerElem.getBoundingClientRect();
-        const elRect = first.getBoundingClientRect();
-        const targetScrollTop = readerElem.scrollTop + (elRect.top - containerRect.top) - 40;
-
-        readerElem.scrollTo({
-          top: Math.max(0, targetScrollTop),
-          behavior: "smooth",
-        });
+      // Batch DOM operations with requestAnimationFrame to prevent layout thrashing and scroll jitter
+      if (highlightRafRef.current) {
+        cancelAnimationFrame(highlightRafRef.current);
       }
+
+      highlightRafRef.current = requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        clearAllHighlights(containerRef.current);
+
+        const matched = findMatchingPreviewElements(containerRef.current, startLine, endLine);
+        if (matched.length > 0) {
+          matched.forEach((el) => {
+            el.classList.add("sync-highlight-active");
+          });
+        }
+      });
     },
     [viewMode, containerRef, setLock]
   );
@@ -146,18 +143,9 @@ export function useSyncSelection({
 
       setLock("preview");
 
-      // Highlight in preview immediately and scroll element to upper area
+      // Highlight in preview immediately
       clearAllHighlights(readerElem);
       blockElem.classList.add("sync-highlight-active");
-
-      const containerRect = readerElem.getBoundingClientRect();
-      const elRect = blockElem.getBoundingClientRect();
-      const targetScrollTop = readerElem.scrollTop + (elRect.top - containerRect.top) - 40;
-
-      readerElem.scrollTo({
-        top: Math.max(0, targetScrollTop),
-        behavior: "smooth",
-      });
 
       const doc = view.state.doc;
       const totalLines = doc.lines;
@@ -183,10 +171,7 @@ export function useSyncSelection({
 
       view.dispatch({
         selection: { anchor: targetFrom, head: targetTo },
-        effects: EditorView.scrollIntoView(targetFrom, {
-          y: "start",
-          yMargin: 40,
-        }),
+        scrollIntoView: false,
       });
       view.focus();
     },
@@ -200,11 +185,14 @@ export function useSyncSelection({
     }
   }, [viewMode, containerRef]);
 
-  // Cleanup timers on unmount
+  // Cleanup timers and RAF on unmount
   useEffect(() => {
     return () => {
       if (lockTimerRef.current) {
         window.clearTimeout(lockTimerRef.current);
+      }
+      if (highlightRafRef.current) {
+        cancelAnimationFrame(highlightRafRef.current);
       }
     };
   }, []);

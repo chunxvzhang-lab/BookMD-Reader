@@ -91,4 +91,20 @@ const b = 2;
     expect(matchesLine4[0].tagName.toLowerCase()).toBe("li");
     expect(matchesLine4[0].textContent).toBe("Item 4");
   });
+
+  it("handles batch multi-line selection across code blocks and paragraphs without missing elements", () => {
+    container.innerHTML = `
+      <h2 data-source-line="1" data-source-line-end="1">Section Header</h2>
+      <pre data-source-line="3" data-source-line-end="15"><code>const x = 1;\nconst y = 2;</code></pre>
+      <p data-source-line="17" data-source-line-end="19">Summary text</p>
+      <pre data-source-line="21" data-source-line-end="35"><code>function test() {}</code></pre>
+    `;
+
+    // Batch selecting lines 5 to 25 spans code block 1, paragraph, and code block 2
+    const matches = findMatchingPreviewElements(container, 5, 25);
+    expect(matches.length).toBe(3);
+    expect(matches[0].tagName.toLowerCase()).toBe("pre");
+    expect(matches[1].tagName.toLowerCase()).toBe("p");
+    expect(matches[2].tagName.toLowerCase()).toBe("pre");
+  });
 });
