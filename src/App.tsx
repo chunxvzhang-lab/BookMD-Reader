@@ -135,12 +135,16 @@ export function App() {
   }, []);
 
   const clearSearchHighlights = useCallback(() => {
-    const container = readerRef.current;
-    if (!container) return;
-    const prevHighlights = container.querySelectorAll(".search-highlight-active");
-    prevHighlights.forEach((el) => el.classList.remove("search-highlight-active"));
+    // 1. Globally remove all search and sync highlight classes across document
+    const activeHighlights = document.querySelectorAll(".search-highlight-active, .sync-highlight-active");
+    activeHighlights.forEach((el) => {
+      el.classList.remove("search-highlight-active");
+      el.classList.remove("sync-highlight-active");
+      (el as HTMLElement).style.animation = "";
+    });
 
-    const marks = container.querySelectorAll("mark.search-keyword-match");
+    // 2. Globally restore all search mark tags back to plain text
+    const marks = document.querySelectorAll("mark.search-keyword-match");
     marks.forEach((mark) => {
       const parent = mark.parentNode;
       if (parent) {
@@ -203,12 +207,13 @@ export function App() {
     const container = readerRef.current;
     if (!container) return;
 
-    // Clear previous search highlights & marks
+    // 1. Immediately wipe all previous highlights and marks across the whole DOM
     clearSearchHighlights();
 
     let targetElement: HTMLElement | null = null;
+    const queryText = (result.matchedText || searchQuery || "").trim().toLowerCase();
 
-    // 1. Try finding by source line number if available
+    // 2. Try finding by source line number
     if (result.lineNumber) {
       const lineElements = Array.from(container.querySelectorAll<HTMLElement>("[data-source-line]"));
       const targetStart = result.lineNumber;
@@ -221,36 +226,56 @@ export function App() {
       });
 
       if (matched.length > 0) {
-        // Pick the innermost matching block to accurately highlight the cohesive paragraph/element
-        targetElement = matched.find((el) => !matched.some((other) => other !== el && el.contains(other))) || matched[0];
+        // Priority 1: Check if there is an overarching block container (ol, ul, blockquote, pre, table, p)
+        // that encompasses the list/paragraph block
+        const containerBlock = matched.find((el) => {
+          const tag = el.tagName.toLowerCase();
+          return (
+            ["ol", "ul", "blockquote", "pre", "table", "p"].includes(tag) &&
+            matched.some((child) => child !== el && el.contains(child))
+          );
+        });
+
+        // Priority 2: If there's an overarching container, highlight the entire broad block!
+        // Otherwise, if any matched item directly contains the queryText, prefer it; else use matched[0]
+        if (containerBlock) {
+          targetElement = containerBlock;
+        } else {
+          targetElement =
+            matched.find((el) => queryText && el.textContent?.toLowerCase().includes(queryText)) || matched[0];
+        }
       }
     }
 
-    // 2. Fallback: Search for element containing matched keyword or excerpt
-    if (!targetElement && (result.matchedText || searchQuery)) {
-      const queryText = (result.matchedText || searchQuery).trim().toLowerCase();
-      const candidateBlocks = Array.from(container.querySelectorAll<HTMLElement>(
-        ".markdown-body p, .markdown-body li, .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6, .markdown-body pre, .markdown-body blockquote, .markdown-body tr, .markdown-body td"
-      ));
+    // 3. Fallback: Search by content/excerpt matching
+    if (!targetElement && queryText) {
+      const candidateBlocks = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          ".markdown-body p, .markdown-body ol, .markdown-body ul, .markdown-body li, .markdown-body blockquote, .markdown-body pre, .markdown-body table, .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6"
+        )
+      );
       targetElement = candidateBlocks.find((el) => el.textContent?.toLowerCase().includes(queryText)) || null;
     }
 
-    // 3. Fallback: Search by headingId
+    // 4. Fallback: Search by headingId
     if (!targetElement && result.headingId) {
       targetElement = container.querySelector(`#${CSS.escape(result.headingId)}`);
     }
 
     if (targetElement) {
-      // Highlight the entire block / paragraph (大片对应文段)
+      // Highlight the entire broad block ("大片对应文段")
       targetElement.classList.add("search-highlight-active");
 
       // Highlight all matching keywords inside the block
       highlightKeywordsInNode(targetElement, searchQuery);
 
-      // Smoothly scroll element to comfortable upper-middle view
+      // Determine the best scroll target: if a keyword was marked inside, center on the first mark
+      const firstMark = targetElement.querySelector("mark.search-keyword-match") as HTMLElement | null;
+      const scrollAnchor = firstMark || targetElement;
+
       const containerRect = container.getBoundingClientRect();
-      const elRect = targetElement.getBoundingClientRect();
-      const targetScrollTop = container.scrollTop + (elRect.top - containerRect.top) - (containerRect.height / 3);
+      const elRect = scrollAnchor.getBoundingClientRect();
+      const targetScrollTop = container.scrollTop + (elRect.top - containerRect.top) - containerRect.height / 3;
 
       container.scrollTo({
         top: Math.max(0, targetScrollTop),

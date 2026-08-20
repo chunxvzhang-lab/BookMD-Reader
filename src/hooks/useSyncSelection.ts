@@ -52,9 +52,10 @@ export function findMatchingPreviewElements(
  * Clears highlight from all elements in the container.
  */
 export function clearAllHighlights(container: HTMLElement): void {
-  const activeElements = container.querySelectorAll(".sync-highlight-active");
+  const activeElements = container.querySelectorAll(".sync-highlight-active, .search-highlight-active");
   activeElements.forEach((el) => {
     el.classList.remove("sync-highlight-active");
+    el.classList.remove("search-highlight-active");
   });
 }
 

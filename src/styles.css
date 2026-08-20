@@ -1968,6 +1968,22 @@ button {
   margin-left: -4px;
 }
 
+.markdown-body ol.search-highlight-active,
+.markdown-body ul.search-highlight-active {
+  padding: 8px 14px 8px 34px !important;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.markdown-body table.search-highlight-active {
+  padding: 6px !important;
+  border-radius: 8px !important;
+}
+
+.markdown-body blockquote.search-highlight-active {
+  padding: 10px 16px !important;
+}
+
 .markdown-body pre.search-highlight-active {
   padding: 14px 16px !important;
 }
