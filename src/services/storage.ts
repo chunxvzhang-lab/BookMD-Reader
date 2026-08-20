@@ -6,9 +6,10 @@ const POSITIONS_V1_KEY = "bookmd.positions.v1";
 const POSITIONS_V2_KEY = "bookmd.positions.v2";
 const PREFS_KEY = "bookmd.preferences.v1";
 
-type Preferences = {
+export type Preferences = {
   theme: ThemeMode;
   fontScale: number;
+  showLineNumbers?: boolean;
 };
 
 export function loadBookmarks(bookId: string, chapters?: ChapterManifest[]): Bookmark[] {
@@ -64,11 +65,12 @@ export function saveReadingPosition(position: ReadingPosition): void {
 }
 
 export function loadPreferences(): Preferences {
-  const fallback: Preferences = { theme: "system", fontScale: 1 };
+  const fallback: Preferences = { theme: "system", fontScale: 1, showLineNumbers: true };
   try {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}");
     const theme: ThemeMode = raw.theme === "dark" ? "twitter" : (raw.theme ?? "system");
-    return { ...fallback, ...raw, theme };
+    const showLineNumbers = raw.showLineNumbers !== undefined ? Boolean(raw.showLineNumbers) : true;
+    return { ...fallback, ...raw, theme, showLineNumbers };
   } catch {
     return fallback;
   }

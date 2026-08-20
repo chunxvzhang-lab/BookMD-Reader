@@ -84,4 +84,22 @@ describe("src/services/storage.ts", () => {
     expect(loaded?.chapterId).toBe("chapter:path:02-advanced.md");
     expect(loaded?.chapterSrc).toBe("02-advanced.md");
   });
+
+  it("loads default preferences with showLineNumbers true and saves updated preferences", async () => {
+    const { loadPreferences, savePreferences } = await import("../services/storage");
+    const defaultPrefs = loadPreferences();
+    expect(defaultPrefs.showLineNumbers).toBe(true);
+    expect(defaultPrefs.theme).toBe("system");
+
+    savePreferences({
+      theme: "twitter",
+      fontScale: 1.1,
+      showLineNumbers: false,
+    });
+
+    const updated = loadPreferences();
+    expect(updated.showLineNumbers).toBe(false);
+    expect(updated.theme).toBe("twitter");
+    expect(updated.fontScale).toBe(1.1);
+  });
 });

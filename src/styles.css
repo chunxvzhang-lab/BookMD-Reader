@@ -661,54 +661,81 @@ button {
 }
 
 /* ==========================================================================
-   Workspace Grid & Sidebars
+   Workspace Flex Layout & Sidebars (Resizable Splitters)
    ========================================================================== */
 .workspace {
-  display: grid;
-  grid-template-columns: 240px 260px minmax(0, 1fr);
+  display: flex;
+  flex-direction: row;
   flex: 1 1 0;
   min-height: 0;
   height: 100%;
   overflow: hidden;
   background: var(--bg);
-  transition: grid-template-columns 0.24s var(--ease-spring);
+  position: relative;
 }
 
-.app-shell.directory-closed .chapter-list {
-  display: none !important;
-}
-
-.app-shell:not(.sidebar-open) .workspace {
-  grid-template-columns: 240px minmax(0, 1fr);
-}
-
-.app-shell.directory-closed .workspace {
-  grid-template-columns: 260px minmax(0, 1fr);
-}
-
-.app-shell.directory-closed:not(.sidebar-open) .workspace {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.app-shell.empty-source .workspace {
-  grid-template-columns: 340px minmax(0, 1fr);
-}
-
-.app-shell.empty-source:not(.sidebar-open) .workspace {
-  grid-template-columns: 340px minmax(0, 1fr);
-}
-
-.app-shell.empty-source.directory-closed .workspace {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-/* Chapter Tree / Directory Sidebar */
 .chapter-list {
-  min-width: 0;
+  min-width: 160px;
+  max-width: 480px;
   overflow: auto;
   padding: 10px 8px;
-  border-right: 1px solid var(--border);
   background: var(--surface-2);
+  flex-shrink: 0;
+}
+
+.side-panel {
+  min-width: 180px;
+  max-width: 520px;
+  overflow: auto;
+  padding: 12px 10px;
+  background: var(--surface);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.reader-frame {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Draggable Splitter Divider between sidebars and reader */
+.layout-resizer {
+  position: relative;
+  width: 6px;
+  margin: 0 -3px;
+  z-index: 20;
+  cursor: col-resize;
+  flex-shrink: 0;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.layout-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2.5px;
+  width: 1px;
+  background: var(--border);
+  transition: all 0.18s ease;
+}
+
+.layout-resizer:hover::after,
+.layout-resizer.is-active::after {
+  width: 3px;
+  left: 1.5px;
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+body.is-resizing-col,
+body.is-resizing-col * {
+  user-select: none !important;
+  cursor: col-resize !important;
 }
 
 .tree-heading {
@@ -2022,6 +2049,50 @@ button {
     box-shadow: 0 0 0 2px #1d9bf0, 0 6px 24px rgba(29, 155, 240, 0.35);
     background: rgba(29, 155, 240, 0.16);
   }
+}
+
+/* ==========================================================================
+   Preview Line Numbers Gutter
+   ========================================================================== */
+.markdown-body.show-line-numbers {
+  padding-left: 54px;
+  position: relative;
+}
+
+.markdown-body.show-line-numbers > [data-source-line],
+.markdown-body.show-line-numbers li[data-source-line],
+.markdown-body.show-line-numbers tr[data-source-line] {
+  position: relative;
+}
+
+.markdown-body.show-line-numbers > [data-source-line]::before,
+.markdown-body.show-line-numbers li[data-source-line]::before,
+.markdown-body.show-line-numbers tr[data-source-line] > :first-child::before {
+  content: attr(data-source-line);
+  position: absolute;
+  left: -48px;
+  width: 38px;
+  text-align: right;
+  font-family: var(--font-mono, "JetBrains Mono", Consolas, "Fira Code", monospace);
+  font-size: 11px;
+  line-height: inherit;
+  color: var(--text-muted);
+  opacity: 0.40;
+  user-select: none;
+  pointer-events: none;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.markdown-body.show-line-numbers li[data-source-line]::before {
+  left: -42px;
+}
+
+.markdown-body.show-line-numbers > [data-source-line]:hover::before,
+.markdown-body.show-line-numbers li[data-source-line]:hover::before,
+.markdown-body.show-line-numbers tr[data-source-line]:hover > :first-child::before {
+  opacity: 0.95;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* ==========================================================================

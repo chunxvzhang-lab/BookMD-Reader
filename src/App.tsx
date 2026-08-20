@@ -66,6 +66,36 @@ export function App() {
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
 
+  const [directoryWidth, setDirectoryWidth] = useState(() => {
+    try {
+      const saved = localStorage.getItem("bookmd.layout.dirWidth");
+      if (saved) {
+        const val = parseFloat(saved);
+        if (!Number.isNaN(val) && val >= 160 && val <= 480) return val;
+      }
+    } catch {
+      // fallback
+    }
+    return 240;
+  });
+
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const saved = localStorage.getItem("bookmd.layout.sidebarWidth");
+      if (saved) {
+        const val = parseFloat(saved);
+        if (!Number.isNaN(val) && val >= 180 && val <= 520) return val;
+      }
+    } catch {
+      // fallback
+    }
+    return 260;
+  });
+
+  const [resizingType, setResizingType] = useState<"dir" | "sidebar" | null>(null);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+
   const {
     session,
     renderedChapter,
@@ -117,6 +147,59 @@ export function App() {
   const handleMermaidError = useCallback(() => {
     setNotice("Mermaid 图表渲染失败，请检查语法。");
   }, []);
+
+  const handleDirResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setResizingType("dir");
+    startXRef.current = e.clientX;
+    startWidthRef.current = directoryWidth;
+  }, [directoryWidth]);
+
+  const handleSidebarResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setResizingType("sidebar");
+    startXRef.current = e.clientX;
+    startWidthRef.current = sidebarWidth;
+  }, [sidebarWidth]);
+
+  useEffect(() => {
+    if (!resizingType) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startXRef.current;
+      if (resizingType === "dir") {
+        const newWidth = Math.min(Math.max(startWidthRef.current + deltaX, 160), 480);
+        setDirectoryWidth(newWidth);
+        try {
+          localStorage.setItem("bookmd.layout.dirWidth", newWidth.toString());
+        } catch {
+          // ignore
+        }
+      } else if (resizingType === "sidebar") {
+        const newWidth = Math.min(Math.max(startWidthRef.current + deltaX, 180), 520);
+        setSidebarWidth(newWidth);
+        try {
+          localStorage.setItem("bookmd.layout.sidebarWidth", newWidth.toString());
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setResizingType(null);
+      document.body.classList.remove("is-resizing-col");
+    };
+
+    document.body.classList.add("is-resizing-col");
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.body.classList.remove("is-resizing-col");
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [resizingType]);
 
   const jumpToHeading = useCallback((headingId: string, behavior: ScrollBehavior = "smooth") => {
     const container = readerRef.current;
@@ -1058,6 +1141,14 @@ export function App() {
           directoryOpen={directoryOpen}
           theme={preferences.theme}
           fontScale={preferences.fontScale}
+          showLineNumbers={preferences.showLineNumbers}
+          onToggleLineNumbers={() =>
+            setPreferences((prev) => {
+              const next = { ...prev, showLineNumbers: !prev.showLineNumbers };
+              savePreferences(next);
+              return next;
+            })
+          }
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
           onPrevious={goPrevious}
@@ -1072,79 +1163,108 @@ export function App() {
           onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
           onOpenAbout={() => setAboutOpen(true)}
           onFocusSearch={focusSearch}
-          onFontScaleChange={(fontScale) => setPreferences((current) => ({ ...current, fontScale }))}
+          onFontScaleChange={(fontScale) => {
+            setPreferences((current) => {
+              const next = { ...current, fontScale };
+              savePreferences(next);
+              return next;
+            });
+          }}
         />
 
       <div className="workspace">
-        {manifest ? (
-          <ChapterList
-            manifest={manifest}
-            activeChapterId={chapterId}
-            isDirty={isDirty}
-            onSelectChapter={selectChapter}
+        {directoryOpen ? (
+          manifest ? (
+            <div style={{ width: directoryWidth, flex: `0 0 ${directoryWidth}px` }} className="chapter-list-container">
+              <ChapterList
+                manifest={manifest}
+                activeChapterId={chapterId}
+                isDirty={isDirty}
+                onSelectChapter={selectChapter}
+              />
+            </div>
+          ) : (
+            <aside className="chapter-list empty-library" style={{ width: directoryWidth, flex: `0 0 ${directoryWidth}px` }} aria-label="文档目录">
+              <div className="tree-heading">DOCUMENT</div>
+              <p>打开一个 Markdown 文件，新建文件，或在桌面版中打开文件目录。</p>
+            </aside>
+          )
+        ) : null}
+
+        {directoryOpen && (
+          <div
+            className={`layout-resizer ${resizingType === "dir" ? "is-active" : ""}`}
+            onMouseDown={handleDirResizeMouseDown}
+            role="separator"
+            aria-orientation="vertical"
+            title="拖拽调整文档目录栏宽度"
           />
-        ) : (
-          <aside className="chapter-list empty-library" aria-label="文档目录">
-            <div className="tree-heading">DOCUMENT</div>
-            <p>打开一个 Markdown 文件，新建文件，或在桌面版中打开文件目录。</p>
-          </aside>
         )}
 
         {sidebarOpen && manifest ? (
-          <aside className="side-panel">
-            <div className="tabs" role="tablist" aria-label="侧栏区域">
-              {(["toc", "bookmarks", "search"] as SidebarTab[]).map((tab) => (
-                <button
-                  key={tab}
-                  id={`${tab}-tab`}
-                  role="tab"
-                  aria-selected={sidebarTab === tab}
-                  aria-controls={`${tab}-panel`}
-                  className={sidebarTab === tab ? "active" : ""}
-                  onClick={() => setSidebarTab(tab)}
-                >
-                  {tabLabels[tab]}
-                </button>
-              ))}
-            </div>
-            {sidebarTab === "toc" ? (
-              <section id="toc-panel" role="tabpanel" aria-labelledby="toc-tab">
-                <TocPanel
-                  headings={renderedChapter?.headings ?? []}
-                  activeHeadingId={activeHeadingId}
-                  bookmarkedHeadingIds={bookmarkedHeadingIds}
-                  onJump={jumpToHeading}
-                />
-              </section>
-            ) : null}
-            {sidebarTab === "bookmarks" ? (
-              <section id="bookmarks-panel" role="tabpanel" aria-labelledby="bookmarks-tab">
-                <BookmarkPanel
-                  bookmarks={bookmarks}
-                  manifest={manifest}
-                  onJump={jumpBookmark}
-                  onDelete={(bookmarkId) => persistBookmarks(bookmarks.filter((item) => item.id !== bookmarkId))}
-                />
-              </section>
-            ) : null}
-            {sidebarTab === "search" ? (
-              <section id="search-panel" role="tabpanel" aria-labelledby="search-tab">
-                <SearchPanel
-                  query={searchQuery}
-                  results={searchResults}
-                  activeResultId={activeSearchMatchId}
-                  onQueryChange={(q) => {
-                    setSearchQuery(q);
-                    setActiveSearchMatchId(null);
-                    if (!q.trim()) {
-                      clearSearchHighlights();
-                    }
-                  }}
-                  onJump={handleSearchJump}
-                />
-              </section>
-            ) : null}
-          </aside>
+          <>
+            <aside className="side-panel" style={{ width: sidebarWidth, flex: `0 0 ${sidebarWidth}px` }}>
+              <div className="tabs" role="tablist" aria-label="侧栏区域">
+                {(["toc", "bookmarks", "search"] as SidebarTab[]).map((tab) => (
+                  <button
+                    key={tab}
+                    id={`${tab}-tab`}
+                    role="tab"
+                    aria-selected={sidebarTab === tab}
+                    aria-controls={`${tab}-panel`}
+                    className={sidebarTab === tab ? "active" : ""}
+                    onClick={() => setSidebarTab(tab)}
+                  >
+                    {tabLabels[tab]}
+                  </button>
+                ))}
+              </div>
+              {sidebarTab === "toc" ? (
+                <section id="toc-panel" role="tabpanel" aria-labelledby="toc-tab">
+                  <TocPanel
+                    headings={renderedChapter?.headings ?? []}
+                    activeHeadingId={activeHeadingId}
+                    bookmarkedHeadingIds={bookmarkedHeadingIds}
+                    onJump={jumpToHeading}
+                  />
+                </section>
+              ) : null}
+              {sidebarTab === "bookmarks" ? (
+                <section id="bookmarks-panel" role="tabpanel" aria-labelledby="bookmarks-tab">
+                  <BookmarkPanel
+                    bookmarks={bookmarks}
+                    manifest={manifest}
+                    onJump={jumpBookmark}
+                    onDelete={(bookmarkId) => persistBookmarks(bookmarks.filter((item) => item.id !== bookmarkId))}
+                  />
+                </section>
+              ) : null}
+              {sidebarTab === "search" ? (
+                <section id="search-panel" role="tabpanel" aria-labelledby="search-tab">
+                  <SearchPanel
+                    query={searchQuery}
+                    results={searchResults}
+                    activeResultId={activeSearchMatchId}
+                    onQueryChange={(q) => {
+                      setSearchQuery(q);
+                      setActiveSearchMatchId(null);
+                      if (!q.trim()) {
+                        clearSearchHighlights();
+                      }
+                    }}
+                    onJump={handleSearchJump}
+                  />
+                </section>
+              ) : null}
+            </aside>
+            <div
+              className={`layout-resizer ${resizingType === "sidebar" ? "is-active" : ""}`}
+              onMouseDown={handleSidebarResizeMouseDown}
+              role="separator"
+              aria-orientation="vertical"
+              title="拖拽调整大纲侧栏宽度"
+            />
+          </>
         ) : null}
 
         <section className="reader-frame">
@@ -1164,6 +1284,7 @@ export function App() {
               autoPreviewPaused={autoPreviewPaused}
               onRefreshPreview={renderPreviewNow}
               readOnly={!session.writable}
+              showLineNumbers={preferences.showLineNumbers}
             />
           ) : (
             <main className="empty-reader" ref={readerRef}>

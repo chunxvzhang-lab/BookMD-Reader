@@ -6,6 +6,8 @@ import { RefreshCw, AlertCircle, Link2, Link2Off } from "lucide-react";
 import { useSyncScroll } from "../hooks/useSyncScroll";
 import { useSyncSelection } from "../hooks/useSyncSelection";
 
+const SPLIT_RATIO_KEY = "bookmd.layout.splitRatio";
+
 type DocumentWorkspaceProps = {
   viewMode: EditorViewMode;
   source: string;
@@ -21,6 +23,7 @@ type DocumentWorkspaceProps = {
   autoPreviewPaused?: boolean;
   onRefreshPreview?: () => void;
   readOnly?: boolean;
+  showLineNumbers?: boolean;
 };
 
 export function DocumentWorkspace({
@@ -38,8 +41,20 @@ export function DocumentWorkspace({
   autoPreviewPaused = false,
   onRefreshPreview,
   readOnly = false,
+  showLineNumbers = true,
 }: DocumentWorkspaceProps) {
-  const [splitRatio, setSplitRatio] = useState(0.5);
+  const [splitRatio, setSplitRatio] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SPLIT_RATIO_KEY);
+      if (saved) {
+        const val = parseFloat(saved);
+        if (!Number.isNaN(val) && val >= 0.15 && val <= 0.85) return val;
+      }
+    } catch {
+      // fallback
+    }
+    return 0.5;
+  });
   const [isDragging, setIsDragging] = useState(false);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,24 +87,33 @@ export function DocumentWorkspace({
       const rect = workspaceRef.current.getBoundingClientRect();
       const isNarrow = rect.width < 980;
 
+      let newRatio: number;
       if (isNarrow) {
         // Vertical split
-        const newRatio = (e.clientY - rect.top) / rect.height;
-        setSplitRatio(Math.min(Math.max(newRatio, 0.2), 0.8));
+        newRatio = (e.clientY - rect.top) / rect.height;
       } else {
         // Horizontal split
-        const newRatio = (e.clientX - rect.left) / rect.width;
-        setSplitRatio(Math.min(Math.max(newRatio, 0.2), 0.8));
+        newRatio = (e.clientX - rect.left) / rect.width;
+      }
+      const clamped = Math.min(Math.max(newRatio, 0.15), 0.85);
+      setSplitRatio(clamped);
+      try {
+        localStorage.setItem(SPLIT_RATIO_KEY, clamped.toString());
+      } catch {
+        // ignore
       }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      document.body.classList.remove("is-resizing-col");
     };
 
+    document.body.classList.add("is-resizing-col");
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => {
+      document.body.classList.remove("is-resizing-col");
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
@@ -143,7 +167,7 @@ export function DocumentWorkspace({
       {/* Resizer bar for split mode */}
       {viewMode === "split" && (
         <div
-          className="workspace-splitter"
+          className={`workspace-splitter ${isDragging ? "is-active" : ""}`}
           onMouseDown={handleMouseDown}
           role="separator"
           aria-orientation="vertical"
@@ -192,6 +216,7 @@ export function DocumentWorkspace({
             mermaidTheme={mermaidTheme}
             onMermaidError={onMermaidError}
             onElementClick={handlePreviewSelectionChange}
+            showLineNumbers={showLineNumbers}
           />
         </div>
       )}

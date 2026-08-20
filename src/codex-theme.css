@@ -192,21 +192,7 @@ button {
 }
 
 .workspace {
-  grid-template-columns: 230px 250px minmax(0, 1fr);
   background: var(--reader-canvas);
-}
-
-.app-shell:not(.sidebar-open) .workspace {
-  grid-template-columns: 230px minmax(0, 1fr);
-}
-
-.app-shell.directory-closed .workspace {
-  grid-template-columns: 250px minmax(0, 1fr);
-}
-
-.app-shell.empty-source .workspace,
-.app-shell.empty-source:not(.sidebar-open) .workspace {
-  grid-template-columns: 280px minmax(0, 1fr);
 }
 
 .chapter-list,
@@ -596,23 +582,6 @@ button {
 }
 
 @media (max-width: 1120px) {
-  .workspace {
-    grid-template-columns: 205px 220px minmax(0, 1fr);
-  }
-
-  .app-shell:not(.sidebar-open) .workspace {
-    grid-template-columns: 205px minmax(0, 1fr);
-  }
-
-  .app-shell.directory-closed .workspace {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
-
-  .app-shell.empty-source .workspace,
-  .app-shell.empty-source:not(.sidebar-open) .workspace {
-    grid-template-columns: 250px minmax(0, 1fr);
-  }
-
   .toolbar .command-button span {
     display: none;
   }
@@ -636,28 +605,6 @@ button {
 
   .font-control input {
     display: none;
-  }
-
-  .workspace {
-    grid-template-columns: 190px 205px minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-  }
-
-  .app-shell:not(.sidebar-open) .workspace {
-    grid-template-columns: 190px minmax(0, 1fr);
-  }
-
-  .app-shell.directory-closed .workspace {
-    grid-template-columns: 205px minmax(0, 1fr);
-  }
-
-  .app-shell.directory-closed:not(.sidebar-open) .workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .app-shell.empty-source .workspace,
-  .app-shell.empty-source:not(.sidebar-open) .workspace {
-    grid-template-columns: 220px minmax(0, 1fr);
   }
 
   .chapter-list {

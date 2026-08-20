@@ -68,7 +68,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div>
               <div className="about-header-title-row">
                 <span className="about-app-name">BookMD Reader</span>
-                <span className="about-version-badge">v1.4.1</span>
+                <span className="about-version-badge">v1.4.2</span>
               </div>
               <p className="about-tagline">现代化高颜值本地优先 Markdown 阅读与编辑工作台</p>
             </div>

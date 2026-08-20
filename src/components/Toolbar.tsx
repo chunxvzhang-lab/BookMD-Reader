@@ -16,6 +16,7 @@ import {
   Info,
   Maximize2,
   Minimize2,
+  Hash,
 } from "lucide-react";
 import type { EditorViewMode, ThemeMode } from "../core/types";
 import { ViewModeControl } from "./ViewModeControl";
@@ -32,6 +33,8 @@ type ToolbarProps = {
   directoryOpen: boolean;
   theme?: ThemeMode;
   fontScale: number;
+  showLineNumbers?: boolean;
+  onToggleLineNumbers?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   onPrevious: () => void;
@@ -181,6 +184,17 @@ export function Toolbar(props: ToolbarProps) {
           <BookmarkPlus size={16} />
           <span>书签</span>
         </button>
+
+        {props.onToggleLineNumbers && (
+          <button
+            className={`icon-button ${props.showLineNumbers ? "active" : ""}`}
+            onClick={props.onToggleLineNumbers}
+            aria-label={props.showLineNumbers ? "隐藏正文预览行号" : "显示正文预览行号"}
+            title={props.showLineNumbers ? "正文行号：已开启（点击隐藏）" : "正文行号：已隐藏（点击开启）"}
+          >
+            <Hash size={17} />
+          </button>
+        )}
 
         {props.onOpenAbout && (
           <button

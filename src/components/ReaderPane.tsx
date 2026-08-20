@@ -9,6 +9,7 @@ type ReaderPaneProps = {
   mermaidTheme: MermaidTheme;
   onMermaidError: () => void;
   onElementClick?: (targetElement: HTMLElement, selectedText: string) => void;
+  showLineNumbers?: boolean;
 };
 
 export const ReaderPane = memo(function ReaderPane({
@@ -18,6 +19,7 @@ export const ReaderPane = memo(function ReaderPane({
   mermaidTheme,
   onMermaidError,
   onElementClick,
+  showLineNumbers = true,
 }: ReaderPaneProps) {
   const articleRef = useRef<HTMLElement | null>(null);
   const attachReader = useCallback((node: HTMLElement | null) => {
@@ -70,7 +72,7 @@ export const ReaderPane = memo(function ReaderPane({
     <main className="reader-pane" ref={attachReader} style={{ "--reader-scale": fontScale } as React.CSSProperties}>
       {chapter?.frontMatter ? <FrontMatterCard data={chapter.frontMatter} /> : null}
       <article
-        className="markdown-body"
+        className={`markdown-body ${showLineNumbers ? "show-line-numbers" : ""}`}
         ref={attachArticle}
         onMouseUp={handleMouseUp}
         dangerouslySetInnerHTML={{ __html: chapter?.html ?? "" }}
