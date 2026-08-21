@@ -3112,3 +3112,62 @@ body.is-resizing-col * {
 .app-shell.is-zen-mode .reader-pane {
   padding-top: 24px;
 }
+
+/* ==========================================================================
+   v1.5.0: Adaptive Fullscreen View System
+   ========================================================================== */
+.app-shell.is-fullscreen {
+  width: 100vw;
+  height: 100vh;
+}
+
+.app-shell.is-fullscreen .main-viewport-container {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+}
+
+.app-shell.is-fullscreen .workspace {
+  width: 100%;
+  height: 100%;
+}
+
+.app-shell.is-fullscreen .reader-frame,
+.app-shell.is-fullscreen .document-workspace {
+  width: 100%;
+  height: 100%;
+}
+
+.app-shell.is-fullscreen .reader-pane {
+  width: 100%;
+  height: 100%;
+  padding: 24px clamp(20px, 3.5vw, 48px) 60px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.app-shell.is-fullscreen .markdown-body {
+  width: 100%;
+  max-width: 100%;
+  min-height: calc(100vh - 120px);
+  padding: 36px clamp(24px, 4vw, 56px);
+  box-sizing: border-box;
+}
+
+.app-shell.is-fullscreen .frontmatter-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.app-shell.is-fullscreen .workspace-pane.editor-section,
+.app-shell.is-fullscreen .workspace-pane.reader-section {
+  height: 100%;
+  width: 100%;
+}
+
+.app-shell.is-fullscreen .cm-editor {
+  width: 100%;
+  height: 100%;
+}
