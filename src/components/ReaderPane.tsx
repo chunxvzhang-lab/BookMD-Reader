@@ -1,4 +1,4 @@
-import { memo, useCallback, useLayoutEffect, useRef } from "react";
+import { memo, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import type { RenderedChapter } from "../core/types";
 import { renderMermaid, type MermaidTheme } from "../services/mermaid";
 import type { LightboxMedia } from "./MediaLightbox";
@@ -25,6 +25,9 @@ export const ReaderPane = memo(function ReaderPane({
   onOpenLightbox,
 }: ReaderPaneProps) {
   const articleRef = useRef<HTMLElement | null>(null);
+  // Mermaid mutates the sanitized article HTML after React commits it. Keep
+  // this prop stable so unrelated renders do not restore the pre-render HTML.
+  const articleHtml = useMemo(() => ({ __html: chapter?.html ?? "" }), [chapter?.html]);
   const attachReader = useCallback((node: HTMLElement | null) => {
     containerRef.current = node;
   }, [containerRef]);
@@ -80,9 +83,15 @@ export const ReaderPane = memo(function ReaderPane({
           const svg = mermaidPre.querySelector("svg");
           if (svg) {
             e.stopPropagation();
+            let serializedSvg = "";
+            try {
+              serializedSvg = new XMLSerializer().serializeToString(svg);
+            } catch {
+              serializedSvg = svg.outerHTML;
+            }
             onOpenLightbox({
               type: "mermaid",
-              svgHtml: svg.outerHTML,
+              svgHtml: serializedSvg,
               title: "Mermaid 架构图预览",
             });
             return;
@@ -114,7 +123,7 @@ export const ReaderPane = memo(function ReaderPane({
     const node = articleRef.current;
     if (!node) return;
 
-    const preElements = node.querySelectorAll<HTMLPreElement>("pre.hljs, pre");
+    const preElements = node.querySelectorAll<HTMLPreElement>("pre.hljs, pre:not(.mermaid)");
     preElements.forEach((pre) => {
       if (pre.querySelector(".code-header-bar")) return; // Already decorated
 
@@ -175,7 +184,7 @@ export const ReaderPane = memo(function ReaderPane({
         ref={attachArticle}
         onClick={handleClick}
         onMouseUp={handleMouseUp}
-        dangerouslySetInnerHTML={{ __html: chapter?.html ?? "" }}
+        dangerouslySetInnerHTML={articleHtml}
       />
     </main>
   );

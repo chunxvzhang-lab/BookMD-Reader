@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { downloadSvgFile } from "../services/svgExport";
 
 export type LightboxMedia = {
   type: "image" | "mermaid";
@@ -93,15 +94,7 @@ export const MediaLightbox = memo(function MediaLightbox({
       a.click();
       document.body.removeChild(a);
     } else if (media.type === "mermaid" && media.svgHtml) {
-      const blob = new Blob([media.svgHtml], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${media.title || "diagram"}.svg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadSvgFile(media.svgHtml, media.title || "diagram");
     }
   }, [media]);
 
