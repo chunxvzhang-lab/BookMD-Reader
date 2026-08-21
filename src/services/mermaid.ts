@@ -8,73 +8,90 @@ type RenderMermaidOptions = {
 };
 
 let renderId = 0;
+let initializedTheme: MermaidTheme | null = null;
 
-export async function renderMermaid(container: HTMLElement, options: RenderMermaidOptions = {}): Promise<void> {
-  if (!container.querySelector("pre.mermaid")) return;
+/** Initialize mermaid once per theme — avoid re-initializing mid-render. */
+function ensureInitialized(theme: MermaidTheme): void {
+  if (initializedTheme === theme) return;
+  initializedTheme = theme;
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: "loose",
+    theme,
+    suppressErrorRendering: true,
+  });
+}
 
-  const theme = options.theme ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default");
+/** Read raw Mermaid source from a <pre.mermaid> element.
+ *  Priority: data-mermaid-source attribute (already decoded plain text)
+ *            > textContent (browser auto-decodes HTML entities for us)
+ */
+function readSource(diagram: HTMLElement): string {
+  const stored = diagram.getAttribute("data-mermaid-source");
+  if (stored) return stored;
+  // textContent gives us the decoded plain text — no manual entity decoding needed.
+  return diagram.textContent ?? "";
+}
+
+/** Remove any stray DOM nodes that mermaid may have injected into document.body. */
+function cleanupStrayNodes(id: string): void {
   try {
-    mermaid.initialize({
-      startOnLoad: false,
-      securityLevel: "loose",
-      theme,
-      suppressErrorRendering: true,
-    });
+    document.getElementById(`d${id}`)?.remove();
+    document.getElementById(id)?.remove();
+    document.querySelectorAll(`[id^='d${id}']`).forEach((el) => el.remove());
   } catch {
-    // Ignore re-init errors
+    // Ignore
   }
+}
 
+export async function renderMermaid(
+  container: HTMLElement,
+  options: RenderMermaidOptions = {},
+): Promise<void> {
   const diagrams = Array.from(container.querySelectorAll<HTMLElement>("pre.mermaid"));
   if (diagrams.length === 0) return;
 
-  const failures: string[] = [];
+  const theme =
+    options.theme ??
+    (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default");
+
+  ensureInitialized(theme);
+
   for (const diagram of diagrams) {
-    let source = diagram.dataset.mermaidSource ?? diagram.textContent ?? "";
-    if (source.includes("&gt;") || source.includes("&lt;") || source.includes("&amp;")) {
-      const txt = document.createElement("textarea");
-      txt.innerHTML = source;
-      source = txt.value;
-    }
-    const cleanSource = source.trim();
-    if (!cleanSource) continue;
+    // Skip already-rendered diagrams unless forced or theme changed.
+    const prevTheme = diagram.getAttribute("data-mermaid-theme");
+    const alreadyRendered = diagram.classList.contains("mermaid-rendered");
+    if (alreadyRendered && !options.force && prevTheme === theme) continue;
 
-    diagram.dataset.mermaidSource = source;
-    if (options.force || diagram.dataset.mermaidTheme !== theme) {
-      diagram.textContent = source;
-      diagram.removeAttribute("data-processed");
-      diagram.classList.remove("mermaid-rendered", "mermaid-error");
-    }
-    diagram.dataset.mermaidTheme = theme;
+    // Read the original Mermaid source.
+    const source = readSource(diagram).trim();
+    if (!source) continue;
 
-    const id = `bookmd-mermaid-${Date.now()}-${renderId += 1}`;
+    // Persist the raw source so we can re-read it after innerHTML is replaced.
+    diagram.setAttribute("data-mermaid-source", source);
+    diagram.setAttribute("data-mermaid-theme", theme);
+
+    // Reset to text so mermaid doesn't see stale SVG markup.
+    diagram.textContent = source;
+    diagram.removeAttribute("data-processed");
+    diagram.classList.remove("mermaid-rendered", "mermaid-error");
+
+    const id = `bookmd-mermaid-${Date.now()}-${(renderId += 1)}`;
     try {
-      const { svg } = await mermaid.render(id, cleanSource);
+      const { svg } = await mermaid.render(id, source);
+      cleanupStrayNodes(id);
       diagram.innerHTML = svg;
-      diagram.dataset.processed = "true";
+      diagram.setAttribute("data-processed", "true");
       diagram.classList.add("mermaid-rendered");
       diagram.classList.remove("mermaid-error");
     } catch (error) {
-      // Clean up any stray error elements injected by mermaid into document.body
-      try {
-        const stray1 = document.getElementById(`d${id}`);
-        if (stray1) stray1.remove();
-        const stray2 = document.getElementById(id);
-        if (stray2) stray2.remove();
-        document.querySelectorAll("[id^='dbookmd-mermaid-']").forEach((el) => el.remove());
-      } catch {
-        // Ignore cleanup errors
-      }
-
-      diagram.innerHTML = `<div class="mermaid-error-fallback"><div class="mermaid-error-label">⚠️ 图表渲染提示：Mermaid 语法未通过校验</div><pre class="mermaid-error-source"><code>${escapeHtml(source)}</code></pre></div>`;
-      diagram.dataset.processed = "true";
+      cleanupStrayNodes(id);
+      const label = describeMermaidError(error);
+      diagram.innerHTML = `<div class="mermaid-error-fallback"><div class="mermaid-error-label">⚠️ Mermaid 图表语法错误：${escapeHtml(label)}</div><pre class="mermaid-error-source"><code>${escapeHtml(source)}</code></pre></div>`;
+      diagram.setAttribute("data-processed", "true");
       diagram.classList.add("mermaid-error");
       diagram.classList.remove("mermaid-rendered");
-      failures.push(describeMermaidError(error));
     }
-  }
-
-  if (failures.length > 0) {
-    throw new Error(`Failed to render ${failures.length} Mermaid diagram(s): ${failures.join("; ")}`);
   }
 }
 
