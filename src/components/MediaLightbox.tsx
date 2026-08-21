@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { downloadSvgFile } from "../services/svgExport";
+import { downloadSvgAsPng } from "../services/svgExport";
 
 export type LightboxMedia = {
   type: "image" | "mermaid";
@@ -83,7 +83,7 @@ export const MediaLightbox = memo(function MediaLightbox({
     setIsDragging(false);
   }, []);
 
-  // Download media
+  // Download media (Mermaid exports as PNG)
   const handleDownload = useCallback(() => {
     if (!media) return;
     if (media.type === "image" && media.src) {
@@ -94,7 +94,8 @@ export const MediaLightbox = memo(function MediaLightbox({
       a.click();
       document.body.removeChild(a);
     } else if (media.type === "mermaid" && media.svgHtml) {
-      downloadSvgFile(media.svgHtml, media.title || "diagram");
+      const svgElem = contentRef.current?.querySelector<SVGElement>("svg");
+      downloadSvgAsPng(media.svgHtml, media.title || "mermaid-diagram", svgElem);
     }
   }, [media]);
 
@@ -149,9 +150,9 @@ export const MediaLightbox = memo(function MediaLightbox({
             type="button"
             className="lightbox-btn"
             onClick={handleDownload}
-            title="下载文件"
+            title={media.type === "mermaid" ? "导出为 PNG 高清图片" : "下载图片"}
           >
-            ⬇ 下载
+            ⬇ {media.type === "mermaid" ? "导出 PNG" : "下载"}
           </button>
           <button
             type="button"

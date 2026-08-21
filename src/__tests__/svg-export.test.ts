@@ -33,4 +33,10 @@ describe("SVG Export and XML Sanitization", () => {
 
     expect(serialized).toContain("<text>Hello World</text>");
   });
+
+  it("extracts correct viewBox dimensions when preparing for PNG rasterization", () => {
+    const rawSvg = `<svg viewBox="0 0 1600 900"><rect width="1600" height="900" /></svg>`;
+    const serialized = serializeSvgForExport(rawSvg);
+    expect(serialized).toContain('viewBox="0 0 1600 900"');
+  });
 });
