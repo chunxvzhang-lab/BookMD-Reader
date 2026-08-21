@@ -23,6 +23,8 @@
 /.playwright-cli
 /__pycache__
 *.pyc
+product_roadmap.md
+ROADMAP.md
 
 # Scratch and unrelated local folders
 /ai_quality_inspection_ppt

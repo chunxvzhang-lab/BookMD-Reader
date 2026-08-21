@@ -33,13 +33,14 @@ type EditorPaneProps = {
   theme: ThemeMode;
   fontScale?: number;
   readOnly?: boolean;
+  typewriterMode?: boolean;
   onSave?: () => void;
   onScroll?: (view: EditorView) => void;
   onSelectionChange?: (view: EditorView) => void;
   onEditorViewReady?: (view: EditorView | null) => void;
 };
 
-function buildCustomTheme(isDarkMode: boolean, fontScale: number) {
+function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode = false) {
   return EditorView.theme(
     {
       "&": {
@@ -56,6 +57,7 @@ function buildCustomTheme(isDarkMode: boolean, fontScale: number) {
       },
       ".cm-content": {
         padding: "16px 14px",
+        paddingBottom: typewriterMode ? "50vh" : "16px",
         caretColor: "#1d9bf0",
       },
       ".cm-cursor, .cm-dropCursor": {
@@ -109,6 +111,7 @@ export function EditorPane({
   theme,
   fontScale = 1,
   readOnly = false,
+  typewriterMode = false,
   onSave,
   onScroll,
   onSelectionChange,
@@ -129,6 +132,8 @@ export function EditorPane({
   onSelectionChangeRef.current = onSelectionChange;
   const onEditorViewReadyRef = useRef(onEditorViewReady);
   onEditorViewReadyRef.current = onEditorViewReady;
+  const typewriterModeRef = useRef(typewriterMode);
+  typewriterModeRef.current = typewriterMode;
 
   const isDarkMode =
     theme === "twitter" ||
@@ -139,7 +144,7 @@ export function EditorPane({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale);
+    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale, typewriterMode);
 
     const saveKeyBinding = keymap.of([
       {
@@ -198,6 +203,13 @@ export function EditorPane({
           }
           if (update.selectionSet || update.docChanged) {
             onSelectionChangeRef.current?.(update.view);
+
+            if (typewriterModeRef.current) {
+              const head = update.state.selection.main.head;
+              update.view.dispatch({
+                effects: EditorView.scrollIntoView(head, { y: "center" }),
+              });
+            }
           }
         }),
       ],

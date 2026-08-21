@@ -116,14 +116,15 @@ const markdown: MarkdownIt = new MarkdownIt({
     if (isMermaidFence(languageName)) {
       return `<pre class="mermaid">${markdown.utils.escapeHtml(source)}</pre>`;
     }
+    const displayLang = languageName || "";
     if (source.length <= maxHighlightedCodeLength && languageName && hljs.getLanguage(languageName)) {
       try {
-        return `<pre class="hljs"><code>${hljs.highlight(source, { language: languageName }).value}</code></pre>`;
+        return `<pre class="hljs" data-language="${displayLang}"><code class="language-${displayLang}">${hljs.highlight(source, { language: languageName }).value}</code></pre>`;
       } catch {
         // Fall back to escaping below.
       }
     }
-    return `<pre class="hljs"><code>${markdown.utils.escapeHtml(source)}</code></pre>`;
+    return `<pre class="hljs" data-language="${displayLang}"><code class="language-${displayLang}">${markdown.utils.escapeHtml(source)}</code></pre>`;
   },
 })
   .use(sourceLineMappingPlugin)
@@ -147,6 +148,7 @@ export async function renderMarkdown(source: string, baseUrl = window.location.h
       "aria-hidden",
       "aria-label",
       "class",
+      "data-language",
       "data-source-line",
       "data-source-line-end",
       "decoding",

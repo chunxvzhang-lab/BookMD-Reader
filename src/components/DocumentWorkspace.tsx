@@ -6,6 +6,8 @@ import { RefreshCw, AlertCircle, Link2, Link2Off } from "lucide-react";
 import { useSyncScroll } from "../hooks/useSyncScroll";
 import { useSyncSelection } from "../hooks/useSyncSelection";
 
+import type { LightboxMedia } from "./MediaLightbox";
+
 const SPLIT_RATIO_KEY = "bookmd.layout.splitRatio";
 
 type DocumentWorkspaceProps = {
@@ -24,6 +26,8 @@ type DocumentWorkspaceProps = {
   onRefreshPreview?: () => void;
   readOnly?: boolean;
   showLineNumbers?: boolean;
+  typewriterMode?: boolean;
+  onOpenLightbox?: (media: LightboxMedia) => void;
 };
 
 export function DocumentWorkspace({
@@ -42,6 +46,8 @@ export function DocumentWorkspace({
   onRefreshPreview,
   readOnly = false,
   showLineNumbers = true,
+  typewriterMode = false,
+  onOpenLightbox,
 }: DocumentWorkspaceProps) {
   const [splitRatio, setSplitRatio] = useState(() => {
     try {
@@ -155,6 +161,7 @@ export function DocumentWorkspace({
             fontScale={fontScale}
             onSave={onSave}
             readOnly={readOnly}
+            typewriterMode={typewriterMode}
             onScroll={handleEditorScroll}
             onSelectionChange={handleEditorSelectionChange}
             onEditorViewReady={(view) => {
@@ -225,6 +232,7 @@ export function DocumentWorkspace({
             onMermaidError={onMermaidError}
             onElementClick={handlePreviewSelectionChange}
             showLineNumbers={showLineNumbers}
+            onOpenLightbox={onOpenLightbox}
           />
         </div>
       )}

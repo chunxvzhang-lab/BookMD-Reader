@@ -6,8 +6,10 @@ import { BookmarkPanel } from "./components/BookmarkPanel";
 import { ChapterList } from "./components/ChapterList";
 import { DocumentWorkspace } from "./components/DocumentWorkspace";
 import { FileConflictDialog } from "./components/FileConflictDialog";
+import { MediaLightbox, type LightboxMedia } from "./components/MediaLightbox";
 import { SearchPanel } from "./components/SearchPanel";
 import { StatusBar } from "./components/StatusBar";
+import { TabBar, type TabItem } from "./components/TabBar";
 import { TocPanel } from "./components/TocPanel";
 import { Toolbar } from "./components/Toolbar";
 import { UnsavedChangesDialog } from "./components/UnsavedChangesDialog";
@@ -53,11 +55,21 @@ export function App() {
 
   const [manifest, setManifest] = useState<BookManifest | null>(null);
   const [chapterId, setChapterId] = useState<string>("");
+  const [tabs, setTabs] = useState<TabItem[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [directoryOpen, setDirectoryOpen] = useState(true);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("toc");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
+  const [typewriterMode, setTypewriterMode] = useState(() => {
+    try {
+      return localStorage.getItem("bookmd.editor.typewriter") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [lightboxMedia, setLightboxMedia] = useState<LightboxMedia | null>(null);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSearchMatchId, setActiveSearchMatchId] = useState<string | null>(null);
@@ -521,6 +533,97 @@ export function App() {
     },
     [chapterId, guardAction]
   );
+
+  // Sync active chapter to tabs list
+  useEffect(() => {
+    if (!activeChapter) return;
+    setTabs((prev) => {
+      const exists = prev.some((t) => t.id === activeChapter.id);
+      if (exists) {
+        return prev.map((t) =>
+          t.id === activeChapter.id
+            ? {
+                ...t,
+                title: activeChapter.title,
+                isDirty: Boolean(isDirty && activeChapter.id === chapterId),
+              }
+            : t
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: activeChapter.id,
+          title: activeChapter.title,
+          relativePath: activeChapter.src,
+          absolutePath: activeChapter.absolutePath,
+          isDirty: Boolean(isDirty),
+        },
+      ];
+    });
+  }, [activeChapter, isDirty, chapterId]);
+
+  const handleCloseTab = useCallback(
+    (tabId: string) => {
+      setTabs((prev) => {
+        const next = prev.filter((t) => t.id !== tabId);
+        if (next.length === 0) {
+          setChapterId("");
+          return next;
+        }
+        if (tabId === chapterId) {
+          const closedIndex = prev.findIndex((t) => t.id === tabId);
+          const newActiveIndex = Math.min(closedIndex, next.length - 1);
+          const targetId = next[newActiveIndex].id;
+          selectChapter(targetId);
+        }
+        return next;
+      });
+    },
+    [chapterId, selectChapter]
+  );
+
+  const handleCloseOtherTabs = useCallback(
+    (tabId: string) => {
+      setTabs((prev) => prev.filter((t) => t.id === tabId));
+      if (chapterId !== tabId) {
+        selectChapter(tabId);
+      }
+    },
+    [chapterId, selectChapter]
+  );
+
+  const handleCloseRightTabs = useCallback(
+    (tabId: string) => {
+      setTabs((prev) => {
+        const idx = prev.findIndex((t) => t.id === tabId);
+        if (idx === -1) return prev;
+        const next = prev.slice(0, idx + 1);
+        const activeStillExists = next.some((t) => t.id === chapterId);
+        if (!activeStillExists) {
+          selectChapter(tabId);
+        }
+        return next;
+      });
+    },
+    [chapterId, selectChapter]
+  );
+
+  const toggleZenMode = useCallback(() => {
+    setZenMode((prev) => !prev);
+  }, []);
+
+  const toggleTypewriterMode = useCallback(() => {
+    setTypewriterMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("bookmd.editor.typewriter", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
 
   const doOpenMarkdownFile = async (file: File) => {
     openRequestRef.current += 1;
@@ -1072,15 +1175,64 @@ export function App() {
         target?.isContentEditable ||
         target?.closest(".cm-editor");
 
+      if (event.key === "F10") {
+        event.preventDefault();
+        toggleZenMode();
+        return;
+      }
+
       if (event.key === "F11") {
         event.preventDefault();
         toggleFullscreen();
         return;
       }
 
-      if (event.key === "Escape" && isFullscreen) {
+      if (event.key === "Escape") {
+        if (lightboxMedia) {
+          event.preventDefault();
+          setLightboxMedia(null);
+          return;
+        }
+        if (zenMode) {
+          event.preventDefault();
+          setZenMode(false);
+          return;
+        }
+        if (isFullscreen) {
+          event.preventDefault();
+          toggleFullscreen();
+          return;
+        }
+      }
+
+      // Close active tab: Ctrl+W
+      if (event.ctrlKey && event.key.toLowerCase() === "w") {
         event.preventDefault();
-        toggleFullscreen();
+        if (chapterId) {
+          handleCloseTab(chapterId);
+        }
+        return;
+      }
+
+      // Switch tabs: Ctrl+Tab / Ctrl+Shift+Tab
+      if (event.ctrlKey && event.key === "Tab") {
+        event.preventDefault();
+        if (tabs.length > 1) {
+          const currentIndex = tabs.findIndex((t) => t.id === chapterId);
+          if (currentIndex !== -1) {
+            const nextIndex = event.shiftKey
+              ? (currentIndex - 1 + tabs.length) % tabs.length
+              : (currentIndex + 1) % tabs.length;
+            selectChapter(tabs[nextIndex].id);
+          }
+        }
+        return;
+      }
+
+      // Toggle Typewriter Mode: Alt+T
+      if (event.altKey && event.key.toLowerCase() === "t") {
+        event.preventDefault();
+        toggleTypewriterMode();
         return;
       }
 
@@ -1136,7 +1288,26 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [addBookmark, createNewFile, focusSearch, goNext, goPrevious, isFullscreen, openMarkdownDirectory, saveSession, saveSessionAs, toggleFullscreen]);
+  }, [
+    addBookmark,
+    chapterId,
+    createNewFile,
+    focusSearch,
+    goNext,
+    goPrevious,
+    handleCloseTab,
+    isFullscreen,
+    lightboxMedia,
+    openMarkdownDirectory,
+    saveSession,
+    saveSessionAs,
+    selectChapter,
+    tabs,
+    toggleFullscreen,
+    toggleTypewriterMode,
+    toggleZenMode,
+    zenMode,
+  ]);
 
   // Toast auto-clear
   useEffect(() => {
@@ -1158,25 +1329,27 @@ export function App() {
 
   return (
     <div
-      className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}`}
+      className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${zenMode ? " is-zen-mode" : ""}`}
     >
-      <ActivityBar
-        directoryOpen={directoryOpen}
-        onToggleDirectory={() => setDirectoryOpen((open) => !open)}
-        sidebarOpen={sidebarOpen}
-        activeSidebarTab={sidebarTab}
-        onSelectSidebarTab={handleSelectSidebarTab}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        theme={preferences.theme}
-        onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
-        isFullscreen={isFullscreen}
-        onToggleFullscreen={toggleFullscreen}
-        onNewFile={window.bookMDDesktop ? createNewFile : undefined}
-        onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
-        onOpenAbout={() => setAboutOpen(true)}
-        isDirty={isDirty}
-      />
+      {!zenMode && (
+        <ActivityBar
+          directoryOpen={directoryOpen}
+          onToggleDirectory={() => setDirectoryOpen((open) => !open)}
+          sidebarOpen={sidebarOpen}
+          activeSidebarTab={sidebarTab}
+          onSelectSidebarTab={handleSelectSidebarTab}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          theme={preferences.theme}
+          onThemeChange={(theme: ThemeMode) => setPreferences((current) => ({ ...current, theme }))}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          onNewFile={window.bookMDDesktop ? createNewFile : undefined}
+          onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
+          onOpenAbout={() => setAboutOpen(true)}
+          isDirty={isDirty}
+        />
+      )}
 
       <div className="main-viewport-container">
         <Toolbar
@@ -1199,6 +1372,10 @@ export function App() {
               return next;
             })
           }
+          typewriterMode={typewriterMode}
+          onToggleTypewriterMode={toggleTypewriterMode}
+          zenMode={zenMode}
+          onToggleZenMode={toggleZenMode}
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
           onPrevious={goPrevious}
@@ -1223,7 +1400,7 @@ export function App() {
         />
 
       <div className="workspace">
-        {directoryOpen ? (
+        {!zenMode && directoryOpen ? (
           manifest ? (
             <div style={{ width: directoryWidth, flex: `0 0 ${directoryWidth}px` }} className="chapter-list-container">
               <ChapterList
@@ -1241,7 +1418,7 @@ export function App() {
           )
         ) : null}
 
-        {directoryOpen && (
+        {!zenMode && directoryOpen && (
           <div
             className={`layout-resizer ${resizingType === "dir" ? "is-active" : ""}`}
             onMouseDown={handleDirResizeMouseDown}
@@ -1252,7 +1429,7 @@ export function App() {
           />
         )}
 
-        {sidebarOpen && manifest ? (
+        {!zenMode && sidebarOpen && manifest ? (
           <>
             <aside className="side-panel" style={{ width: sidebarWidth, flex: `0 0 ${sidebarWidth}px` }}>
               <div className="tabs" role="tablist" aria-label="侧栏区域">
@@ -1320,6 +1497,16 @@ export function App() {
         ) : null}
 
         <section className="reader-frame">
+          {tabs.length > 0 && (
+            <TabBar
+              tabs={tabs}
+              activeTabId={chapterId}
+              onSelectTab={selectChapter}
+              onCloseTab={handleCloseTab}
+              onCloseOtherTabs={handleCloseOtherTabs}
+              onCloseRightTabs={handleCloseRightTabs}
+            />
+          )}
           {session ? (
             <DocumentWorkspace
               viewMode={viewMode}
@@ -1337,6 +1524,8 @@ export function App() {
               onRefreshPreview={renderPreviewNow}
               readOnly={!session.writable}
               showLineNumbers={preferences.showLineNumbers}
+              typewriterMode={typewriterMode}
+              onOpenLightbox={(media) => setLightboxMedia(media)}
             />
           ) : (
             <main className="empty-reader" ref={readerRef}>
@@ -1391,17 +1580,25 @@ export function App() {
         </section>
       </div>
 
-      <StatusBar
-        fileName={session?.fileName}
-        chapterTitle={activeChapter?.title}
-        source={session?.source}
-        isDirty={isDirty}
-        writable={session?.writable}
-        lineEnding={session?.lineEnding}
-        viewMode={viewMode}
-        isLargeDocument={isLargeDocument}
-      />
+      {!zenMode && (
+        <StatusBar
+          fileName={session?.fileName}
+          chapterTitle={activeChapter?.title}
+          source={session?.source}
+          isDirty={isDirty}
+          writable={session?.writable}
+          lineEnding={session?.lineEnding}
+          viewMode={viewMode}
+          isLargeDocument={isLargeDocument}
+        />
+      )}
     </div>
+
+      {/* Media Lightbox Modal */}
+      <MediaLightbox
+        media={lightboxMedia}
+        onClose={() => setLightboxMedia(null)}
+      />
 
       {/* Unsaved Changes Guard Dialog */}
       <UnsavedChangesDialog

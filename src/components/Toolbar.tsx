@@ -17,6 +17,8 @@ import {
   Maximize2,
   Minimize2,
   Hash,
+  Sparkles,
+  Eye,
 } from "lucide-react";
 import type { EditorViewMode, ThemeMode } from "../core/types";
 import { ViewModeControl } from "./ViewModeControl";
@@ -35,6 +37,10 @@ type ToolbarProps = {
   fontScale: number;
   showLineNumbers?: boolean;
   onToggleLineNumbers?: () => void;
+  typewriterMode?: boolean;
+  onToggleTypewriterMode?: () => void;
+  zenMode?: boolean;
+  onToggleZenMode?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   onPrevious: () => void;
@@ -184,6 +190,28 @@ export function Toolbar(props: ToolbarProps) {
           <BookmarkPlus size={16} />
           <span>书签</span>
         </button>
+
+        {props.onToggleTypewriterMode && (
+          <button
+            className={`icon-button ${props.typewriterMode ? "active" : ""}`}
+            onClick={props.onToggleTypewriterMode}
+            aria-label={props.typewriterMode ? "关闭打字机居中滚动" : "开启打字机居中滚动"}
+            title={props.typewriterMode ? "打字机模式：已开启（Alt+T）" : "打字机模式：已关闭（Alt+T）"}
+          >
+            <Eye size={17} />
+          </button>
+        )}
+
+        {props.onToggleZenMode && (
+          <button
+            className={`icon-button ${props.zenMode ? "active" : ""}`}
+            onClick={props.onToggleZenMode}
+            aria-label={props.zenMode ? "退出专注模式" : "进入专注模式"}
+            title={props.zenMode ? "专注模式：已开启（F10 / Esc）" : "专注模式：已关闭（F10）"}
+          >
+            <Sparkles size={17} />
+          </button>
+        )}
 
         {props.onToggleLineNumbers && (
           <button
