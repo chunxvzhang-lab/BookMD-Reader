@@ -10,7 +10,6 @@ type RenderMermaidOptions = {
 let renderId = 0;
 let initializedTheme: MermaidTheme | null = null;
 
-/** Initialize mermaid once per theme — avoid re-initializing mid-render. */
 function ensureInitialized(theme: MermaidTheme): void {
   if (initializedTheme === theme) return;
   initializedTheme = theme;
@@ -22,25 +21,35 @@ function ensureInitialized(theme: MermaidTheme): void {
   });
 }
 
-/** Read raw Mermaid source from a <pre.mermaid> element.
- *  Priority: data-mermaid-source attribute (already decoded plain text)
- *            > textContent (browser auto-decodes HTML entities for us)
+/**
+ * Read the raw Mermaid source from a <pre class="mermaid"> element.
+ *
+ * markdown.ts stores the original (unescaped) source as base64 in the
+ * `data-mermaid-src` attribute so HTML-entity encoding (e.g. --> → --&gt;)
+ * can never corrupt the diagram source before Mermaid sees it.
+ *
+ * Fallback: use textContent (browser auto-decodes HTML entities).
  */
 function readSource(diagram: HTMLElement): string {
-  const stored = diagram.getAttribute("data-mermaid-source");
-  if (stored) return stored;
-  // textContent gives us the decoded plain text — no manual entity decoding needed.
+  const b64 = diagram.getAttribute("data-mermaid-src");
+  if (b64) {
+    try {
+      return decodeURIComponent(escape(atob(b64)));
+    } catch {
+      // fall through to textContent
+    }
+  }
   return diagram.textContent ?? "";
 }
 
-/** Remove any stray DOM nodes that mermaid may have injected into document.body. */
 function cleanupStrayNodes(id: string): void {
   try {
     document.getElementById(`d${id}`)?.remove();
     document.getElementById(id)?.remove();
-    document.querySelectorAll(`[id^='d${id}']`).forEach((el) => el.remove());
+    // Broad sweep for any leftovers with the same prefix
+    document.querySelectorAll(`[id^='d${id}'], [id='${id}']`).forEach((el) => el.remove());
   } catch {
-    // Ignore
+    // ignore
   }
 }
 
@@ -48,7 +57,9 @@ export async function renderMermaid(
   container: HTMLElement,
   options: RenderMermaidOptions = {},
 ): Promise<void> {
-  const diagrams = Array.from(container.querySelectorAll<HTMLElement>("pre.mermaid"));
+  const diagrams = Array.from(
+    container.querySelectorAll<HTMLElement>("pre.mermaid"),
+  );
   if (diagrams.length === 0) return;
 
   const theme =
@@ -63,34 +74,27 @@ export async function renderMermaid(
     const alreadyRendered = diagram.classList.contains("mermaid-rendered");
     if (alreadyRendered && !options.force && prevTheme === theme) continue;
 
-    // Read the original Mermaid source.
     const source = readSource(diagram).trim();
     if (!source) continue;
 
-    // Persist the raw source so we can re-read it after innerHTML is replaced.
-    diagram.setAttribute("data-mermaid-source", source);
     diagram.setAttribute("data-mermaid-theme", theme);
-
-    // Reset to text so mermaid doesn't see stale SVG markup.
-    diagram.textContent = source;
-    diagram.removeAttribute("data-processed");
     diagram.classList.remove("mermaid-rendered", "mermaid-error");
 
     const id = `bookmd-mermaid-${Date.now()}-${(renderId += 1)}`;
     try {
       const { svg } = await mermaid.render(id, source);
       cleanupStrayNodes(id);
+      // Clear text content first, then inject SVG
+      diagram.textContent = "";
       diagram.innerHTML = svg;
-      diagram.setAttribute("data-processed", "true");
       diagram.classList.add("mermaid-rendered");
-      diagram.classList.remove("mermaid-error");
     } catch (error) {
       cleanupStrayNodes(id);
       const label = describeMermaidError(error);
-      diagram.innerHTML = `<div class="mermaid-error-fallback"><div class="mermaid-error-label">⚠️ Mermaid 图表语法错误：${escapeHtml(label)}</div><pre class="mermaid-error-source"><code>${escapeHtml(source)}</code></pre></div>`;
-      diagram.setAttribute("data-processed", "true");
+      // Show graceful fallback — raw source preserved in a code block
+      diagram.textContent = "";
       diagram.classList.add("mermaid-error");
-      diagram.classList.remove("mermaid-rendered");
+      diagram.innerHTML = `<div class="mermaid-error-fallback"><div class="mermaid-error-label">⚠️ Mermaid 渲染失败：${escapeHtml(label)}</div><pre class="mermaid-error-source"><code>${escapeHtml(source)}</code></pre></div>`;
     }
   }
 }

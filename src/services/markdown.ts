@@ -114,7 +114,10 @@ const markdown: MarkdownIt = new MarkdownIt({
   highlight: (source: string, language: string): string => {
     const languageName = normalizeFenceLanguage(language);
     if (isMermaidFence(languageName)) {
-      return `<pre class="mermaid">${markdown.utils.escapeHtml(source)}</pre>`;
+      // Store the raw source as base64 so the renderer reads it back without
+      // any HTML-entity distortion (e.g. --> would become --&gt; if escaped).
+      const b64 = btoa(unescape(encodeURIComponent(source)));
+      return `<pre class="mermaid" data-mermaid-src="${b64}">${markdown.utils.escapeHtml(source)}</pre>`;
     }
     const displayLang = languageName || "";
     if (source.length <= maxHighlightedCodeLength && languageName && hljs.getLanguage(languageName)) {
@@ -149,6 +152,7 @@ export async function renderMarkdown(source: string, baseUrl = window.location.h
       "aria-label",
       "class",
       "data-language",
+      "data-mermaid-src",
       "data-source-line",
       "data-source-line-end",
       "decoding",
