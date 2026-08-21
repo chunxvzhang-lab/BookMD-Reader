@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.4.3-1D9BF0?style=flat-square&logo=github" alt="Version 1.4.3" />
+  <img src="https://img.shields.io/badge/Version-v1.5.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.5.0" />
   <img src="https://img.shields.io/badge/Theme-Geek_Dark-1D9BF0?style=flat-square" alt="Geek Dark Theme" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
@@ -33,13 +33,30 @@
 
 ---
 
-BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入现代极客设计美学，支持多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、界面分栏自由拖拽缩放、正文预览行号显示、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
+BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入现代极客设计美学，支持多标签页多文档管理、代码块一键复制与高对比度高亮、图片与 Mermaid 架构图无损灯箱缩放、专注模式 (F10)、打字机居中滚动、多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、界面分栏自由拖拽缩放、正文预览行号显示、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
 
 ---
 
 ## 🌟 核心功能特性
 
-### 1. 现代视觉与双主题交互系统
+### 1. v1.5.0 全新生产力与交互升级
+- **📑 多标签页协同编辑栏（Multi-Tabs Bar）**：
+  - 顶部原生文档标签栏，打开多个 Markdown 章节或独立文档随心并行切换。
+  - 支持未保存修改黄点呼吸灯状态（`isDirty`）、鼠标中键快速关闭。
+  - 右键上下文菜单支持：关闭当前、关闭其他、关闭右侧标签页。
+  - 快捷键支持：`Ctrl + W` 关闭标签、`Ctrl + Tab` / `Ctrl + Shift + Tab` 前后循环切换。
+- **📋 代码块一键复制与语言标签（Code Copy & Language Badges）**：
+  - 自动识别并呈现语法语言胶囊（`PYTHON`, `TYPESCRIPT`, `JSON`, `BASH` 等）。
+  - 一键复制代码至剪贴板，提供绿色 `✓ 已复制` 动效反馈。
+- **🔍 图片与 Mermaid 架构图无损灯箱（Media Lightbox）**：
+  - 点击正文中的任何图片或 Mermaid 渲染图，一键呼出高画质毛玻璃全屏灯箱。
+  - 支持 10% ~ 500% 滚轮/按键无损平滑缩放、鼠标任意拖拽平移、原图/SVG 一键下载及 `Esc` 退出。
+- **🧘 专注极简模式（Zen Mode / `F10`）**：
+  - 一键隐藏侧边栏、目录树与状态栏，正文自动居中呈现（960px 黄金阅读视宽），沉浸写作。
+- **✍️ 打字机居中滚动模式（Typewriter Scrolling Mode / `Alt+T`）**：
+  - 编辑时保持活动光标行始终位于视口垂直中心（45%~50% 视线黄金区），免去频繁低头。
+
+### 2. 现代视觉与双主题交互系统
 - **全新极客暗黑主题**：
   - 采用 Lights Out 纯黑底色 (`#000000`)、电光蓝高亮 (`#1D9BF0`) 与发丝微边框 (`#2F3336`)。
   - 支持 **☀️ 日光浅色 / ✨ 极客暗黑** 双重主题一键平滑切换。
@@ -85,7 +102,7 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 - **🖥️ 全屏沉浸模式**：支持 `F11` 快捷键沉浸全屏阅读写作与 `Esc` 退出。
 
 ### 4. 数据安全与防丢稿守卫
-- **原子事务落盘保存**：同目录临时文件写入 + `fsync` 物理落盘 + 原子重命名替换，杜绝断电或异常退出的文件截断损坏。
+- **原子事务落盘保存**：同目录临时文件写入 + `fsync` + 原子重命名替换，杜绝断电或异常退出的文件截断损坏。
 - **编码与换行风格保真**：自动识别并保留原文件的 UTF-8 BOM 以及 CRLF (`\r\n`) / LF (`\n`) 格式。
 - **外部修改冲突检测**：保存前校验磁盘 `{ size, mtimeMs }`。若文件被外部工具修改，自动弹出冲突协商弹窗（重新载入、强制覆盖或另存为）。
 - **全链路未保存守卫**：切换章节、新建文件、打开文件/目录或关闭窗口时，若有未保存修改均触发拦截提示，杜绝误操作丢稿。
@@ -115,7 +132,7 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`BookMD-Reader-1.4.2.msi`
+- **文件**：`BookMD-Reader-1.5.0.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版
