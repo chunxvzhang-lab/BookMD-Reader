@@ -101,6 +101,13 @@ declare global {
       openExternal?: (url: string) => Promise<boolean>;
       toggleFullScreen?: () => Promise<boolean>;
       isFullScreen?: () => Promise<boolean>;
+      exportSvgAsPng?: (params: {
+        svgHtml: string;
+        width?: number;
+        height?: number;
+        theme?: string;
+        filename?: string;
+      }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
       onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
       onMenuCommand: (callback: (command: string) => void) => () => void;
       onBeforeClose: (callback: (data: BeforeCloseData) => void) => () => void;

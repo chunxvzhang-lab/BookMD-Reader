@@ -457,3 +457,110 @@ ipcMain.handle("bookmd:is-fullscreen", () => {
   return mainWindow.isFullScreen();
 });
 
+ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { success: false, message: "主窗口未就绪" };
+
+  const { svgHtml, width = 1200, height = 800, theme = "twitter", filename = "mermaid-diagram" } = request;
+  if (!svgHtml) return { success: false, message: "缺少 SVG 源码" };
+
+  const cleanFilename = (filename || "mermaid-diagram").replace(/\.(svg|png)$/i, "");
+  const defaultPath = path.join(app.getPath("downloads"), `${cleanFilename}.png`);
+
+  const saveResult = await dialog.showSaveDialog(mainWindow, {
+    title: "导出 Mermaid 架构图为 PNG 图片",
+    defaultPath,
+    filters: [
+      { name: "PNG 图片 (*.png)", extensions: ["png"] },
+      { name: "所有文件 (*.*)", extensions: ["*"] },
+    ],
+  });
+
+  if (saveResult.canceled || !saveResult.filePath) {
+    return { canceled: true };
+  }
+
+  const targetWidth = Math.max(Math.min(Math.round(width) + 60, 4000), 400);
+  const targetHeight = Math.max(Math.min(Math.round(height) + 60, 4000), 300);
+
+  const offscreenWin = new BrowserWindow({
+    width: targetWidth,
+    height: targetHeight,
+    show: false,
+    webPreferences: {
+      offscreen: true,
+      contextIsolation: true,
+    },
+  });
+
+  try {
+    const isDark = theme === "twitter" || (theme === "system" && nativeTheme.shouldUseDarkColors);
+    const bgColor = isDark ? "#000000" : "#ffffff";
+    const textColor = isDark ? "#e7e9ea" : "#0f1419";
+
+    const pageHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: ${bgColor};
+    color: ${textColor};
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .wrapper {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+</style>
+</head>
+<body>
+  <div class="wrapper">
+    ${svgHtml}
+  </div>
+</body>
+</html>`;
+
+    await offscreenWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(pageHtml)}`);
+    // Wait for layout rendering and fonts
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const image = await offscreenWin.webContents.capturePage({
+      x: 0,
+      y: 0,
+      width: targetWidth,
+      height: targetHeight,
+    });
+
+    const pngBuffer = image.toPNG();
+    await fs.promises.writeFile(saveResult.filePath, pngBuffer);
+    return { success: true, filePath: saveResult.filePath };
+  } catch (err) {
+    console.error("Failed to render and save PNG:", err);
+    return { success: false, message: err.message };
+  } finally {
+    if (offscreenWin && !offscreenWin.isDestroyed()) {
+      offscreenWin.destroy();
+    }
+  }
+});
+
+

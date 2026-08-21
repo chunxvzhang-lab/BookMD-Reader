@@ -98,7 +98,33 @@ export const MediaLightbox = memo(function MediaLightbox({
     } else if (media.type === "mermaid" && media.svgHtml) {
       try {
         setIsExporting(true);
-        const svgElem = contentRef.current?.querySelector<SVGElement>("svg");
+        const svgElem = contentRef.current?.querySelector<SVGSVGElement>("svg");
+        const rect = svgElem?.getBoundingClientRect();
+
+        let width = 1200;
+        let height = 800;
+        if (rect && rect.width > 0 && rect.height > 0) {
+          width = Math.round(rect.width);
+          height = Math.round(rect.height);
+        } else if (svgElem?.viewBox?.baseVal) {
+          width = Math.round(svgElem.viewBox.baseVal.width || 1200);
+          height = Math.round(svgElem.viewBox.baseVal.height || 800);
+        }
+
+        if (window.bookMDDesktop?.exportSvgAsPng) {
+          const theme = document.documentElement.getAttribute("data-theme") || "twitter";
+          const res = await window.bookMDDesktop.exportSvgAsPng({
+            svgHtml: media.svgHtml,
+            width,
+            height,
+            theme,
+            filename: media.title || "mermaid-diagram",
+          });
+          if (res?.success || res?.canceled) {
+            return;
+          }
+        }
+
         await downloadSvgAsPng(media.svgHtml, media.title || "mermaid-diagram", svgElem);
       } catch (err) {
         console.error("Export error:", err);
