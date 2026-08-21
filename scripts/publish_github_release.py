@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "BookMD-Reader"
-    tag = "v1.4.3"
-    title = "BookMD Reader v1.4.3 - 代码高对比度语法高亮与分割线双击自适应"
+    tag = "v1.5.0"
+    title = "BookMD Reader v1.5.0 - 多标签页协同、代码块复制、媒体无损灯箱与专注模式"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -74,29 +74,33 @@ def main():
         print(f"Notice: {e}")
 
     # 3. Create Release Body
-    body_md = """# 🚀 BookMD Reader v1.4.3
+    body_md = """# 🚀 BookMD Reader v1.5.0
 
-BookMD Reader v1.4.3 现已正式发布！本次版本迭代重点带来了**代码高对比度语法高亮系统**、**正文行号最左侧一列整齐排版**、**分屏选中内容平滑上移**与**界面分割线双击自适应最佳宽度**。
+BookMD Reader v1.5.0 现已正式发布！本次版本迭代带来了**多标签页多文档协同编辑**、**代码块一键复制与语言标签 Pill**、**图片与 Mermaid 架构图无损毛玻璃灯箱预览**、**专注模式 (F10)** 与**打字机居中滚动 (Alt+T)**。
 
 ---
 
 ### ✨ 核心更新亮点
 
-1. **🎨 增强代码与正文高对比度语法高亮（High-Contrast Syntax Highlighting）**：
-   - **全面告别暗黑模糊**：移除导致暗色背景下代码发黑的旧样式，全面引入色彩鲜明、高对比度的专业代码着色系统。
-   - **清晰可辨的注释与关键词**：注释改为清晰明亮的银灰斜体（`#94a3b8`），关键词珊瑚红（`#ff7b72`），字符串天蓝（`#a5d6ff`），函数淡紫（`#d2a8ff`），变量翠绿（`#7ee787`），数字亮蓝（`#79c0ff`），在纯黑/暗色背景下极致清晰舒适。
-   - **表格与行内代码对比度提升**：表格边框与表头采用高辨识度层次排版，行内代码高亮对比度显著增强。
+1. **📑 多标签页协同编辑栏（Multi-Tabs Bar）**：
+   - 顶部原生文档标签栏，打开多个 Markdown 章节或独立文档随心并行切换。
+   - 支持未保存修改黄点呼吸灯状态（`isDirty`）、鼠标中键快速关闭。
+   - 右键上下文菜单支持：关闭当前、关闭其他、关闭右侧标签页。
+   - 快捷键支持：`Ctrl + W` 关闭标签、`Ctrl + Tab` / `Ctrl + Shift + Tab` 前后循环切换。
 
-2. **🔢 正文预览行号整齐放置在最左侧一列**：
-   - 在左侧开辟独立固定行号槽位（`58px`）与垂直分割线，所有标题、段落、列表、代码块、引用块及表格的行号全部统一定位在最左侧同一竖列，消除嵌套缩进对行号的影响。
+2. **📋 代码块一键复制与语言标签（Code Copy & Language Badges）**：
+   - 自动识别并呈现语法语言胶囊（`PYTHON`, `TYPESCRIPT`, `JSON`, `BASH` 等）。
+   - 一键复制代码至剪贴板，提供绿色 `✓ 已复制` 动效反馈。
 
-3. **🎯 修复分屏模式下选中高亮内容平滑移动到上部**：
-   - 在左侧编辑器中选中文本或点击光标时，右侧预览区匹配的高亮块自动平滑滚动停靠在视口上部（约 15%~20% 偏上舒适区），并加入防抖去重锁，杜绝鼠标大跨度拖拽划选时发生抖动乱滚。
+3. **🔍 图片与 Mermaid 架构图无损灯箱（Media Lightbox）**：
+   - 点击正文中的任何图片或 Mermaid 渲染图，一键呼出高画质毛玻璃全屏灯箱。
+   - 支持 10% ~ 500% 滚轮/按键无损平滑缩放、鼠标任意拖拽平移、原图/SVG 一键下载及 `Esc` 退出。
 
-4. **📐 界面分割线双击自适应内容最佳位置**：
-   - **目录栏分割线**：双击自动根据目录树文本宽度自适应最佳宽度（200px~380px）。
-   - **侧栏分割线**：双击自动根据大纲/书签/搜索项自适应最佳宽度（220px~400px）。
-   - **分屏中间分割线**：双击瞬间恢复 1:1（50%）等宽黄金平衡比例。
+4. **🧘 专注极简模式（Zen Mode / `F10`）**：
+   - 一键隐藏侧边栏、目录树与状态栏，正文自动居中呈现（960px 黄金阅读视宽），沉浸写作。
+
+5. **✍️ 打字机居中滚动模式（Typewriter Scrolling Mode / `Alt+T`）**：
+   - 编辑时保持活动光标行始终位于视口垂直中心（45%~50% 视线黄金区），免去频繁低头。
 
 ---
 
@@ -104,7 +108,7 @@ BookMD Reader v1.4.3 现已正式发布！本次版本迭代重点带来了**代
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`BookMD-Reader-1.4.3.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
+| **`BookMD-Reader-1.5.0.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
 | **`BookMD-Reader-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `BookMD Reader.exe` 即可运行 |
 
 ---
@@ -155,19 +159,19 @@ BookMD Reader v1.4.3 现已正式发布！本次版本迭代重点带来了**代
 
     # 4. Upload Assets
     msi_path = (
-        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.3.msi"
-        if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.3.msi")
+        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.5.0.msi"
+        if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.5.0.msi")
         else (
-            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.3.msi"
-            if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.3.msi")
-            else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\release\BookMD-Reader-1.4.3.msi"
+            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.5.0.msi"
+            if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.5.0.msi")
+            else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\release\BookMD-Reader-1.5.0.msi"
         )
     )
 
     assets_to_upload = [
         (
             msi_path,
-            "BookMD-Reader-1.4.3.msi",
+            "BookMD-Reader-1.5.0.msi",
             "application/x-msi"
         ),
         (
