@@ -22,11 +22,12 @@ import type {
   SidebarTab,
   ThemeMode,
 } from "./core/types";
+import { EditorView } from "@codemirror/view";
 import { useDocumentSession } from "./hooks/useDocumentSession";
 import { useReadingTracker } from "./hooks/useReadingTracker";
 import { createBookmark, resolveBookmark } from "./services/bookmarks";
 import { loadChapterMarkdown, loadPackagedBook } from "./services/bookSource";
-import { extractExcerpt, findInChapter } from "./services/markdown";
+import { extractExcerpt, extractHeadingsFromSource, findHeadingLineInSource, findInChapter } from "./services/markdown";
 import {
   loadBookmarks,
   loadPreferences,
@@ -46,6 +47,7 @@ type PendingAction =
 
 export function App() {
   const readerRef = useRef<HTMLElement | null>(null);
+  const editorViewRef = useRef<EditorView | null>(null);
   const pendingBookmarkRef = useRef<Bookmark | null>(null);
   const activeHeadingRef = useRef<string | undefined>(undefined);
   const preferencesRef = useRef(loadPreferences());
@@ -263,14 +265,43 @@ export function App() {
     }
   }, []);
 
-  const jumpToHeading = useCallback((headingId: string, behavior: ScrollBehavior = "smooth") => {
-    const container = readerRef.current;
-    const target = container?.querySelector(`#${CSS.escape(headingId)}`);
-    if (target) {
-      target.scrollIntoView({ behavior, block: "start" });
+  const jumpToHeading = useCallback(
+    (headingId: string, behavior: ScrollBehavior = "smooth") => {
       setActiveHeadingId(headingId);
-    }
-  }, []);
+
+      // 1. If Reader pane is present (read or split mode), scroll preview
+      const container = readerRef.current;
+      if (container) {
+        const target = container.querySelector(`#${CSS.escape(headingId)}`);
+        if (target) {
+          target.scrollIntoView({ behavior, block: "start" });
+        }
+      }
+
+      // 2. If Editor pane is present (source or split mode), scroll editor directly to heading line
+      const editor = editorViewRef.current;
+      if (editor && session?.source) {
+        const allHeadings = renderedChapter?.headings?.length
+          ? renderedChapter.headings
+          : extractHeadingsFromSource(session.source);
+        const heading = allHeadings.find((h) => h.id === headingId);
+        if (heading) {
+          const lineNum = findHeadingLineInSource(session.source, heading);
+          const totalLines = editor.state.doc.lines;
+          const safeLineNum = Math.min(Math.max(1, lineNum), totalLines);
+          const line = editor.state.doc.line(safeLineNum);
+          editor.dispatch({
+            selection: { anchor: line.from, head: line.from },
+            effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 40 }),
+          });
+          if (viewMode === "source") {
+            editor.focus();
+          }
+        }
+      }
+    },
+    [session?.source, renderedChapter?.headings, viewMode]
+  );
 
   const jumpToRatio = useCallback((ratio: number) => {
     const container = readerRef.current;
@@ -349,6 +380,22 @@ export function App() {
 
   const handleSearchJump = useCallback((result: SearchResult) => {
     setActiveSearchMatchId(result.id ?? `match-${result.index}`);
+
+    // If editor is active, scroll editor to matching line
+    if (editorViewRef.current && result.lineNumber) {
+      const editor = editorViewRef.current;
+      const totalLines = editor.state.doc.lines;
+      const safeLineNum = Math.min(Math.max(1, result.lineNumber), totalLines);
+      const line = editor.state.doc.line(safeLineNum);
+      editor.dispatch({
+        selection: { anchor: line.from, head: line.from },
+        effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 40 }),
+      });
+      if (viewMode === "source") {
+        editor.focus();
+      }
+    }
+
     const container = readerRef.current;
     if (!container) return;
 
@@ -1475,7 +1522,13 @@ export function App() {
               {sidebarTab === "toc" ? (
                 <section id="toc-panel" role="tabpanel" aria-labelledby="toc-tab">
                   <TocPanel
-                    headings={renderedChapter?.headings ?? []}
+                    headings={
+                      renderedChapter?.headings?.length
+                        ? renderedChapter.headings
+                        : session?.source
+                          ? extractHeadingsFromSource(session.source)
+                          : []
+                    }
                     activeHeadingId={activeHeadingId}
                     bookmarkedHeadingIds={bookmarkedHeadingIds}
                     onJump={jumpToHeading}
@@ -1551,6 +1604,9 @@ export function App() {
               showLineNumbers={preferences.showLineNumbers}
               typewriterMode={typewriterMode}
               onOpenLightbox={(media) => setLightboxMedia(media)}
+              onEditorViewReady={(view) => {
+                editorViewRef.current = view;
+              }}
             />
           ) : (
             <main className="empty-reader" ref={readerRef}>

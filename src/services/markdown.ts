@@ -421,6 +421,58 @@ function addHeadingIds(fragment: DocumentFragment): Heading[] {
   return headings;
 }
 
+export function extractHeadingsFromSource(source: string): Heading[] {
+  const seen = new Map<string, number>();
+  const headings: Heading[] = [];
+  const lines = source.split("\n");
+  let inCodeBlock = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+
+    const match = trimmed.match(/^(#{1,6})\s+(.*)$/);
+    if (match) {
+      const level = match[1].length;
+      if (level <= 3) {
+        const text = compactWhitespace(match[2]);
+        const id = uniqueSlug(text, seen);
+        headings.push({ id, text, level });
+      }
+    }
+  }
+  return headings;
+}
+
+export function findHeadingLineInSource(source: string, targetHeading: Heading): number {
+  const lines = source.split("\n");
+  let inCodeBlock = false;
+  const targetText = targetHeading.text.trim().toLowerCase();
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+
+    const match = line.match(/^(#{1,6})\s+(.*)$/);
+    if (match) {
+      const level = match[1].length;
+      const text = match[2].trim().toLowerCase();
+      if (level === targetHeading.level && (text === targetText || text.includes(targetText) || targetText.includes(text))) {
+        return i + 1; // 1-indexed line number
+      }
+    }
+  }
+  return 1;
+}
+
 function parseFrontMatter(frontMatter: string): Record<string, unknown> | null {
   if (!frontMatter.trim()) return null;
   try {

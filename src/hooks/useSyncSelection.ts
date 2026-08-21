@@ -45,7 +45,25 @@ export function findMatchingPreviewElements(
     return !rawMatched.some((other) => other !== el && el.contains(other));
   });
 
-  return filtered.length > 0 ? filtered : rawMatched;
+  const finalMatched = filtered.length > 0 ? filtered : rawMatched;
+
+  // For a single-line cursor (startLine === endLine), pick only the tightest/innermost matching element
+  if (startLine === endLine && finalMatched.length > 1) {
+    let bestElem = finalMatched[0];
+    let minSpan = Infinity;
+    for (const el of finalMatched) {
+      const s = parseInt(el.getAttribute("data-source-line") || "0", 10);
+      const e = parseInt(el.getAttribute("data-source-line-end") || String(s), 10);
+      const span = Math.max(0, e - s);
+      if (span < minSpan) {
+        minSpan = span;
+        bestElem = el;
+      }
+    }
+    return [bestElem];
+  }
+
+  return finalMatched;
 }
 
 /**
@@ -117,33 +135,35 @@ export function useSyncSelection({
             el.classList.add("sync-highlight-active");
           });
 
-          // Smoothly move the first highlighted element to the upper reading zone (~16% from top)
-          const firstElem = matched[0];
-          const container = containerRef.current;
-          if (firstElem && container) {
-            if (lastScrolledLineRef.current !== startLine) {
-              lastScrolledLineRef.current = startLine;
+          // If user made a multi-line or explicit selection, softly reveal the first matched element
+          if (from !== to) {
+            const firstElem = matched[0];
+            const container = containerRef.current;
+            if (firstElem && container) {
+              if (lastScrolledLineRef.current !== startLine) {
+                lastScrolledLineRef.current = startLine;
 
-              if (scrollTimeoutRef.current) {
-                window.clearTimeout(scrollTimeoutRef.current);
-              }
-
-              scrollTimeoutRef.current = window.setTimeout(() => {
-                if (!containerRef.current) return;
-                const containerRect = container.getBoundingClientRect();
-                const elemRect = firstElem.getBoundingClientRect();
-
-                const upperOffset = Math.min(Math.max(container.clientHeight * 0.16, 60), 120);
-                const targetScrollTop = container.scrollTop + (elemRect.top - containerRect.top) - upperOffset;
-
-                const currentOffset = elemRect.top - containerRect.top;
-                if (Math.abs(currentOffset - upperOffset) > 25) {
-                  container.scrollTo({
-                    top: Math.max(0, targetScrollTop),
-                    behavior: "smooth",
-                  });
+                if (scrollTimeoutRef.current) {
+                  window.clearTimeout(scrollTimeoutRef.current);
                 }
-              }, 40);
+
+                scrollTimeoutRef.current = window.setTimeout(() => {
+                  if (!containerRef.current) return;
+                  const containerRect = container.getBoundingClientRect();
+                  const elemRect = firstElem.getBoundingClientRect();
+
+                  const upperOffset = Math.min(Math.max(container.clientHeight * 0.16, 60), 120);
+                  const targetScrollTop = container.scrollTop + (elemRect.top - containerRect.top) - upperOffset;
+
+                  const currentOffset = elemRect.top - containerRect.top;
+                  if (Math.abs(currentOffset - upperOffset) > 35) {
+                    container.scrollTo({
+                      top: Math.max(0, targetScrollTop),
+                      behavior: "smooth",
+                    });
+                  }
+                }, 50);
+              }
             }
           }
         } else {
@@ -178,34 +198,22 @@ export function useSyncSelection({
 
       setLock("preview");
 
-      // Highlight in preview immediately
+      // Highlight clicked block in preview immediately
       clearAllHighlights(readerElem);
       blockElem.classList.add("sync-highlight-active");
-
-      // Smoothly move the clicked block to the upper reading zone
-      const containerRect = readerElem.getBoundingClientRect();
-      const elemRect = blockElem.getBoundingClientRect();
-      const upperOffset = Math.min(Math.max(readerElem.clientHeight * 0.16, 60), 120);
-      const targetScrollTop = readerElem.scrollTop + (elemRect.top - containerRect.top) - upperOffset;
-      const currentOffset = elemRect.top - containerRect.top;
-      if (Math.abs(currentOffset - upperOffset) > 25) {
-        readerElem.scrollTo({
-          top: Math.max(0, targetScrollTop),
-          behavior: "smooth",
-        });
-      }
 
       const doc = view.state.doc;
       const totalLines = doc.lines;
       const safeStartLine = Math.min(Math.max(1, startLine), totalLines);
       const safeEndLine = Math.min(Math.max(safeStartLine, endLine), totalLines);
 
-      let targetFrom = doc.line(safeStartLine).from;
-      let targetTo = doc.line(safeEndLine).to;
+      const lineObj = doc.line(safeStartLine);
+      let targetFrom = lineObj.from;
+      let targetTo = lineObj.from; // Default to collapsed cursor at line start
 
-      // If user selected specific text, attempt to locate the exact character range
       const cleanSelection = selectedText.trim();
       if (cleanSelection.length >= 2) {
+        // If user explicitly selected text, locate the exact character range
         const searchScopeStart = doc.line(Math.max(1, safeStartLine - 1)).from;
         const searchScopeEnd = doc.line(Math.min(totalLines, safeEndLine + 1)).to;
         const scopeText = doc.sliceString(searchScopeStart, searchScopeEnd);
@@ -214,14 +222,17 @@ export function useSyncSelection({
         if (foundIndex !== -1) {
           targetFrom = searchScopeStart + foundIndex;
           targetTo = targetFrom + cleanSelection.length;
+        } else {
+          // If markdown markup doesn't match plain text, collapse to line start
+          targetFrom = lineObj.from;
+          targetTo = lineObj.from;
         }
       }
 
       view.dispatch({
         selection: { anchor: targetFrom, head: targetTo },
-        scrollIntoView: false,
+        effects: EditorView.scrollIntoView(targetFrom, { y: "center" }),
       });
-      view.focus();
     },
     [viewMode, editorViewRef, containerRef, setLock]
   );

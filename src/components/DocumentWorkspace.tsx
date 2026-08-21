@@ -28,6 +28,7 @@ type DocumentWorkspaceProps = {
   showLineNumbers?: boolean;
   typewriterMode?: boolean;
   onOpenLightbox?: (media: LightboxMedia) => void;
+  onEditorViewReady?: (view: any) => void;
 };
 
 export function DocumentWorkspace({
@@ -48,6 +49,7 @@ export function DocumentWorkspace({
   showLineNumbers = true,
   typewriterMode = false,
   onOpenLightbox,
+  onEditorViewReady,
 }: DocumentWorkspaceProps) {
   const [splitRatio, setSplitRatio] = useState(() => {
     try {
@@ -166,6 +168,7 @@ export function DocumentWorkspace({
             onSelectionChange={handleEditorSelectionChange}
             onEditorViewReady={(view) => {
               editorViewRef.current = view;
+              onEditorViewReady?.(view);
             }}
           />
         </div>
