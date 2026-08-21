@@ -144,6 +144,7 @@ export function EditorPane({
 
   const triggerSmoothTypewriterScroll = (view: EditorView) => {
     if (!typewriterModeRef.current) return;
+    if (!view.state.selection.main.empty) return;
 
     if (typewriterRafRef.current !== null) {
       cancelAnimationFrame(typewriterRafRef.current);
@@ -239,7 +240,7 @@ export function EditorPane({
           if (update.selectionSet || update.docChanged) {
             onSelectionChangeRef.current?.(update.view);
 
-            if (typewriterModeRef.current) {
+            if (typewriterModeRef.current && update.view.state.selection.main.empty) {
               triggerSmoothTypewriterScroll(update.view);
             }
           }

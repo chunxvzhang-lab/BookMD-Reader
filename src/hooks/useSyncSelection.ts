@@ -134,40 +134,6 @@ export function useSyncSelection({
           matched.forEach((el) => {
             el.classList.add("sync-highlight-active");
           });
-
-          // If user made a multi-line or explicit selection, softly reveal the first matched element
-          if (from !== to) {
-            const firstElem = matched[0];
-            const container = containerRef.current;
-            if (firstElem && container) {
-              if (lastScrolledLineRef.current !== startLine) {
-                lastScrolledLineRef.current = startLine;
-
-                if (scrollTimeoutRef.current) {
-                  window.clearTimeout(scrollTimeoutRef.current);
-                }
-
-                scrollTimeoutRef.current = window.setTimeout(() => {
-                  if (!containerRef.current) return;
-                  const containerRect = container.getBoundingClientRect();
-                  const elemRect = firstElem.getBoundingClientRect();
-
-                  const upperOffset = Math.min(Math.max(container.clientHeight * 0.16, 60), 120);
-                  const targetScrollTop = container.scrollTop + (elemRect.top - containerRect.top) - upperOffset;
-
-                  const currentOffset = elemRect.top - containerRect.top;
-                  if (Math.abs(currentOffset - upperOffset) > 35) {
-                    container.scrollTo({
-                      top: Math.max(0, targetScrollTop),
-                      behavior: "smooth",
-                    });
-                  }
-                }, 50);
-              }
-            }
-          }
-        } else {
-          lastScrolledLineRef.current = null;
         }
       });
     },
@@ -231,7 +197,7 @@ export function useSyncSelection({
 
       view.dispatch({
         selection: { anchor: targetFrom, head: targetTo },
-        effects: EditorView.scrollIntoView(targetFrom, { y: "center" }),
+        effects: EditorView.scrollIntoView(targetFrom, { y: "nearest" }),
       });
     },
     [viewMode, editorViewRef, containerRef, setLock]
