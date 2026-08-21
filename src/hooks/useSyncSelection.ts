@@ -67,6 +67,8 @@ export function useSyncSelection({
   const lockRef = useRef<"editor" | "preview" | null>(null);
   const lockTimerRef = useRef<number | null>(null);
   const highlightRafRef = useRef<number | null>(null);
+  const lastScrolledLineRef = useRef<number | null>(null);
+  const scrollTimeoutRef = useRef<number | null>(null);
 
   const setLock = useCallback((source: "editor" | "preview") => {
     lockRef.current = source;
@@ -79,7 +81,7 @@ export function useSyncSelection({
     }, 150);
   }, []);
 
-  // 1. Editor -> Preview Highlight Sync
+  // 1. Editor -> Preview Highlight & Scroll Sync
   const handleEditorSelectionChange = useCallback(
     (view: EditorView) => {
       if (viewMode !== "split") return;
@@ -114,6 +116,38 @@ export function useSyncSelection({
           matched.forEach((el) => {
             el.classList.add("sync-highlight-active");
           });
+
+          // Smoothly move the first highlighted element to the upper reading zone (~16% from top)
+          const firstElem = matched[0];
+          const container = containerRef.current;
+          if (firstElem && container) {
+            if (lastScrolledLineRef.current !== startLine) {
+              lastScrolledLineRef.current = startLine;
+
+              if (scrollTimeoutRef.current) {
+                window.clearTimeout(scrollTimeoutRef.current);
+              }
+
+              scrollTimeoutRef.current = window.setTimeout(() => {
+                if (!containerRef.current) return;
+                const containerRect = container.getBoundingClientRect();
+                const elemRect = firstElem.getBoundingClientRect();
+
+                const upperOffset = Math.min(Math.max(container.clientHeight * 0.16, 60), 120);
+                const targetScrollTop = container.scrollTop + (elemRect.top - containerRect.top) - upperOffset;
+
+                const currentOffset = elemRect.top - containerRect.top;
+                if (Math.abs(currentOffset - upperOffset) > 25) {
+                  container.scrollTo({
+                    top: Math.max(0, targetScrollTop),
+                    behavior: "smooth",
+                  });
+                }
+              }, 40);
+            }
+          }
+        } else {
+          lastScrolledLineRef.current = null;
         }
       });
     },
@@ -147,6 +181,19 @@ export function useSyncSelection({
       // Highlight in preview immediately
       clearAllHighlights(readerElem);
       blockElem.classList.add("sync-highlight-active");
+
+      // Smoothly move the clicked block to the upper reading zone
+      const containerRect = readerElem.getBoundingClientRect();
+      const elemRect = blockElem.getBoundingClientRect();
+      const upperOffset = Math.min(Math.max(readerElem.clientHeight * 0.16, 60), 120);
+      const targetScrollTop = readerElem.scrollTop + (elemRect.top - containerRect.top) - upperOffset;
+      const currentOffset = elemRect.top - containerRect.top;
+      if (Math.abs(currentOffset - upperOffset) > 25) {
+        readerElem.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: "smooth",
+        });
+      }
 
       const doc = view.state.doc;
       const totalLines = doc.lines;
@@ -194,6 +241,9 @@ export function useSyncSelection({
       }
       if (highlightRafRef.current) {
         cancelAnimationFrame(highlightRafRef.current);
+      }
+      if (scrollTimeoutRef.current) {
+        window.clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, []);

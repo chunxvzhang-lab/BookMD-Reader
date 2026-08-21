@@ -169,9 +169,17 @@ export function DocumentWorkspace({
         <div
           className={`workspace-splitter ${isDragging ? "is-active" : ""}`}
           onMouseDown={handleMouseDown}
+          onDoubleClick={() => {
+            setSplitRatio(0.5);
+            try {
+              localStorage.setItem(SPLIT_RATIO_KEY, "0.5");
+            } catch {
+              // ignore
+            }
+          }}
           role="separator"
           aria-orientation="vertical"
-          title="拖拽调整编辑器与预览窗口比例"
+          title="拖拽调整编辑器与预览窗口比例（双击自适应 1:1 等宽）"
         >
           <div className="splitter-handle" />
         </div>

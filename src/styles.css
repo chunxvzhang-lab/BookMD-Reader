@@ -2052,44 +2052,47 @@ body.is-resizing-col * {
 }
 
 /* ==========================================================================
-   Preview Line Numbers Gutter
+   Preview Line Numbers Gutter (Dedicated Leftmost Column)
    ========================================================================== */
 .markdown-body.show-line-numbers {
-  padding-left: 54px;
+  padding-left: 58px !important;
   position: relative;
 }
 
-.markdown-body.show-line-numbers > [data-source-line],
-.markdown-body.show-line-numbers li[data-source-line],
-.markdown-body.show-line-numbers tr[data-source-line] {
+/* Subtle vertical guide line separating line numbers from content */
+.markdown-body.show-line-numbers::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 46px;
+  width: 1px;
+  background: var(--border);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.markdown-body.show-line-numbers > [data-source-line] {
   position: relative;
 }
 
-.markdown-body.show-line-numbers > [data-source-line]::before,
-.markdown-body.show-line-numbers li[data-source-line]::before,
-.markdown-body.show-line-numbers tr[data-source-line] > :first-child::before {
+.markdown-body.show-line-numbers > [data-source-line]::before {
   content: attr(data-source-line);
   position: absolute;
-  left: -48px;
-  width: 38px;
+  left: -52px;
+  width: 36px;
   text-align: right;
   font-family: var(--font-mono, "JetBrains Mono", Consolas, "Fira Code", monospace);
   font-size: 11px;
   line-height: inherit;
   color: var(--text-muted);
-  opacity: 0.40;
+  opacity: 0.42;
   user-select: none;
   pointer-events: none;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-.markdown-body.show-line-numbers li[data-source-line]::before {
-  left: -42px;
-}
-
-.markdown-body.show-line-numbers > [data-source-line]:hover::before,
-.markdown-body.show-line-numbers li[data-source-line]:hover::before,
-.markdown-body.show-line-numbers tr[data-source-line]:hover > :first-child::before {
+.markdown-body.show-line-numbers > [data-source-line]:hover::before {
   opacity: 0.95;
   color: var(--accent);
   font-weight: 600;

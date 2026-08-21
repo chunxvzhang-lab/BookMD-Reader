@@ -201,6 +201,56 @@ export function App() {
     };
   }, [resizingType]);
 
+  const handleDirDoubleClick = useCallback(() => {
+    const treeContainer = document.querySelector(".chapter-list");
+    if (treeContainer) {
+      const items = treeContainer.querySelectorAll(".tree-item-title, .tree-folder-title, .tree-heading");
+      let maxW = 0;
+      items.forEach((el) => {
+        maxW = Math.max(maxW, el.getBoundingClientRect().width + 60);
+      });
+      const optimal = Math.min(Math.max(Math.ceil(maxW), 200), 380);
+      setDirectoryWidth(optimal);
+      try {
+        localStorage.setItem("bookmd.layout.dirWidth", optimal.toString());
+      } catch {
+        // ignore
+      }
+    } else {
+      setDirectoryWidth(240);
+      try {
+        localStorage.setItem("bookmd.layout.dirWidth", "240");
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const handleSidebarDoubleClick = useCallback(() => {
+    const panel = document.querySelector(".side-panel");
+    if (panel) {
+      const items = panel.querySelectorAll(".toc-item-text, .search-card-excerpt, .bookmark-item-title, .tabs");
+      let maxW = 0;
+      items.forEach((el) => {
+        maxW = Math.max(maxW, el.getBoundingClientRect().width + 48);
+      });
+      const optimal = Math.min(Math.max(Math.ceil(maxW), 220), 400);
+      setSidebarWidth(optimal);
+      try {
+        localStorage.setItem("bookmd.layout.sidebarWidth", optimal.toString());
+      } catch {
+        // ignore
+      }
+    } else {
+      setSidebarWidth(260);
+      try {
+        localStorage.setItem("bookmd.layout.sidebarWidth", "260");
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   const jumpToHeading = useCallback((headingId: string, behavior: ScrollBehavior = "smooth") => {
     const container = readerRef.current;
     const target = container?.querySelector(`#${CSS.escape(headingId)}`);
@@ -1195,9 +1245,10 @@ export function App() {
           <div
             className={`layout-resizer ${resizingType === "dir" ? "is-active" : ""}`}
             onMouseDown={handleDirResizeMouseDown}
+            onDoubleClick={handleDirDoubleClick}
             role="separator"
             aria-orientation="vertical"
-            title="拖拽调整文档目录栏宽度"
+            title="拖拽调整文档目录栏宽度（双击自适应最佳宽度）"
           />
         )}
 
@@ -1260,9 +1311,10 @@ export function App() {
             <div
               className={`layout-resizer ${resizingType === "sidebar" ? "is-active" : ""}`}
               onMouseDown={handleSidebarResizeMouseDown}
+              onDoubleClick={handleSidebarDoubleClick}
               role="separator"
               aria-orientation="vertical"
-              title="拖拽调整大纲侧栏宽度"
+              title="拖拽调整大纲侧栏宽度（双击自适应最佳宽度）"
             />
           </>
         ) : null}
