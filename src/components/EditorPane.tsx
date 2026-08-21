@@ -122,6 +122,7 @@ export function EditorPane({
   const themeCompartment = useRef(new Compartment());
   const readOnlyCompartment = useRef(new Compartment());
   const fontSizeCompartment = useRef(new Compartment());
+  const typewriterRafRef = useRef<number | null>(null);
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
   const onChangeRef = useRef(onChange);
@@ -140,6 +141,40 @@ export function EditorPane({
     (theme === "system" &&
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+
+  const triggerSmoothTypewriterScroll = (view: EditorView) => {
+    if (!typewriterModeRef.current) return;
+
+    if (typewriterRafRef.current !== null) {
+      cancelAnimationFrame(typewriterRafRef.current);
+    }
+
+    typewriterRafRef.current = requestAnimationFrame(() => {
+      typewriterRafRef.current = null;
+      try {
+        const head = view.state.selection.main.head;
+        const coords = view.coordsAtPos(head);
+        if (!coords) return;
+
+        const scroller = view.scrollDOM;
+        const scrollerRect = scroller.getBoundingClientRect();
+        const currentLineCenter = (coords.top + coords.bottom) / 2;
+        const desiredLineCenter = scrollerRect.top + scrollerRect.height * 0.45;
+        const diff = currentLineCenter - desiredLineCenter;
+
+        // Smoothly adjust when moving across lines (diff > 6px) to avoid micro-jitter during horizontal typing
+        if (Math.abs(diff) > 6) {
+          const targetScrollTop = Math.max(0, scroller.scrollTop + diff);
+          scroller.scrollTo({
+            top: targetScrollTop,
+            behavior: "smooth",
+          });
+        }
+      } catch {
+        // ignore detached DOM errors
+      }
+    });
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -205,10 +240,7 @@ export function EditorPane({
             onSelectionChangeRef.current?.(update.view);
 
             if (typewriterModeRef.current) {
-              const head = update.state.selection.main.head;
-              update.view.dispatch({
-                effects: EditorView.scrollIntoView(head, { y: "center" }),
-              });
+              triggerSmoothTypewriterScroll(update.view);
             }
           }
         }),
@@ -230,6 +262,9 @@ export function EditorPane({
     view.scrollDOM.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
+      if (typewriterRafRef.current !== null) {
+        cancelAnimationFrame(typewriterRafRef.current);
+      }
       view.scrollDOM.removeEventListener("scroll", onScroll);
       onEditorViewReadyRef.current?.(null);
       view.destroy();
@@ -249,15 +284,18 @@ export function EditorPane({
     }
   }, [value]);
 
-  // Update theme dynamically
+  // Update theme and typewriter mode dynamically
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
-    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale);
+    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale, typewriterMode);
     view.dispatch({
       effects: themeCompartment.current.reconfigure(isDarkMode ? [oneDark, customBaseTheme] : [customBaseTheme]),
     });
-  }, [isDarkMode, fontScale]);
+    if (typewriterMode) {
+      triggerSmoothTypewriterScroll(view);
+    }
+  }, [isDarkMode, fontScale, typewriterMode]);
 
   // Update font scale dynamically
   useEffect(() => {

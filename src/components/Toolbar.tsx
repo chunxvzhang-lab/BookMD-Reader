@@ -96,24 +96,22 @@ export function Toolbar(props: ToolbarProps) {
         {props.onNewFile && (
           <button
             aria-label="新建 Markdown 文件"
-            className="command-button secondary"
+            className="icon-button"
             onClick={props.onNewFile}
             title="新建文件 (Ctrl+N)"
           >
-            <FilePlus2 size={16} />
-            <span>新建</span>
+            <FilePlus2 size={17} />
           </button>
         )}
 
         <button
           aria-label="保存当前文件"
-          className={`command-button ${props.isDirty ? "primary highlight" : "secondary"}`}
+          className={`icon-button ${props.isDirty ? "active highlight" : ""}`}
           onClick={props.onSave}
           disabled={!props.canSave && !props.isDirty}
           title="保存文件 (Ctrl+S)"
         >
-          <Save size={16} />
-          <span>保存</span>
+          <Save size={17} />
         </button>
 
         <button
@@ -141,7 +139,7 @@ export function Toolbar(props: ToolbarProps) {
           onClick={props.onFocusSearch}
           title="搜索内容 (Ctrl+F)"
         >
-          <Search size={18} />
+          <Search size={17} />
         </button>
         <button
           aria-label="切换大纲侧栏"
@@ -149,7 +147,7 @@ export function Toolbar(props: ToolbarProps) {
           onClick={props.onToggleSidebar}
           title="切换大纲与书签侧栏"
         >
-          {props.sidebarOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+          {props.sidebarOpen ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
         </button>
 
         <input
@@ -161,34 +159,31 @@ export function Toolbar(props: ToolbarProps) {
         />
         <button
           aria-label="打开 Markdown 文件"
-          className="command-button secondary"
+          className="icon-button"
           onClick={() => fileInputRef.current?.click()}
           title="打开单个 Markdown 文件 (Ctrl+O)"
         >
-          <FileUp size={16} />
-          <span>打开</span>
+          <FileUp size={17} />
         </button>
 
         {props.onOpenDirectory ? (
           <button
             aria-label="打开 Markdown 目录"
-            className="command-button secondary"
+            className="icon-button"
             onClick={props.onOpenDirectory}
             title="打开文档文件夹 (Ctrl+Shift+O)"
           >
-            <FolderOpen size={16} />
-            <span>目录</span>
+            <FolderOpen size={17} />
           </button>
         ) : null}
 
         <button
           aria-label="添加书签"
-          className="command-button secondary"
+          className="icon-button"
           onClick={props.onAddBookmark}
           title="添加书签 (Ctrl+B)"
         >
-          <BookmarkPlus size={16} />
-          <span>书签</span>
+          <BookmarkPlus size={17} />
         </button>
 
         {props.onToggleTypewriterMode && (
