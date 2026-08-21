@@ -538,13 +538,24 @@ export function App() {
   useEffect(() => {
     if (!activeChapter) return;
     setTabs((prev) => {
-      const exists = prev.some((t) => t.id === activeChapter.id);
-      if (exists) {
-        return prev.map((t) =>
-          t.id === activeChapter.id
+      // Find matching tab by ID or by matching absolutePath or matching title/src
+      const matchIndex = prev.findIndex(
+        (t) =>
+          t.id === activeChapter.id ||
+          (t.absolutePath &&
+            activeChapter.absolutePath &&
+            t.absolutePath.toLowerCase() === activeChapter.absolutePath.toLowerCase()) ||
+          (t.title === activeChapter.title && (!t.absolutePath || !activeChapter.absolutePath))
+      );
+      if (matchIndex !== -1) {
+        return prev.map((t, idx) =>
+          idx === matchIndex
             ? {
                 ...t,
+                id: activeChapter.id,
                 title: activeChapter.title,
+                relativePath: activeChapter.src,
+                absolutePath: activeChapter.absolutePath,
                 isDirty: Boolean(isDirty && activeChapter.id === chapterId),
               }
             : t
@@ -739,6 +750,20 @@ export function App() {
               setManifest(dirResult.directory);
               setBookmarks(loadBookmarks(dirResult.directory.id, dirResult.directory.chapters));
               setChapterId(activeChap.id);
+              setTabs((prev) =>
+                prev.map((t) =>
+                  t.id === singleChapterId ||
+                  (t.absolutePath && t.absolutePath.toLowerCase() === absolutePath.toLowerCase())
+                    ? {
+                        ...t,
+                        id: activeChap.id,
+                        title: activeChap.title,
+                        relativePath: activeChap.src,
+                        absolutePath: activeChap.absolutePath,
+                      }
+                    : t
+                )
+              );
             }
           })
           .catch(() => {

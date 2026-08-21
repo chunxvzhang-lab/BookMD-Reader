@@ -114,20 +114,28 @@ export const ReaderPane = memo(function ReaderPane({
     const node = articleRef.current;
     if (!node) return;
 
-    const preElements = node.querySelectorAll<HTMLPreElement>("pre.hljs");
+    const preElements = node.querySelectorAll<HTMLPreElement>("pre.hljs, pre");
     preElements.forEach((pre) => {
       if (pre.querySelector(".code-header-bar")) return; // Already decorated
 
       const rawLang = pre.getAttribute("data-language") || "";
-      const displayLang = rawLang.trim() ? rawLang.toUpperCase() : "CODE";
+      const trimmedLang = rawLang.trim();
+      const displayLang =
+        trimmedLang &&
+        trimmedLang.toLowerCase() !== "text" &&
+        trimmedLang.toLowerCase() !== "plaintext" &&
+        trimmedLang.toLowerCase() !== "code"
+          ? trimmedLang.toUpperCase()
+          : "";
 
       const headerBar = document.createElement("div");
       headerBar.className = "code-header-bar";
       headerBar.innerHTML = `
-        <span class="code-lang-label">${displayLang}</span>
+        ${displayLang ? `<span class="code-lang-label">${displayLang}</span>` : ""}
         <button type="button" class="code-copy-btn" title="复制代码到剪贴板">📋 复制</button>
       `;
 
+      pre.style.position = "relative";
       pre.insertBefore(headerBar, pre.firstChild);
     });
   }, [chapter?.html]);
