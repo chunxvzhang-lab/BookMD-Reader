@@ -29,7 +29,15 @@ export async function renderMermaid(container: HTMLElement, options: RenderMerma
 
   const failures: string[] = [];
   for (const diagram of diagrams) {
-    const source = diagram.dataset.mermaidSource ?? diagram.textContent ?? "";
+    let source = diagram.dataset.mermaidSource ?? diagram.textContent ?? "";
+    if (source.includes("&gt;") || source.includes("&lt;") || source.includes("&amp;")) {
+      const txt = document.createElement("textarea");
+      txt.innerHTML = source;
+      source = txt.value;
+    }
+    const cleanSource = source.trim();
+    if (!cleanSource) continue;
+
     diagram.dataset.mermaidSource = source;
     if (options.force || diagram.dataset.mermaidTheme !== theme) {
       diagram.textContent = source;
@@ -40,7 +48,7 @@ export async function renderMermaid(container: HTMLElement, options: RenderMerma
 
     const id = `bookmd-mermaid-${Date.now()}-${renderId += 1}`;
     try {
-      const { svg } = await mermaid.render(id, source);
+      const { svg } = await mermaid.render(id, cleanSource);
       diagram.innerHTML = svg;
       diagram.dataset.processed = "true";
       diagram.classList.add("mermaid-rendered");
