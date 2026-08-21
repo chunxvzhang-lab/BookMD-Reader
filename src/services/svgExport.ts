@@ -53,6 +53,19 @@ export function serializeSvgForExport(svgInput: string | SVGElement | HTMLElemen
 }
 
 /**
+ * Triggers browser file download helper
+ */
+function triggerDownload(urlOrDataUri: string, filename: string, ext: string): void {
+  const a = document.createElement("a");
+  a.href = urlOrDataUri;
+  const cleanName = filename.replace(/\.(svg|png)$/i, "");
+  a.download = `${cleanName}${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/**
  * Converts an SVG string (or SVG element) to a high-resolution PNG image and triggers download.
  *
  * @param svgInput SVG markup string or SVGSVGElement
@@ -86,8 +99,8 @@ export async function downloadSvgAsPng(
     const vbWidth = parseFloat(viewBoxMatch[3]);
     const vbHeight = parseFloat(viewBoxMatch[4]);
     if (vbWidth > 0 && vbHeight > 0) {
-      width = vbWidth;
-      height = vbHeight;
+      width = Math.round(vbWidth);
+      height = Math.round(vbHeight);
     }
   } else {
     const widthMatch = cleanXml.match(/\bwidth=["']\s*([0-9.]+)(?:px)?\s*["']/i);
@@ -96,21 +109,58 @@ export async function downloadSvgAsPng(
       const w = parseFloat(widthMatch[1]);
       const h = parseFloat(heightMatch[1]);
       if (w > 0 && h > 0) {
-        width = w;
-        height = h;
+        width = Math.round(w);
+        height = Math.round(h);
       }
     }
   }
 
-  // 2. Build Blob and Object URL
-  const blob = new Blob([cleanXml], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+  // Ensure minimum dimensions
+  width = Math.max(width, 100);
+  height = Math.max(height, 60);
+
+  // 2. Inject explicit width and height attributes into the root <svg> tag for reliable rasterization
+  let rasterXml = cleanXml;
+  if (!rasterXml.match(/<svg\b[^>]*\bwidth=["']/i)) {
+    rasterXml = rasterXml.replace(/<svg\b/i, `<svg width="${width}"`);
+  }
+  if (!rasterXml.match(/<svg\b[^>]*\bheight=["']/i)) {
+    rasterXml = rasterXml.replace(/<svg\b/i, `<svg height="${height}"`);
+  }
+
+  // 3. Try rasterizing to PNG, with automatic fallback
+  try {
+    await rasterizeSvgToPngDownload(rasterXml, width, height, filename, scaleMultiplier);
+  } catch (err) {
+    console.warn("PNG rasterization encountered error, downloading clean SVG fallback:", err);
+    downloadSvgFile(cleanXml, filename);
+  }
+}
+
+async function rasterizeSvgToPngDownload(
+  svgXml: string,
+  width: number,
+  height: number,
+  filename: string,
+  scaleMultiplier: number
+): Promise<void> {
+  const dataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgXml);
 
   return new Promise<void>((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    let timeoutId: number | null = null;
+
+    const cleanup = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+
+    timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Rasterization image load timeout"));
+    }, 4000);
 
     img.onload = () => {
+      cleanup();
       try {
         const finalScale = Math.max(scaleMultiplier, 2);
         const canvas = document.createElement("canvas");
@@ -128,40 +178,37 @@ export async function downloadSvgAsPng(
         // Draw image onto high-DPI canvas
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+        // Export to Blob
         canvas.toBlob((pngBlob) => {
           if (!pngBlob) {
-            URL.revokeObjectURL(url);
-            reject(new Error("Failed to create PNG blob from canvas"));
+            try {
+              const dataUri = canvas.toDataURL("image/png");
+              triggerDownload(dataUri, filename, ".png");
+              resolve();
+            } catch (canvasErr) {
+              reject(canvasErr);
+            }
             return;
           }
 
           const pngUrl = URL.createObjectURL(pngBlob);
-          const a = document.createElement("a");
-          a.href = pngUrl;
-          const cleanName = filename.replace(/\.(svg|png)$/i, "");
-          a.download = `${cleanName}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-
+          triggerDownload(pngUrl, filename, ".png");
           setTimeout(() => {
             URL.revokeObjectURL(pngUrl);
-            URL.revokeObjectURL(url);
             resolve();
           }, 100);
         }, "image/png");
       } catch (err) {
-        URL.revokeObjectURL(url);
         reject(err);
       }
     };
 
     img.onerror = (err) => {
-      URL.revokeObjectURL(url);
-      reject(new Error(`Failed to rasterize SVG into image: ${err}`));
+      cleanup();
+      reject(new Error(`Failed to load SVG for rasterization: ${err}`));
     };
 
-    img.src = url;
+    img.src = dataUrl;
   });
 }
 
@@ -172,12 +219,8 @@ export function downloadSvgFile(svgContent: string | SVGElement, filename: strin
   const cleanXml = serializeSvgForExport(svgContent);
   const blob = new Blob([cleanXml], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  const cleanName = filename.replace(/\.(svg|png)$/i, "");
-  a.download = `${cleanName}.svg`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  triggerDownload(url, filename, ".svg");
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 100);
 }

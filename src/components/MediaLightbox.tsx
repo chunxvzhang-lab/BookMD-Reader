@@ -83,9 +83,11 @@ export const MediaLightbox = memo(function MediaLightbox({
     setIsDragging(false);
   }, []);
 
+  const [isExporting, setIsExporting] = useState(false);
+
   // Download media (Mermaid exports as PNG)
-  const handleDownload = useCallback(() => {
-    if (!media) return;
+  const handleDownload = useCallback(async () => {
+    if (!media || isExporting) return;
     if (media.type === "image" && media.src) {
       const a = document.createElement("a");
       a.href = media.src;
@@ -94,10 +96,17 @@ export const MediaLightbox = memo(function MediaLightbox({
       a.click();
       document.body.removeChild(a);
     } else if (media.type === "mermaid" && media.svgHtml) {
-      const svgElem = contentRef.current?.querySelector<SVGElement>("svg");
-      downloadSvgAsPng(media.svgHtml, media.title || "mermaid-diagram", svgElem);
+      try {
+        setIsExporting(true);
+        const svgElem = contentRef.current?.querySelector<SVGElement>("svg");
+        await downloadSvgAsPng(media.svgHtml, media.title || "mermaid-diagram", svgElem);
+      } catch (err) {
+        console.error("Export error:", err);
+      } finally {
+        setIsExporting(false);
+      }
     }
-  }, [media]);
+  }, [media, isExporting]);
 
   if (!media) return null;
 
@@ -150,9 +159,10 @@ export const MediaLightbox = memo(function MediaLightbox({
             type="button"
             className="lightbox-btn"
             onClick={handleDownload}
+            disabled={isExporting}
             title={media.type === "mermaid" ? "导出为 PNG 高清图片" : "下载图片"}
           >
-            ⬇ {media.type === "mermaid" ? "导出 PNG" : "下载"}
+            {isExporting ? "⏳ 导出中..." : media.type === "mermaid" ? "⬇ 导出 PNG" : "⬇ 下载"}
           </button>
           <button
             type="button"
