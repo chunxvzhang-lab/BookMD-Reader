@@ -1504,32 +1504,231 @@ body.is-resizing-col * {
   background: color-mix(in srgb, var(--surface-2) 60%, transparent);
 }
 
-/* Code Blocks */
+/* ==========================================================================
+   Code Blocks & High-Contrast Syntax Highlighting System
+   ========================================================================== */
 .markdown-body pre {
+  position: relative;
   overflow: auto;
-  padding: 16px 18px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.6;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: #0d1117 !important;
+  border: 1px solid #30363d !important;
+  font-family: var(--font-mono, "JetBrains Mono", Consolas, "Fira Code", monospace);
+  font-size: 13.5px;
+  line-height: 1.65;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
 
-:root[data-theme="dark"] .markdown-body pre {
-  background: #0d1017;
-  border-color: rgba(255, 255, 255, 0.08);
+.markdown-body pre code,
+.markdown-body pre.hljs {
+  display: block;
+  overflow-x: auto;
+  color: #f0f6fc !important; /* Crisp bright white/slate default text */
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  background: transparent !important;
+  padding: 0 !important;
 }
 
+/* Base Dark Theme Syntax Highlighting (High-Contrast, Vivid, Crystal Clear) */
+.markdown-body .hljs-comment,
+.markdown-body .hljs-quote {
+  color: #94a3b8 !important; /* Clear readable silver-slate, not invisible black */
+  font-style: italic;
+}
+
+.markdown-body .hljs-keyword,
+.markdown-body .hljs-selector-tag,
+.markdown-body .hljs-subst {
+  color: #ff7b72 !important; /* Vivid coral red */
+  font-weight: 600;
+}
+
+.markdown-body .hljs-string,
+.markdown-body .hljs-doctag,
+.markdown-body .hljs-regexp {
+  color: #a5d6ff !important; /* Crisp sky blue */
+}
+
+.markdown-body .hljs-number,
+.markdown-body .hljs-literal,
+.markdown-body .hljs-boolean {
+  color: #79c0ff !important; /* Bright blue */
+  font-weight: 600;
+}
+
+.markdown-body .hljs-title,
+.markdown-body .hljs-title.function_,
+.markdown-body .hljs-title.class_,
+.markdown-body .hljs-section {
+  color: #d2a8ff !important; /* Radiant lilac purple */
+  font-weight: 600;
+}
+
+.markdown-body .hljs-variable,
+.markdown-body .hljs-template-variable,
+.markdown-body .hljs-attr,
+.markdown-body .hljs-property,
+.markdown-body .hljs-params {
+  color: #7ee787 !important; /* Bright spring green */
+}
+
+.markdown-body .hljs-built_in,
+.markdown-body .hljs-type {
+  color: #ffa657 !important; /* Radiant amber orange */
+}
+
+.markdown-body .hljs-tag,
+.markdown-body .hljs-name {
+  color: #7ee787 !important; /* Emerald green */
+}
+
+.markdown-body .hljs-punctuation,
+.markdown-body .hljs-operator {
+  color: #cbd5e1 !important; /* Bright clean light gray */
+}
+
+.markdown-body .hljs-meta {
+  color: #e3b341 !important; /* Gold */
+  font-weight: 600;
+}
+
+.markdown-body .hljs-deletion {
+  color: #ffdcd7 !important;
+  background-color: #67060c !important;
+}
+
+.markdown-body .hljs-addition {
+  color: #aff5b4 !important;
+  background-color: #033a16 !important;
+}
+
+.markdown-body .hljs-emphasis {
+  font-style: italic;
+}
+
+.markdown-body .hljs-strong {
+  font-weight: 700;
+}
+
+/* Light Theme Syntax Highlighting */
+:root[data-theme="light"] .markdown-body pre,
+.app-shell.theme-light .markdown-body pre {
+  background: #f6f8fa !important;
+  border: 1px solid #d0d7de !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme="light"] .markdown-body pre code,
+:root[data-theme="light"] .markdown-body pre.hljs,
+.app-shell.theme-light .markdown-body pre code,
+.app-shell.theme-light .markdown-body pre.hljs {
+  color: #24292f !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-comment,
+:root[data-theme="light"] .markdown-body .hljs-quote,
+.app-shell.theme-light .markdown-body .hljs-comment,
+.app-shell.theme-light .markdown-body .hljs-quote {
+  color: #6e7781 !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-keyword,
+:root[data-theme="light"] .markdown-body .hljs-selector-tag,
+:root[data-theme="light"] .markdown-body .hljs-subst,
+.app-shell.theme-light .markdown-body .hljs-keyword,
+.app-shell.theme-light .markdown-body .hljs-selector-tag,
+.app-shell.theme-light .markdown-body .hljs-subst {
+  color: #cf222e !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-string,
+:root[data-theme="light"] .markdown-body .hljs-doctag,
+:root[data-theme="light"] .markdown-body .hljs-regexp,
+.app-shell.theme-light .markdown-body .hljs-string,
+.app-shell.theme-light .markdown-body .hljs-doctag,
+.app-shell.theme-light .markdown-body .hljs-regexp {
+  color: #0a3069 !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-number,
+:root[data-theme="light"] .markdown-body .hljs-literal,
+:root[data-theme="light"] .markdown-body .hljs-boolean,
+.app-shell.theme-light .markdown-body .hljs-number,
+.app-shell.theme-light .markdown-body .hljs-literal,
+.app-shell.theme-light .markdown-body .hljs-boolean {
+  color: #0550ae !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-title,
+:root[data-theme="light"] .markdown-body .hljs-title.function_,
+:root[data-theme="light"] .markdown-body .hljs-title.class_,
+:root[data-theme="light"] .markdown-body .hljs-section,
+.app-shell.theme-light .markdown-body .hljs-title,
+.app-shell.theme-light .markdown-body .hljs-title.function_,
+.app-shell.theme-light .markdown-body .hljs-title.class_,
+.app-shell.theme-light .markdown-body .hljs-section {
+  color: #8250df !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-variable,
+:root[data-theme="light"] .markdown-body .hljs-template-variable,
+:root[data-theme="light"] .markdown-body .hljs-attr,
+:root[data-theme="light"] .markdown-body .hljs-property,
+:root[data-theme="light"] .markdown-body .hljs-params,
+.app-shell.theme-light .markdown-body .hljs-variable,
+.app-shell.theme-light .markdown-body .hljs-template-variable,
+.app-shell.theme-light .markdown-body .hljs-attr,
+.app-shell.theme-light .markdown-body .hljs-property,
+.app-shell.theme-light .markdown-body .hljs-params {
+  color: #116329 !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-built_in,
+:root[data-theme="light"] .markdown-body .hljs-type,
+.app-shell.theme-light .markdown-body .hljs-built_in,
+.app-shell.theme-light .markdown-body .hljs-type {
+  color: #953800 !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-tag,
+:root[data-theme="light"] .markdown-body .hljs-name,
+.app-shell.theme-light .markdown-body .hljs-tag,
+.app-shell.theme-light .markdown-body .hljs-name {
+  color: #116329 !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-punctuation,
+:root[data-theme="light"] .markdown-body .hljs-operator,
+.app-shell.theme-light .markdown-body .hljs-punctuation,
+.app-shell.theme-light .markdown-body .hljs-operator {
+  color: #57606a !important;
+}
+
+:root[data-theme="light"] .markdown-body .hljs-meta,
+.app-shell.theme-light .markdown-body .hljs-meta {
+  color: #953800 !important;
+}
+
+/* Inline Code Badges */
 .markdown-body :not(pre) > code {
-  padding: 2px 6px;
+  padding: 2.5px 7px;
   border-radius: 5px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-subtle);
-  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  background: rgba(110, 118, 129, 0.2);
+  border: 1px solid rgba(110, 118, 129, 0.3);
+  font-family: var(--font-mono, "JetBrains Mono", Consolas, "Fira Code", monospace);
   font-size: 0.88em;
-  color: var(--accent);
+  color: #79c0ff;
   font-weight: 550;
+}
+
+:root[data-theme="light"] .markdown-body :not(pre) > code,
+.app-shell.theme-light .markdown-body :not(pre) > code {
+  background: #eff2f5;
+  border-color: #d0d7de;
+  color: #0969da;
 }
 
 .markdown-body pre.mermaid {
@@ -2068,7 +2267,7 @@ body.is-resizing-col * {
   left: 46px;
   width: 1px;
   background: var(--border);
-  opacity: 0.6;
+  opacity: 0.8;
   pointer-events: none;
 }
 
@@ -2083,19 +2282,19 @@ body.is-resizing-col * {
   width: 36px;
   text-align: right;
   font-family: var(--font-mono, "JetBrains Mono", Consolas, "Fira Code", monospace);
-  font-size: 11px;
+  font-size: 11.5px;
   line-height: inherit;
   color: var(--text-muted);
-  opacity: 0.42;
+  opacity: 0.65;
   user-select: none;
   pointer-events: none;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 
 .markdown-body.show-line-numbers > [data-source-line]:hover::before {
-  opacity: 0.95;
+  opacity: 1;
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ==========================================================================

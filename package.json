@@ -1,7 +1,7 @@
 {
   "name": "codex-book-md-viewer",
   "private": true,
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "BookMD Reader - Modern high performance Markdown reader and editor",
   "author": "Codex BookMD Team",
   "type": "module",

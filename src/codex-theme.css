@@ -493,25 +493,33 @@ button {
 }
 
 .markdown-body table {
-  display: block;
-  overflow-x: auto;
+  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  margin: 20px 0;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 .markdown-body th {
   background: var(--surface-2);
-  font-weight: 650;
+  color: var(--text);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
 }
 
-.markdown-body th,
 .markdown-body td {
-  border-right: 0;
+  color: var(--text);
   border-bottom: 1px solid var(--border);
-  border-left: 0;
-  padding: 9px 11px;
+  padding: 10px 14px;
+}
+
+.markdown-body tr:last-child td {
+  border-bottom: none;
 }
 
 .markdown-body pre.mermaid {

@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "BookMD-Reader"
-    tag = "v1.4.2"
-    title = "BookMD Reader v1.4.2 - 界面分栏自由拖拽与正文预览行号显示"
+    tag = "v1.4.3"
+    title = "BookMD Reader v1.4.3 - 代码高对比度语法高亮与分割线双击自适应"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -74,26 +74,29 @@ def main():
         print(f"Notice: {e}")
 
     # 3. Create Release Body
-    body_md = """# 🚀 BookMD Reader v1.4.2
+    body_md = """# 🚀 BookMD Reader v1.4.3
 
-BookMD Reader v1.4.2 现已正式发布！本次版本迭代重点带来了**界面多栏边界自由鼠标拖拽调整**与**正文预览区行号自动显示**功能。
+BookMD Reader v1.4.3 现已正式发布！本次版本迭代重点带来了**代码高对比度语法高亮系统**、**正文行号最左侧一列整齐排版**、**分屏选中内容平滑上移**与**界面分割线双击自适应最佳宽度**。
 
 ---
 
 ### ✨ 核心更新亮点
 
-1. **📐 界面分栏边界自由拖拽调整（Resizable Splitters）**：
-   - **多栏独立调整**：文档目录栏（`ChapterList`，160px~480px）、大纲/书签/搜索侧栏（`side-panel`，180px~520px）以及分屏模式下源码/预览分栏比例（`splitRatio`，15%~85%）均支持鼠标自由拖拽调整。
-   - **智能状态持久化**：用户自定义的分栏宽度与比例自动保存至本地配置，重启后自动恢复最佳排版布局。
-   - **双向箭头反馈与防划选**：悬停时显示专业双向调整指示条（`col-resize`），拖拽时光晕高亮反馈，并杜绝拖拽过程中正文文字被意外划选。
+1. **🎨 增强代码与正文高对比度语法高亮（High-Contrast Syntax Highlighting）**：
+   - **全面告别暗黑模糊**：移除导致暗色背景下代码发黑的旧样式，全面引入色彩鲜明、高对比度的专业代码着色系统。
+   - **清晰可辨的注释与关键词**：注释改为清晰明亮的银灰斜体（`#94a3b8`），关键词珊瑚红（`#ff7b72`），字符串天蓝（`#a5d6ff`），函数淡紫（`#d2a8ff`），变量翠绿（`#7ee787`），数字亮蓝（`#79c0ff`），在纯黑/暗色背景下极致清晰舒适。
+   - **表格与行内代码对比度提升**：表格边框与表头采用高辨识度层次排版，行内代码高亮对比度显著增强。
 
-2. **🔢 正文预览区行号自动显示（Automatic Preview Line Numbers）**：
-   - **AST 零开销行号槽位**：利用 Markdown AST 行号元数据，在正文段落、标题、列表项、代码块、引用块及表格的左侧槽位自动显示源码行号。
-   - **1:1 编辑对齐与悬停发光**：等宽字体排版，鼠标悬停时行号自动点亮为电光蓝（`#1d9bf0`），与代码编辑侧行号完美对齐。
-   - **工具栏快捷切换**：顶部工具栏新增行号显隐切换快捷按钮（`#`），随心切换。
+2. **🔢 正文预览行号整齐放置在最左侧一列**：
+   - 在左侧开辟独立固定行号槽位（`58px`）与垂直分割线，所有标题、段落、列表、代码块、引用块及表格的行号全部统一定位在最左侧同一竖列，消除嵌套缩进对行号的影响。
 
-3. **🔍 搜索同文段卡片聚合与大片对应文段高亮优化**：
-   - 同一文段多次命中聚合为 1 张卡片，正文大片文段微光包裹与所有命中词高亮。
+3. **🎯 修复分屏模式下选中高亮内容平滑移动到上部**：
+   - 在左侧编辑器中选中文本或点击光标时，右侧预览区匹配的高亮块自动平滑滚动停靠在视口上部（约 15%~20% 偏上舒适区），并加入防抖去重锁，杜绝鼠标大跨度拖拽划选时发生抖动乱滚。
+
+4. **📐 界面分割线双击自适应内容最佳位置**：
+   - **目录栏分割线**：双击自动根据目录树文本宽度自适应最佳宽度（200px~380px）。
+   - **侧栏分割线**：双击自动根据大纲/书签/搜索项自适应最佳宽度（220px~400px）。
+   - **分屏中间分割线**：双击瞬间恢复 1:1（50%）等宽黄金平衡比例。
 
 ---
 
@@ -101,7 +104,7 @@ BookMD Reader v1.4.2 现已正式发布！本次版本迭代重点带来了**界
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`BookMD-Reader-1.4.2.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
+| **`BookMD-Reader-1.4.3.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
 | **`BookMD-Reader-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `BookMD Reader.exe` 即可运行 |
 
 ---
@@ -151,10 +154,20 @@ BookMD Reader v1.4.2 现已正式发布！本次版本迭代重点带来了**界
     existing_assets = {a["name"]: a["id"] for a in rel_data.get("assets", [])}
 
     # 4. Upload Assets
+    msi_path = (
+        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.3.msi"
+        if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.3.msi")
+        else (
+            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.3.msi"
+            if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.3.msi")
+            else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\release\BookMD-Reader-1.4.3.msi"
+        )
+    )
+
     assets_to_upload = [
         (
-            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.2.msi" if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.4.2.msi") else (r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.2.msi" if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.4.2.msi") else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\release\BookMD-Reader-1.4.2.msi"),
-            "BookMD-Reader-1.4.2.msi",
+            msi_path,
+            "BookMD-Reader-1.4.3.msi",
             "application/x-msi"
         ),
         (
