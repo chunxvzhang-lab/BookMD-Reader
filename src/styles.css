@@ -402,13 +402,14 @@ button {
   justify-content: space-between;
   gap: 14px;
   height: 50px;
+  min-height: 50px;
   padding: 0 16px;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: var(--surface);
   z-index: 20;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .toolbar-left,
@@ -1799,9 +1800,43 @@ body.is-resizing-col * {
 }
 
 .markdown-body pre.mermaid.mermaid-error {
-  justify-content: flex-start;
-  color: var(--danger);
-  font-family: "Cascadia Code", Consolas, monospace;
+  display: block;
+  min-height: auto;
+  border: 1px dashed var(--border);
+  background: var(--surface-2);
+  padding: 0;
+  white-space: normal;
+}
+
+.mermaid-error-fallback {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 18px;
+}
+
+.mermaid-error-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.mermaid-error-source {
+  margin: 0 !important;
+  padding: 10px 14px !important;
+  background: #0d1117 !important;
+  border-radius: 6px !important;
+  font-family: var(--font-mono, "JetBrains Mono", Consolas, monospace) !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: #c9d1d9 !important;
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+  box-sizing: border-box !important;
 }
 
 .markdown-body .katex-display {
@@ -3125,11 +3160,14 @@ body.is-resizing-col * {
   width: 100%;
   max-width: 100%;
   height: 100%;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .app-shell.is-fullscreen .workspace {
   width: 100%;
-  height: 100%;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .app-shell.is-fullscreen .reader-frame,

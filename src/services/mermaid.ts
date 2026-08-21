@@ -13,11 +13,16 @@ export async function renderMermaid(container: HTMLElement, options: RenderMerma
   if (!container.querySelector("pre.mermaid")) return;
 
   const theme = options.theme ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default");
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: "strict",
-    theme,
-  });
+  try {
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "loose",
+      theme,
+      suppressErrorRendering: true,
+    });
+  } catch {
+    // Ignore re-init errors
+  }
 
   const diagrams = Array.from(container.querySelectorAll<HTMLElement>("pre.mermaid"));
   if (diagrams.length === 0) return;
@@ -33,15 +38,27 @@ export async function renderMermaid(container: HTMLElement, options: RenderMerma
     }
     diagram.dataset.mermaidTheme = theme;
 
+    const id = `bookmd-mermaid-${Date.now()}-${renderId += 1}`;
     try {
-      const id = `bookmd-mermaid-${Date.now()}-${renderId += 1}`;
       const { svg } = await mermaid.render(id, source);
       diagram.innerHTML = svg;
       diagram.dataset.processed = "true";
       diagram.classList.add("mermaid-rendered");
       diagram.classList.remove("mermaid-error");
     } catch (error) {
-      diagram.textContent = source;
+      // Clean up any stray error elements injected by mermaid into document.body
+      try {
+        const stray1 = document.getElementById(`d${id}`);
+        if (stray1) stray1.remove();
+        const stray2 = document.getElementById(id);
+        if (stray2) stray2.remove();
+        document.querySelectorAll("[id^='dbookmd-mermaid-']").forEach((el) => el.remove());
+      } catch {
+        // Ignore cleanup errors
+      }
+
+      diagram.innerHTML = `<div class="mermaid-error-fallback"><div class="mermaid-error-label">⚠️ 图表渲染提示：Mermaid 语法未通过校验</div><pre class="mermaid-error-source"><code>${escapeHtml(source)}</code></pre></div>`;
+      diagram.dataset.processed = "true";
       diagram.classList.add("mermaid-error");
       diagram.classList.remove("mermaid-rendered");
       failures.push(describeMermaidError(error));
@@ -51,6 +68,15 @@ export async function renderMermaid(container: HTMLElement, options: RenderMerma
   if (failures.length > 0) {
     throw new Error(`Failed to render ${failures.length} Mermaid diagram(s): ${failures.join("; ")}`);
   }
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function describeMermaidError(error: unknown): string {
