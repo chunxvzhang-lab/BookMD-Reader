@@ -11,11 +11,11 @@
   --border: #e4e4e7;
   --border-subtle: #f4f4f5;
   --border-hover: #d4d4d8;
-  --accent: #0969da;
-  --accent-hover: #085fc5;
-  --accent-surface: rgba(9, 105, 218, 0.08);
-  --accent-cyan: #0284c7;
-  --accent-blue: #0969da;
+  --accent: #d97706;
+  --accent-hover: #b45309;
+  --accent-surface: rgba(245, 158, 11, 0.12);
+  --accent-cyan: #f59e0b;
+  --accent-blue: #d97706;
   --danger: #ef4444;
   --status-bar-bg: #18181b;
   --status-bar-text: #e4e4e7;
@@ -1512,12 +1512,12 @@ body.is-resizing-col * {
 }
 
 .markdown-body mark {
-  background: rgba(254, 240, 138, 0.75);
-  color: #1e293b;
+  background: rgba(254, 215, 170, 0.85);
+  color: #7c2d12;
   border-radius: 4px;
   padding: 1.5px 5px;
-  border-bottom: 1.5px solid #facc15;
-  font-weight: 500;
+  border-bottom: 1.5px solid #f97316;
+  font-weight: 550;
 }
 
 :root[data-theme="twitter"] .markdown-body mark,
@@ -1793,9 +1793,9 @@ body.is-resizing-col * {
 
 :root[data-theme="light"] .markdown-body :not(pre) > code,
 .app-shell.theme-light .markdown-body :not(pre) > code {
-  background: #eff2f5;
-  border-color: #d0d7de;
-  color: #0969da;
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #b45309;
 }
 
 .markdown-body pre.mermaid {
@@ -2222,14 +2222,14 @@ body.is-resizing-col * {
 }
 
 .markdown-body [data-source-line].sync-highlight-active {
-  background: rgba(9, 105, 218, 0.08) !important;
-  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45), 0 3px 12px rgba(9, 105, 218, 0.08) !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.55), 0 3px 12px rgba(245, 158, 11, 0.12) !important;
   border-radius: 6px !important;
 }
 
 .markdown-body li[data-source-line].sync-highlight-active {
-  background: rgba(9, 105, 218, 0.10) !important;
-  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45) !important;
+  background: rgba(245, 158, 11, 0.16) !important;
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.60) !important;
   border-radius: 6px !important;
   padding-left: 6px;
   padding-right: 6px;
@@ -2281,8 +2281,8 @@ body.is-resizing-col * {
    Search Result Navigation & Highlighting (Broad Block & Keyword Marks)
    ========================================================================== */
 .markdown-body .search-highlight-active {
-  background: rgba(9, 105, 218, 0.08) !important;
-  box-shadow: 0 0 0 2px #0969da, 0 4px 18px rgba(9, 105, 218, 0.16) !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  box-shadow: 0 0 0 2px #d97706, 0 4px 18px rgba(245, 158, 11, 0.22) !important;
   border-radius: 8px !important;
   padding: 8px 12px !important;
   margin-top: 4px;
@@ -2332,12 +2332,12 @@ body.is-resizing-col * {
 
 /* Individual keyword matches inside the broad highlighted paragraph/block */
 .markdown-body mark.search-keyword-match {
-  background: #0969da !important;
+  background: #d97706 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   padding: 1px 4px !important;
   border-radius: 3px !important;
-  box-shadow: 0 1px 4px rgba(9, 105, 218, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.35) !important;
   display: inline-block;
 }
 
@@ -2360,16 +2360,16 @@ body.is-resizing-col * {
 
 @keyframes searchPulse {
   0% {
-    box-shadow: 0 0 0 4px var(--accent, #0969da), 0 0 24px color-mix(in srgb, var(--accent, #0969da) 60%, transparent);
-    background: var(--accent-surface, rgba(9, 105, 218, 0.16));
+    box-shadow: 0 0 0 4px var(--accent, #d97706), 0 0 24px color-mix(in srgb, var(--accent, #d97706) 60%, transparent);
+    background: var(--accent-surface, rgba(245, 158, 11, 0.20));
   }
   50% {
-    box-shadow: 0 0 0 2px var(--accent, #0969da), 0 4px 18px color-mix(in srgb, var(--accent, #0969da) 30%, transparent);
-    background: var(--accent-surface, rgba(9, 105, 218, 0.10));
+    box-shadow: 0 0 0 2px var(--accent, #d97706), 0 4px 18px color-mix(in srgb, var(--accent, #d97706) 30%, transparent);
+    background: var(--accent-surface, rgba(245, 158, 11, 0.12));
   }
   100% {
-    box-shadow: 0 0 0 2px var(--accent, #0969da), 0 4px 18px color-mix(in srgb, var(--accent, #0969da) 30%, transparent);
-    background: var(--accent-surface, rgba(9, 105, 218, 0.10));
+    box-shadow: 0 0 0 2px var(--accent, #d97706), 0 4px 18px color-mix(in srgb, var(--accent, #d97706) 30%, transparent);
+    background: var(--accent-surface, rgba(245, 158, 11, 0.12));
   }
 }
 

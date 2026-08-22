@@ -42,10 +42,10 @@ type EditorPaneProps = {
   onEditorViewReady?: (view: EditorView | null) => void;
 };
 
-// Rich, high-contrast syntax highlighting for Light Theme
+// Rich, high-contrast syntax highlighting for Light Theme (Warm Orange-Yellow Accent)
 const lightHighlightStyle = HighlightStyle.define([
   { tag: tags.heading, color: "#1f2328", fontWeight: "700" },
-  { tag: tags.heading1, color: "#0969da", fontWeight: "800" },
+  { tag: tags.heading1, color: "#d97706", fontWeight: "800" },
   { tag: tags.heading2, color: "#1f2328", fontWeight: "700" },
   { tag: tags.heading3, color: "#1f2328", fontWeight: "600" },
   { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword], color: "#cf222e", fontWeight: "600" },
@@ -61,15 +61,15 @@ const lightHighlightStyle = HighlightStyle.define([
   { tag: tags.strong, fontWeight: "700" },
   { tag: tags.emphasis, fontStyle: "italic" },
   { tag: tags.strikethrough, textDecoration: "line-through" },
-  { tag: tags.link, color: "#0969da", textDecoration: "underline" },
-  { tag: tags.monospace, color: "#0969da", backgroundColor: "rgba(175, 184, 193, 0.18)", borderRadius: "3px" },
+  { tag: tags.link, color: "#d97706", textDecoration: "underline" },
+  { tag: tags.monospace, color: "#c2410c", backgroundColor: "rgba(245, 158, 11, 0.12)", borderRadius: "3px" },
   { tag: [tags.string, tags.inserted], color: "#0a3069" },
   { tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "#0550ae", fontWeight: "600" },
   { tag: tags.invalid, color: "#cf222e" },
 ]);
 
 function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode = false) {
-  const accentColor = isDarkMode ? "#1d9bf0" : "#0969da";
+  const accentColor = isDarkMode ? "#1d9bf0" : "#d97706";
   return EditorView.theme(
     {
       "&": {
@@ -103,14 +103,14 @@ function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode
       ".cm-activeLine": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.16) !important"
-          : "rgba(9, 105, 218, 0.06) !important",
+          : "rgba(245, 158, 11, 0.10) !important",
         boxShadow: `inset 3.5px 0 0 0 ${accentColor} !important`,
       },
       // Active line gutter line number
       ".cm-activeLineGutter": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.22) !important"
-          : "rgba(9, 105, 218, 0.10) !important",
+          : "rgba(245, 158, 11, 0.16) !important",
         color: `${accentColor} !important`,
         fontWeight: "bold",
       },
@@ -118,16 +118,16 @@ function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode
       ".cm-selectionBackground, .cm-selectionLayer .cm-selectionBackground, ::selection": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.35) !important"
-          : "rgba(9, 105, 218, 0.18) !important",
+          : "rgba(245, 158, 11, 0.25) !important",
       },
       // Selection search match
       ".cm-selectionMatch": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.25) !important"
-          : "rgba(9, 105, 218, 0.12) !important",
+          : "rgba(245, 158, 11, 0.18) !important",
         outline: isDarkMode
           ? "1px solid rgba(29, 155, 240, 0.6) !important"
-          : "1px solid rgba(9, 105, 218, 0.35) !important",
+          : "1px solid rgba(217, 119, 6, 0.45) !important",
       },
     },
     { dark: isDarkMode }

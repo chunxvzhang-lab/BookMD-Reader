@@ -697,14 +697,14 @@ button {
    Synchronized Selection Highlighting (Split Mode Theme Overrides)
    ========================================================================== */
 .markdown-body [data-source-line].sync-highlight-active {
-  background: rgba(9, 105, 218, 0.08) !important;
-  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45), 0 3px 12px rgba(9, 105, 218, 0.08) !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.55), 0 3px 12px rgba(245, 158, 11, 0.12) !important;
   border-radius: 6px !important;
 }
 
 .markdown-body li[data-source-line].sync-highlight-active {
-  background: rgba(9, 105, 218, 0.10) !important;
-  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45) !important;
+  background: rgba(245, 158, 11, 0.16) !important;
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.60) !important;
   border-radius: 6px !important;
   padding-left: 6px;
   padding-right: 6px;
@@ -746,8 +746,8 @@ button {
 
 /* Search Jump Highlight Overrides */
 .markdown-body .search-highlight-active {
-  background: rgba(9, 105, 218, 0.08) !important;
-  box-shadow: 0 0 0 2px #0969da, 0 4px 18px rgba(9, 105, 218, 0.16) !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  box-shadow: 0 0 0 2px #d97706, 0 4px 18px rgba(245, 158, 11, 0.22) !important;
   border-radius: 8px !important;
   padding: 8px 12px !important;
   margin-top: 4px;
@@ -784,12 +784,12 @@ button {
 }
 
 .markdown-body mark.search-keyword-match {
-  background: #0969da !important;
+  background: #d97706 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   padding: 1px 4px !important;
   border-radius: 3px !important;
-  box-shadow: 0 1px 4px rgba(9, 105, 218, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.35) !important;
   display: inline-block;
 }
 
