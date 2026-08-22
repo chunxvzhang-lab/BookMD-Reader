@@ -7,10 +7,6 @@ import {
   FileUp,
   FilePlus2,
   Save,
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
   Search,
   Type,
   Info,
@@ -31,8 +27,8 @@ type ToolbarProps = {
   onViewModeChange: (mode: EditorViewMode) => void;
   canGoPrevious: boolean;
   canGoNext: boolean;
-  sidebarOpen: boolean;
-  directoryOpen: boolean;
+  sidebarOpen?: boolean;
+  directoryOpen?: boolean;
   theme?: ThemeMode;
   fontScale: number;
   showLineNumbers?: boolean;
@@ -45,8 +41,8 @@ type ToolbarProps = {
   onToggleFullscreen?: () => void;
   onPrevious: () => void;
   onNext: () => void;
-  onToggleSidebar: () => void;
-  onToggleDirectory: () => void;
+  onToggleSidebar?: () => void;
+  onToggleDirectory?: () => void;
   onAddBookmark: () => void;
   onNewFile?: () => void;
   onSave?: () => void;
@@ -71,14 +67,6 @@ export function Toolbar(props: ToolbarProps) {
   return (
     <header className="toolbar">
       <div className="toolbar-left">
-        <button
-          aria-label="切换目录侧栏"
-          className="icon-button"
-          onClick={props.onToggleDirectory}
-          title="切换目录侧栏 (Ctrl+\)"
-        >
-          {props.directoryOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
-        </button>
         <div className="title-stack">
           <strong>{props.title}</strong>
           <div className="chapter-title-row">
@@ -140,14 +128,6 @@ export function Toolbar(props: ToolbarProps) {
           title="搜索内容 (Ctrl+F)"
         >
           <Search size={17} />
-        </button>
-        <button
-          aria-label="切换大纲侧栏"
-          className="icon-button"
-          onClick={props.onToggleSidebar}
-          title="切换大纲与书签侧栏"
-        >
-          {props.sidebarOpen ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
         </button>
 
         <input
