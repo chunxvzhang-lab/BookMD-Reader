@@ -115,8 +115,6 @@ export const MediaLightbox = memo(function MediaLightbox({
           const theme = document.documentElement.getAttribute("data-theme") || "twitter";
           const res = await window.bookMDDesktop.exportSvgAsPng({
             svgHtml: media.svgHtml,
-            width,
-            height,
             theme,
             filename: media.title || "mermaid-diagram",
           });
@@ -125,7 +123,7 @@ export const MediaLightbox = memo(function MediaLightbox({
           }
         }
 
-        await downloadSvgAsPng(media.svgHtml, media.title || "mermaid-diagram", svgElem);
+        await downloadSvgAsPng(media.svgHtml, media.title || "mermaid-diagram", svgElem, 3);
       } catch (err) {
         console.error("Export error:", err);
       } finally {

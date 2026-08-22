@@ -460,17 +460,17 @@ ipcMain.handle("bookmd:is-fullscreen", () => {
 ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
   if (!mainWindow || mainWindow.isDestroyed()) return { success: false, message: "主窗口未就绪" };
 
-  const { svgHtml, width = 1200, height = 800, theme = "twitter", filename = "mermaid-diagram" } = request;
+  const { svgHtml, theme = "twitter", filename = "mermaid-diagram" } = request;
   if (!svgHtml) return { success: false, message: "缺少 SVG 源码" };
 
   const cleanFilename = (filename || "mermaid-diagram").replace(/\.(svg|png)$/i, "");
   const defaultPath = path.join(app.getPath("downloads"), `${cleanFilename}.png`);
 
   const saveResult = await dialog.showSaveDialog(mainWindow, {
-    title: "导出 Mermaid 架构图为 PNG 图片",
+    title: "导出 Mermaid 架构图为 PNG 高清图片",
     defaultPath,
     filters: [
-      { name: "PNG 图片 (*.png)", extensions: ["png"] },
+      { name: "PNG 高清图片 (*.png)", extensions: ["png"] },
       { name: "所有文件 (*.*)", extensions: ["*"] },
     ],
   });
@@ -479,8 +479,35 @@ ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
     return { canceled: true };
   }
 
-  const targetWidth = Math.max(Math.min(Math.round(width) + 60, 4000), 400);
-  const targetHeight = Math.max(Math.min(Math.round(height) + 60, 4000), 300);
+  // 1. Extract natural viewBox dimensions from SVG
+  let naturalWidth = 1200;
+  let naturalHeight = 800;
+
+  const viewBoxMatch = svgHtml.match(/viewBox=["']\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*["']/i);
+  if (viewBoxMatch) {
+    const vbWidth = parseFloat(viewBoxMatch[3]);
+    const vbHeight = parseFloat(viewBoxMatch[4]);
+    if (vbWidth > 0 && vbHeight > 0) {
+      naturalWidth = vbWidth;
+      naturalHeight = vbHeight;
+    }
+  } else {
+    const widthMatch = svgHtml.match(/\bwidth=["']\s*([0-9.]+)(?:px)?\s*["']/i);
+    const heightMatch = svgHtml.match(/\bheight=["']\s*([0-9.]+)(?:px)?\s*["']/i);
+    if (widthMatch && heightMatch) {
+      const w = parseFloat(widthMatch[1]);
+      const h = parseFloat(heightMatch[1]);
+      if (w > 0 && h > 0) {
+        naturalWidth = w;
+        naturalHeight = h;
+      }
+    }
+  }
+
+  // 2. Compute 3x Ultra-HD Retina scale (guaranteeing minimum 2400px width up to 4800px)
+  const scale = Math.max(2.5, Math.min(3200 / naturalWidth, 4.0));
+  const targetWidth = Math.max(Math.min(Math.round(naturalWidth * scale), 4800), 800);
+  const targetHeight = Math.max(Math.min(Math.round(naturalHeight * scale), 4800), 600);
 
   const offscreenWin = new BrowserWindow({
     width: targetWidth,
@@ -496,28 +523,34 @@ ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
     const isDark = theme === "twitter" || (theme === "system" && nativeTheme.shouldUseDarkColors);
     const bgColor = isDark ? "#000000" : "#ffffff";
     const textColor = isDark ? "#e7e9ea" : "#0f1419";
+    const padding = Math.round(32 * (scale / 2));
 
     const pageHtml = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <style>
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+  }
   html, body {
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
+    width: ${targetWidth}px;
+    height: ${targetHeight}px;
     background-color: ${bgColor};
     color: ${textColor};
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
   }
   .wrapper {
-    padding: 24px;
+    padding: ${padding}px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -529,6 +562,8 @@ ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
     height: 100%;
     max-width: 100%;
     max-height: 100%;
+    shape-rendering: geometricPrecision;
+    text-rendering: geometricPrecision;
   }
 </style>
 </head>
@@ -541,7 +576,7 @@ ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
 
     await offscreenWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(pageHtml)}`);
     // Wait for layout rendering and fonts
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const image = await offscreenWin.webContents.capturePage({
       x: 0,

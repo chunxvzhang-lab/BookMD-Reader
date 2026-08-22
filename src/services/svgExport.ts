@@ -162,7 +162,7 @@ async function rasterizeSvgToPngDownload(
     img.onload = () => {
       cleanup();
       try {
-        const finalScale = Math.max(scaleMultiplier, 2);
+        const finalScale = Math.max(scaleMultiplier, 3);
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(width * finalScale);
         canvas.height = Math.round(height * finalScale);
