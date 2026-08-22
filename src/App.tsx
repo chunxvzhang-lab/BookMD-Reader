@@ -54,6 +54,7 @@ export function App() {
   const scrollRatioRef = useRef(0);
   const openRequestRef = useRef(0);
   const pendingActionRef = useRef<PendingAction | null>(null);
+  const activeLoadedChapterIdRef = useRef<string>("");
 
   const [manifest, setManifest] = useState<BookManifest | null>(null);
   const [chapterId, setChapterId] = useState<string>("");
@@ -710,6 +711,7 @@ export function App() {
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
+      activeLoadedChapterIdRef.current = "uploaded";
 
       openSession({
         chapterId: "uploaded",
@@ -769,6 +771,7 @@ export function App() {
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
+      activeLoadedChapterIdRef.current = singleChapterId;
 
       openSession({
         chapterId: singleChapterId,
@@ -849,6 +852,7 @@ export function App() {
       setNotice(`已打开目录：${result.directory.title}`);
 
       if (targetChapter.absolutePath) {
+        activeLoadedChapterIdRef.current = targetChapter.id;
         const source = await window.bookMDDesktop.readMarkdownFile(targetChapter.absolutePath);
         openSession({
           chapterId: targetChapter.id,
@@ -903,6 +907,7 @@ export function App() {
       setSidebarOpen(true);
       setSidebarTab("toc");
       setViewMode("split");
+      activeLoadedChapterIdRef.current = activeChap.id;
 
       openSession({
         chapterId: activeChap.id,
@@ -1142,8 +1147,12 @@ export function App() {
   // Load chapter content when chapterId changes
   useEffect(() => {
     if (!manifest || !chapterId) return;
-    // If the active session is already this chapter, skip reloading
-    if (session?.chapterId === chapterId) return;
+    // If this chapter is already the actively loaded session, skip redundant re-fetching
+    if (activeLoadedChapterIdRef.current === chapterId) return;
+    if (session?.chapterId === chapterId) {
+      activeLoadedChapterIdRef.current = chapterId;
+      return;
+    }
 
     let cancelled = false;
     const targetChapter = manifest.chapters.find((item) => item.id === chapterId);
@@ -1154,8 +1163,11 @@ export function App() {
       targetChapter.absolutePath &&
       session.absolutePath.toLowerCase() === targetChapter.absolutePath.toLowerCase()
     ) {
+      activeLoadedChapterIdRef.current = chapterId;
       return;
     }
+
+    activeLoadedChapterIdRef.current = chapterId;
 
     const loadPromise =
       targetChapter.absolutePath && window.bookMDDesktop

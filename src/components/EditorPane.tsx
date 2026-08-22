@@ -142,6 +142,8 @@ export function EditorPane({
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-color-scheme: dark)").matches);
 
+  const lastInternalValueRef = useRef(value);
+
   const triggerSmoothTypewriterScroll = (view: EditorView) => {
     if (!typewriterModeRef.current) return;
     if (!view.state.selection.main.empty) return;
@@ -195,8 +197,12 @@ export function EditorPane({
       },
     ]);
 
+    lastInternalValueRef.current = value;
+    const initialCursorPos = value ? value.length : 0;
+
     const state = EditorState.create({
       doc: value,
+      selection: { anchor: initialCursorPos, head: initialCursorPos },
       extensions: [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -235,6 +241,7 @@ export function EditorPane({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const docString = update.state.doc.toString();
+            lastInternalValueRef.current = docString;
             onChangeRef.current(docString);
           }
           if (update.selectionSet || update.docChanged) {
@@ -273,14 +280,21 @@ export function EditorPane({
     };
   }, []);
 
-  // Update document content if changed from outside
+  // Update document content if changed from outside (e.g. reload or undo), preserving cursor position
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
     const currentDoc = view.state.doc.toString();
+    if (value === lastInternalValueRef.current && value === currentDoc) {
+      return;
+    }
     if (value !== currentDoc) {
+      lastInternalValueRef.current = value;
+      const currentSelection = view.state.selection.main;
+      const targetPos = Math.min(currentSelection.head, value.length);
       view.dispatch({
         changes: { from: 0, to: currentDoc.length, insert: value },
+        selection: { anchor: targetPos, head: targetPos },
       });
     }
   }, [value]);
