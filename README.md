@@ -24,11 +24,10 @@
 
 <p align="center">
   <a href="#-核心功能特性">中文文档</a> •
-  <a href="#️-平台开发架构与语言构成">架构与语言</a> •
+  <a href="#️-平台开发架构与语言构成">技术架构</a> •
   <a href="#-key-features">English Docs</a> •
   <a href="#-便携版与-msi-安装包">下载运行</a> •
-  <a href="#-键盘快捷键">快捷键</a> •
-  <a href="#️-研发与构建">开发构建</a>
+  <a href="#-键盘快捷键">快捷键</a>
 </p>
 
 ---
@@ -164,41 +163,6 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 
 ---
 
-## 🛠️ 研发与构建
-
-### 环境要求
-- Node.js >= 18.0.0
-- npm >= 9.0.0
-
-### 本地开发
-```powershell
-# 1. 安装依赖
-npm install
-
-# 2. 运行单元测试 (Vitest)
-npm test
-
-# 3. 启动 Vite 开发服务器 (Web 预览)
-npm run dev
-
-# 4. 启动 Electron 桌面应用开发模式
-npm run desktop
-```
-
-### 生产打包
-```powershell
-# 构建 Web 静态 bundle
-npm run build
-
-# 生成 Windows 绿色便携版
-npm run desktop:pack
-
-# 生成 Windows MSI 标准安装包
-npm run desktop:msi
-```
-
----
-
 ## 🛠️ 平台开发架构与语言构成 (Architecture & Languages)
 
 项目基于严谨的跨平台桌面应用架构设计，各开发语言在技术栈中承担明确的核心职责：
@@ -209,52 +173,6 @@ npm run desktop:msi
 | **CSS3 (Design System)** | 视觉设计系统 (Aesthetic Styling) | 极客暗夜 Twitter Dark 纯黑主题规范、日光浅色变量、Acrylic 毛玻璃灯箱与卡片、物理弹性动画、响应式断点适配 | **~15%** |
 | **JavaScript / CommonJS** | 原生运行时与桥接层 (Electron Desktop Runtime) | Electron 42 主进程生命周期管理、`contextBridge` 安全跨进程通信、原子落盘物理事务保存、UTF-8 BOM/换行符保真与外部修改冲突检测 | **~6%** |
 | **PowerShell / WiX / Python** | 发布构建与自动化 (Build & DevOps) | Windows MSI 安装包生成流水线、WiX 工具链自动编译链接、便携版零依赖打包压缩自动化脚本、GitHub Release 自动上传脚本 | **~4%** |
-
-### 📂 目录结构与分层
-
-```text
-electron/
-  ├── main.cjs                  # Electron 主进程、窗口管理、原生菜单、PNG原生保存与 IPC
-  ├── preload.cjs               # contextBridge 安全桌面 API 暴露
-  └── markdown-files.cjs        # 稳定 ID 树生成、原子落盘保存、BOM保护与冲突检测
-src/
-  ├── components/
-  │     ├── ActivityBar.tsx         # 左侧核心活动功能栏（Logo、工具切换、视图模式、主题与关于）
-  │     ├── MultiTabsBar.tsx        # 顶部多标签页协同管理栏（修改指示灯、右键菜单、快捷关闭）
-  │     ├── StatusBar.tsx           # 底部科技信息停靠栏（字数统计、状态徽章、编码与阅读预估）
-  │     ├── EditorPane.tsx          # CodeMirror 6 编辑器集成、打字机居中与选区监听
-  │     ├── ReaderPane.tsx          # 渲染阅读面板与富文本交互
-  │     ├── MediaLightbox.tsx       # 图片与 Mermaid 架构图无损灯箱及 3x PNG 导出
-  │     ├── DocumentWorkspace.tsx   # 阅读/分屏/源码工作区与拖拽分割调度
-  │     ├── Toolbar.tsx             # 顶部工具栏（章节标题、保存、大纲/目录控制、行号切换、关于）
-  │     ├── ChapterList.tsx         # 目录树列表与多级文件夹折叠/展开
-  │     ├── TocPanel.tsx            # 多级大纲侧栏
-  │     ├── BookmarkPanel.tsx       # 书签侧栏
-  │     ├── SearchPanel.tsx         # 全文检索侧栏
-  │     ├── AboutDialog.tsx         # 关于应用卡片弹窗（项目简介、GitHub、作者与环境）
-  │     ├── UnsavedChangesDialog.tsx# 未保存修改守卫弹窗
-  │     └── FileConflictDialog.tsx  # 外部修改冲突处理弹窗
-  ├── hooks/
-  │     ├── useSyncScroll.ts        # 双向高精度行号映射同步滚动 Hook
-  │     ├── useSyncSelection.ts     # 双向选择同步高亮与平滑上移聚焦 Hook
-  │     ├── useDocumentSession.ts   # 文档编辑会话状态机与防抖渲染调度
-  │     └── useReadingTracker.ts    # 标题位置追踪与阅读进度记忆
-  ├── services/
-  │     ├── markdown.ts             # markdown-it 渲染管线、AST行号注入、KaTeX 公式、Mermaid 图表
-  │     ├── svgExport.ts            # Mermaid 架构图 3x 高清 PNG 光栅化与下载服务
-  │     ├── storage.ts              # 本地阅读偏好与进度持久化
-  │     ├── bookmarks.ts            # 书签索引与校验
-  │     └── bookSource.ts           # 文档源数据加载
-  └── core/
-        └── types.ts                # 全局核心类型定义
-scripts/
-  ├── package-desktop.cjs       # Windows 便携版打包脚本
-  ├── publish_github_release.py # GitHub Release 自动化发布与资源上传脚本
-  ├── build-msi.ps1             # WiX / Electron-Builder MSI 安装包自动化脚本
-  ├── build-msi.cjs             # WiX MSI 编译链接配置
-  └── extract-wix.cjs           # WiX 工具链环境解压准备脚本
-release/                        # 便携版与 MSI 安装包发布输出目录
-```
 
 ---
 
