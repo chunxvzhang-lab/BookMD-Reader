@@ -227,7 +227,7 @@ export function EditorPane({
     ]);
 
     lastInternalValueRef.current = value;
-    const initialCursorPos = value ? value.length : 0;
+    const initialCursorPos = 0;
 
     const state = EditorState.create({
       doc: value,

@@ -192,6 +192,31 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
     };
   }, [containerRef, viewMode, handleReaderScroll]);
 
+  // When entering split mode, lock scrolling to reader and align editor position without jumping reader
+  useEffect(() => {
+    if (viewMode !== "split" || !syncEnabled) return undefined;
+
+    // Lock to reader immediately so any initial editor layout/scroll events do not overwrite the reader position
+    setLock("reader");
+
+    const timer = window.setTimeout(() => {
+      const readerElem = containerRef.current;
+      const view = editorViewRef.current;
+      if (!readerElem || !view) return;
+
+      const readerScrollTop = readerElem.scrollTop;
+      if (readerScrollTop > 0) {
+        const keyframes = buildScrollKeyframes(view, readerElem);
+        const targetEditorY = interpolateCoordinate(readerScrollTop, keyframes, "readerY", "editorY");
+        view.scrollDOM.scrollTop = targetEditorY;
+      }
+    }, 60);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [viewMode, syncEnabled, containerRef, setLock]);
+
   // Cleanup lock timer on unmount
   useEffect(() => {
     return () => {

@@ -58,6 +58,9 @@ export function App() {
   const restoredChapterIdRef = useRef<string | null>(null);
 
   const [manifest, setManifest] = useState<BookManifest | null>(null);
+  const manifestRef = useRef<BookManifest | null>(manifest);
+  manifestRef.current = manifest;
+
   const [chapterId, setChapterId] = useState<string>("");
   const [tabs, setTabs] = useState<TabItem[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -490,11 +493,32 @@ export function App() {
     async (action: PendingAction) => {
       switch (action.type) {
         case "select-chapter": {
-          startTransition(() => {
-            setChapterId(action.chapterId);
-            setSearchQuery("");
-            setSidebarTab("toc");
-          });
+          setChapterId(action.chapterId);
+          setSearchQuery("");
+          setSidebarTab("toc");
+          const targetChap = manifestRef.current?.chapters.find((c) => c.id === action.chapterId);
+          if (targetChap) {
+            setTabs((prev) => {
+              const exists = prev.some(
+                (t) =>
+                  t.id === targetChap.id ||
+                  (t.absolutePath &&
+                    targetChap.absolutePath &&
+                    t.absolutePath.toLowerCase() === targetChap.absolutePath.toLowerCase())
+              );
+              if (exists) return prev;
+              return [
+                ...prev,
+                {
+                  id: targetChap.id,
+                  title: targetChap.title,
+                  relativePath: targetChap.src,
+                  absolutePath: targetChap.absolutePath,
+                  isDirty: false,
+                },
+              ];
+            });
+          }
           break;
         }
         case "open-file": {
@@ -709,6 +733,7 @@ export function App() {
       setManifest(localManifest);
       setBookmarks(loadBookmarks(localId, localManifest.chapters));
       setChapterId("uploaded");
+      setTabs([{ id: "uploaded", title: baseName, relativePath: file.name, absolutePath: undefined, isDirty: false }]);
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
@@ -769,6 +794,30 @@ export function App() {
       setManifest(singleManifest);
       setBookmarks(loadBookmarks(singleManifest.id, singleManifest.chapters));
       setChapterId(singleChapterId);
+      setTabs((prev) => {
+        const matchIdx = prev.findIndex(
+          (t) =>
+            t.id === singleChapterId ||
+            (t.absolutePath && t.absolutePath.toLowerCase() === absolutePath.toLowerCase())
+        );
+        if (matchIdx !== -1) {
+          return prev.map((t, idx) =>
+            idx === matchIdx
+              ? { ...t, id: singleChapterId, title: baseName, relativePath: fileName, absolutePath }
+              : t
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: singleChapterId,
+            title: baseName,
+            relativePath: fileName,
+            absolutePath,
+            isDirty: false,
+          },
+        ];
+      });
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
@@ -847,6 +896,26 @@ export function App() {
       setManifest(result.directory);
       setBookmarks(loadBookmarks(result.directory.id, result.directory.chapters));
       setChapterId(targetChapter.id);
+      setTabs((prev) => {
+        const exists = prev.some(
+          (t) =>
+            t.id === targetChapter.id ||
+            (t.absolutePath &&
+              targetChapter.absolutePath &&
+              t.absolutePath.toLowerCase() === targetChapter.absolutePath.toLowerCase())
+        );
+        if (exists) return prev;
+        return [
+          ...prev,
+          {
+            id: targetChapter.id,
+            title: targetChapter.title,
+            relativePath: targetChapter.src,
+            absolutePath: targetChapter.absolutePath,
+            isDirty: false,
+          },
+        ];
+      });
       setSearchQuery("");
       setSidebarOpen(true);
       setSidebarTab("toc");
@@ -905,6 +974,26 @@ export function App() {
 
       setManifest(nextManifest);
       setChapterId(activeChap.id);
+      setTabs((prev) => {
+        const exists = prev.some(
+          (t) =>
+            t.id === activeChap.id ||
+            (t.absolutePath &&
+              activeChap.absolutePath &&
+              t.absolutePath.toLowerCase() === activeChap.absolutePath.toLowerCase())
+        );
+        if (exists) return prev;
+        return [
+          ...prev,
+          {
+            id: activeChap.id,
+            title: activeChap.title,
+            relativePath: activeChap.src,
+            absolutePath: result.absolutePath,
+            isDirty: false,
+          },
+        ];
+      });
       setSidebarOpen(true);
       setSidebarTab("toc");
       setViewMode("split");
