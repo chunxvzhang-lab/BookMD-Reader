@@ -479,43 +479,14 @@ ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
     return { canceled: true };
   }
 
-  // 1. Extract natural viewBox dimensions from SVG
-  let naturalWidth = 1200;
-  let naturalHeight = 800;
-
-  const viewBoxMatch = svgHtml.match(/viewBox=["']\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*["']/i);
-  if (viewBoxMatch) {
-    const vbWidth = parseFloat(viewBoxMatch[3]);
-    const vbHeight = parseFloat(viewBoxMatch[4]);
-    if (vbWidth > 0 && vbHeight > 0) {
-      naturalWidth = vbWidth;
-      naturalHeight = vbHeight;
-    }
-  } else {
-    const widthMatch = svgHtml.match(/\bwidth=["']\s*([0-9.]+)(?:px)?\s*["']/i);
-    const heightMatch = svgHtml.match(/\bheight=["']\s*([0-9.]+)(?:px)?\s*["']/i);
-    if (widthMatch && heightMatch) {
-      const w = parseFloat(widthMatch[1]);
-      const h = parseFloat(heightMatch[1]);
-      if (w > 0 && h > 0) {
-        naturalWidth = w;
-        naturalHeight = h;
-      }
-    }
-  }
-
-  // 2. Compute 3x Ultra-HD Retina scale (guaranteeing minimum 2400px width up to 4800px)
-  const scale = Math.max(2.5, Math.min(3200 / naturalWidth, 4.0));
-  const targetWidth = Math.max(Math.min(Math.round(naturalWidth * scale), 4800), 800);
-  const targetHeight = Math.max(Math.min(Math.round(naturalHeight * scale), 4800), 600);
-
+  // Initial window size for measuring
   const offscreenWin = new BrowserWindow({
-    width: targetWidth,
-    height: targetHeight,
+    width: 1920,
+    height: 1080,
     show: false,
     webPreferences: {
       offscreen: true,
-      contextIsolation: true,
+      contextIsolation: false,
     },
   });
 
@@ -523,7 +494,6 @@ ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
     const isDark = theme === "twitter" || (theme === "system" && nativeTheme.shouldUseDarkColors);
     const bgColor = isDark ? "#000000" : "#ffffff";
     const textColor = isDark ? "#e7e9ea" : "#0f1419";
-    const padding = Math.round(32 * (scale / 2));
 
     const pageHtml = `<!DOCTYPE html>
 <html>
@@ -539,44 +509,90 @@ ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
   html, body {
     margin: 0;
     padding: 0;
-    width: ${targetWidth}px;
-    height: ${targetHeight}px;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
     background-color: ${bgColor};
     color: ${textColor};
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-  .wrapper {
-    padding: ${padding}px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
   }
   svg {
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    margin: 0;
     shape-rendering: geometricPrecision;
     text-rendering: geometricPrecision;
   }
 </style>
 </head>
 <body>
-  <div class="wrapper">
-    ${svgHtml}
-  </div>
+  ${svgHtml}
 </body>
 </html>`;
 
     await offscreenWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(pageHtml)}`);
-    // Wait for layout rendering and fonts
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // Wait for DOM & SVG to parse
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    // Measure exact bounding box and update viewBox to tightly frame contents
+    const metrics = await offscreenWin.webContents.executeJavaScript(`
+      (() => {
+        const svg = document.querySelector('svg');
+        if (!svg) return { success: false, width: 1200, height: 800 };
+
+        svg.style.margin = '0';
+        svg.style.position = 'static';
+        svg.style.transform = 'none';
+        svg.style.maxWidth = 'none';
+        svg.style.maxHeight = 'none';
+
+        let bbox;
+        try {
+          bbox = svg.getBBox();
+        } catch (e) {
+          const vb = svg.viewBox && svg.viewBox.baseVal;
+          bbox = {
+            x: vb ? vb.x : 0,
+            y: vb ? vb.y : 0,
+            width: vb && vb.width ? vb.width : (svg.clientWidth || 1200),
+            height: vb && vb.height ? vb.height : (svg.clientHeight || 800),
+          };
+        }
+
+        const pad = Math.max(20, Math.round(Math.min(bbox.width, bbox.height) * 0.035));
+        const finalX = bbox.x - pad;
+        const finalY = bbox.y - pad;
+        const finalWidth = Math.max(Math.ceil(bbox.width + pad * 2), 100);
+        const finalHeight = Math.max(Math.ceil(bbox.height + pad * 2), 80);
+
+        svg.setAttribute('viewBox', finalX + ' ' + finalY + ' ' + finalWidth + ' ' + finalHeight);
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        svg.style.width = '100vw';
+        svg.style.height = '100vh';
+
+        return {
+          success: true,
+          width: finalWidth,
+          height: finalHeight,
+        };
+      })()
+    `);
+
+    const naturalWidth = metrics?.width || 1200;
+    const naturalHeight = metrics?.height || 800;
+
+    // Compute Ultra-HD Retina resolution (2.0x to 3.5x scale)
+    const scale = Math.max(2.0, Math.min(3200 / naturalWidth, 3.5));
+    const targetWidth = Math.max(Math.min(Math.round(naturalWidth * scale), 4800), 600);
+    const targetHeight = Math.max(Math.min(Math.round(naturalHeight * scale), 4800), 400);
+
+    offscreenWin.setSize(targetWidth, targetHeight);
+    offscreenWin.setContentSize(targetWidth, targetHeight);
+
+    // Wait for layout to settle at high resolution
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const image = await offscreenWin.webContents.capturePage({
       x: 0,
