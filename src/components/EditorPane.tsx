@@ -16,11 +16,13 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
   syntaxHighlighting,
   defaultHighlightStyle,
+  HighlightStyle,
   indentOnInput,
   bracketMatching,
   foldGutter,
   foldKeymap,
 } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { autocompletion, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
@@ -40,7 +42,34 @@ type EditorPaneProps = {
   onEditorViewReady?: (view: EditorView | null) => void;
 };
 
+// Rich, high-contrast syntax highlighting for Light Theme
+const lightHighlightStyle = HighlightStyle.define([
+  { tag: tags.heading, color: "#1f2328", fontWeight: "700" },
+  { tag: tags.heading1, color: "#0969da", fontWeight: "800" },
+  { tag: tags.heading2, color: "#1f2328", fontWeight: "700" },
+  { tag: tags.heading3, color: "#1f2328", fontWeight: "600" },
+  { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword], color: "#cf222e", fontWeight: "600" },
+  { tag: [tags.name, tags.deleted, tags.character, tags.macroName], color: "#cf222e" },
+  { tag: [tags.propertyName], color: "#116329" },
+  { tag: [tags.variableName, tags.definition(tags.variableName)], color: "#953800" },
+  { tag: [tags.function(tags.variableName), tags.labelName], color: "#8250df" },
+  { tag: [tags.color, tags.constant(tags.name), tags.standard(tags.name)], color: "#0550ae" },
+  { tag: [tags.definition(tags.typeName), tags.typeName], color: "#953800" },
+  { tag: [tags.number, tags.changed, tags.annotation, tags.modifier, tags.self, tags.namespace], color: "#0550ae", fontWeight: "600" },
+  { tag: [tags.operator, tags.operatorKeyword, tags.url, tags.escape, tags.regexp, tags.special(tags.string)], color: "#0550ae" },
+  { tag: [tags.meta, tags.comment], color: "#6e7781", fontStyle: "italic" },
+  { tag: tags.strong, fontWeight: "700" },
+  { tag: tags.emphasis, fontStyle: "italic" },
+  { tag: tags.strikethrough, textDecoration: "line-through" },
+  { tag: tags.link, color: "#0969da", textDecoration: "underline" },
+  { tag: tags.monospace, color: "#0969da", backgroundColor: "rgba(175, 184, 193, 0.18)", borderRadius: "3px" },
+  { tag: [tags.string, tags.inserted], color: "#0a3069" },
+  { tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "#0550ae", fontWeight: "600" },
+  { tag: tags.invalid, color: "#cf222e" },
+]);
+
 function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode = false) {
+  const accentColor = isDarkMode ? "#1d9bf0" : "#0969da";
   return EditorView.theme(
     {
       "&": {
@@ -48,7 +77,7 @@ function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode
         fontSize: `${14 * fontScale}px`,
         fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
         backgroundColor: isDarkMode ? "#000000" : "#ffffff",
-        color: isDarkMode ? "#f1f5f9" : "#0f172a",
+        color: isDarkMode ? "#f1f5f9" : "#1f2328",
       },
       ".cm-scroller": {
         overflow: "auto",
@@ -58,47 +87,47 @@ function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode
       ".cm-content": {
         padding: "16px 14px",
         paddingBottom: typewriterMode ? "50vh" : "16px",
-        caretColor: "#1d9bf0",
+        caretColor: accentColor,
       },
       ".cm-cursor, .cm-dropCursor": {
-        borderLeftColor: "#1d9bf0 !important",
+        borderLeftColor: `${accentColor} !important`,
         borderLeftWidth: "2.5px !important",
       },
       ".cm-gutters": {
         backgroundColor: isDarkMode ? "#0a0d12" : "#f8fafc",
-        color: isDarkMode ? "#71767b" : "#94a3b8",
+        color: isDarkMode ? "#71767b" : "#64748b",
         borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
         paddingRight: "6px",
       },
-      // Active line: distinct luminous electric blue background with inset accent edge
+      // Active line: distinct luminous background with inset accent edge
       ".cm-activeLine": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.16) !important"
-          : "rgba(29, 155, 240, 0.08) !important",
-        boxShadow: "inset 3.5px 0 0 0 #1d9bf0 !important",
+          : "rgba(9, 105, 218, 0.06) !important",
+        boxShadow: `inset 3.5px 0 0 0 ${accentColor} !important`,
       },
       // Active line gutter line number
       ".cm-activeLineGutter": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.22) !important"
-          : "rgba(29, 155, 240, 0.12) !important",
-        color: "#1d9bf0 !important",
+          : "rgba(9, 105, 218, 0.10) !important",
+        color: `${accentColor} !important`,
         fontWeight: "bold",
       },
       // Selection highlight
       ".cm-selectionBackground, .cm-selectionLayer .cm-selectionBackground, ::selection": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.35) !important"
-          : "rgba(29, 155, 240, 0.22) !important",
+          : "rgba(9, 105, 218, 0.18) !important",
       },
       // Selection search match
       ".cm-selectionMatch": {
         backgroundColor: isDarkMode
           ? "rgba(29, 155, 240, 0.25) !important"
-          : "rgba(29, 155, 240, 0.16) !important",
+          : "rgba(9, 105, 218, 0.12) !important",
         outline: isDarkMode
           ? "1px solid rgba(29, 155, 240, 0.6) !important"
-          : "1px solid rgba(29, 155, 240, 0.4) !important",
+          : "1px solid rgba(9, 105, 218, 0.35) !important",
       },
     },
     { dark: isDarkMode }
@@ -213,7 +242,6 @@ export function EditorPane({
         dropCursor(),
         EditorState.allowMultipleSelections.of(true),
         indentOnInput(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         bracketMatching(),
         closeBrackets(),
         autocompletion(),
@@ -231,7 +259,11 @@ export function EditorPane({
           ...foldKeymap,
         ]),
         saveKeyBinding,
-        themeCompartment.current.of(isDarkMode ? [oneDark, customBaseTheme] : [customBaseTheme]),
+        themeCompartment.current.of(
+          isDarkMode
+            ? [oneDark, customBaseTheme]
+            : [customBaseTheme, syntaxHighlighting(lightHighlightStyle), syntaxHighlighting(defaultHighlightStyle, { fallback: true })]
+        ),
         readOnlyCompartment.current.of(EditorState.readOnly.of(readOnly)),
         fontSizeCompartment.current.of(
           EditorView.theme({
@@ -305,7 +337,11 @@ export function EditorPane({
     if (!view) return;
     const customBaseTheme = buildCustomTheme(isDarkMode, fontScale, typewriterMode);
     view.dispatch({
-      effects: themeCompartment.current.reconfigure(isDarkMode ? [oneDark, customBaseTheme] : [customBaseTheme]),
+      effects: themeCompartment.current.reconfigure(
+        isDarkMode
+          ? [oneDark, customBaseTheme]
+          : [customBaseTheme, syntaxHighlighting(lightHighlightStyle), syntaxHighlighting(defaultHighlightStyle, { fallback: true })]
+      ),
     });
     if (typewriterMode) {
       triggerSmoothTypewriterScroll(view);

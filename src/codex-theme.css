@@ -697,14 +697,14 @@ button {
    Synchronized Selection Highlighting (Split Mode Theme Overrides)
    ========================================================================== */
 .markdown-body [data-source-line].sync-highlight-active {
-  background: rgba(29, 155, 240, 0.10) !important;
-  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.55), 0 3px 12px rgba(29, 155, 240, 0.12) !important;
+  background: rgba(9, 105, 218, 0.08) !important;
+  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45), 0 3px 12px rgba(9, 105, 218, 0.08) !important;
   border-radius: 6px !important;
 }
 
 .markdown-body li[data-source-line].sync-highlight-active {
-  background: rgba(29, 155, 240, 0.12) !important;
-  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.55) !important;
+  background: rgba(9, 105, 218, 0.10) !important;
+  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45) !important;
   border-radius: 6px !important;
   padding-left: 6px;
   padding-right: 6px;
@@ -746,12 +746,25 @@ button {
 
 /* Search Jump Highlight Overrides */
 .markdown-body .search-highlight-active {
-  background: rgba(29, 155, 240, 0.18) !important;
-  box-shadow: 0 0 0 2px #1d9bf0, 0 6px 26px rgba(29, 155, 240, 0.38) !important;
+  background: rgba(9, 105, 218, 0.08) !important;
+  box-shadow: 0 0 0 2px #0969da, 0 4px 18px rgba(9, 105, 218, 0.16) !important;
   border-radius: 8px !important;
   padding: 8px 12px !important;
   margin-top: 4px;
   margin-bottom: 4px;
+}
+
+:root[data-theme="twitter"] .markdown-body .search-highlight-active,
+:root[data-theme="dark"] .markdown-body .search-highlight-active {
+  background: rgba(29, 155, 240, 0.18) !important;
+  box-shadow: 0 0 0 2px #1d9bf0, 0 6px 26px rgba(29, 155, 240, 0.38) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .markdown-body .search-highlight-active {
+    background: rgba(29, 155, 240, 0.18) !important;
+    box-shadow: 0 0 0 2px #1d9bf0, 0 6px 26px rgba(29, 155, 240, 0.38) !important;
+  }
 }
 
 .markdown-body li.search-highlight-active {
@@ -771,12 +784,27 @@ button {
 }
 
 .markdown-body mark.search-keyword-match {
-  background: #1d9bf0 !important;
+  background: #0969da !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   padding: 1px 4px !important;
   border-radius: 3px !important;
-  box-shadow: 0 0 8px rgba(29, 155, 240, 0.6) !important;
+  box-shadow: 0 1px 4px rgba(9, 105, 218, 0.25) !important;
   display: inline-block;
+}
+
+:root[data-theme="twitter"] .markdown-body mark.search-keyword-match,
+:root[data-theme="dark"] .markdown-body mark.search-keyword-match {
+  background: #1d9bf0 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(29, 155, 240, 0.6) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .markdown-body mark.search-keyword-match {
+    background: #1d9bf0 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(29, 155, 240, 0.6) !important;
+  }
 }
 

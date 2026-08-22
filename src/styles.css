@@ -11,11 +11,11 @@
   --border: #e4e4e7;
   --border-subtle: #f4f4f5;
   --border-hover: #d4d4d8;
-  --accent: #ff4d00;
-  --accent-hover: #e04400;
-  --accent-surface: rgba(255, 77, 0, 0.08);
-  --accent-cyan: #06b6d4;
-  --accent-blue: #2563eb;
+  --accent: #0969da;
+  --accent-hover: #085fc5;
+  --accent-surface: rgba(9, 105, 218, 0.08);
+  --accent-cyan: #0284c7;
+  --accent-blue: #0969da;
   --danger: #ef4444;
   --status-bar-bg: #18181b;
   --status-bar-text: #e4e4e7;
@@ -1511,6 +1511,22 @@ body.is-resizing-col * {
   color: var(--text);
 }
 
+.markdown-body mark {
+  background: rgba(254, 240, 138, 0.75);
+  color: #1e293b;
+  border-radius: 4px;
+  padding: 1.5px 5px;
+  border-bottom: 1.5px solid #facc15;
+  font-weight: 500;
+}
+
+:root[data-theme="twitter"] .markdown-body mark,
+:root[data-theme="dark"] .markdown-body mark {
+  background: rgba(250, 204, 21, 0.25);
+  color: #fef08a;
+  border-bottom: 1.5px solid rgba(250, 204, 21, 0.6);
+}
+
 .markdown-body hr {
   height: 2px;
   background: var(--border);
@@ -2206,14 +2222,14 @@ body.is-resizing-col * {
 }
 
 .markdown-body [data-source-line].sync-highlight-active {
-  background: rgba(29, 155, 240, 0.10) !important;
-  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.55), 0 3px 12px rgba(29, 155, 240, 0.12) !important;
+  background: rgba(9, 105, 218, 0.08) !important;
+  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45), 0 3px 12px rgba(9, 105, 218, 0.08) !important;
   border-radius: 6px !important;
 }
 
 .markdown-body li[data-source-line].sync-highlight-active {
-  background: rgba(29, 155, 240, 0.12) !important;
-  box-shadow: 0 0 0 1.5px rgba(29, 155, 240, 0.55) !important;
+  background: rgba(9, 105, 218, 0.10) !important;
+  box-shadow: 0 0 0 1.5px rgba(9, 105, 218, 0.45) !important;
   border-radius: 6px !important;
   padding-left: 6px;
   padding-right: 6px;
@@ -2265,13 +2281,28 @@ body.is-resizing-col * {
    Search Result Navigation & Highlighting (Broad Block & Keyword Marks)
    ========================================================================== */
 .markdown-body .search-highlight-active {
-  background: rgba(29, 155, 240, 0.16) !important;
-  box-shadow: 0 0 0 2px #1d9bf0, 0 6px 26px rgba(29, 155, 240, 0.32) !important;
+  background: rgba(9, 105, 218, 0.08) !important;
+  box-shadow: 0 0 0 2px #0969da, 0 4px 18px rgba(9, 105, 218, 0.16) !important;
   border-radius: 8px !important;
   padding: 8px 12px !important;
   margin-top: 4px;
   margin-bottom: 4px;
   transition: background-color 0.25s ease, box-shadow 0.25s ease, padding 0.2s ease;
+}
+
+[data-theme="twitter"] .markdown-body .search-highlight-active,
+[data-theme="dark"] .markdown-body .search-highlight-active,
+:root[data-theme="twitter"] .markdown-body .search-highlight-active,
+:root[data-theme="dark"] .markdown-body .search-highlight-active {
+  background: rgba(29, 155, 240, 0.16) !important;
+  box-shadow: 0 0 0 2px #1d9bf0, 0 6px 26px rgba(29, 155, 240, 0.32) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .markdown-body .search-highlight-active {
+    background: rgba(29, 155, 240, 0.16) !important;
+    box-shadow: 0 0 0 2px #1d9bf0, 0 6px 26px rgba(29, 155, 240, 0.32) !important;
+  }
 }
 
 .markdown-body li.search-highlight-active {
@@ -2299,39 +2330,46 @@ body.is-resizing-col * {
   padding: 14px 16px !important;
 }
 
-:root[data-theme="light"] .markdown-body .search-highlight-active {
-  background: rgba(29, 155, 240, 0.12) !important;
-  box-shadow: 0 0 0 2px #1d9bf0, 0 4px 18px rgba(29, 155, 240, 0.22) !important;
-}
-
 /* Individual keyword matches inside the broad highlighted paragraph/block */
 .markdown-body mark.search-keyword-match {
-  background: #1d9bf0 !important;
+  background: #0969da !important;
   color: #ffffff !important;
   font-weight: 700 !important;
   padding: 1px 4px !important;
   border-radius: 3px !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 1px 4px rgba(9, 105, 218, 0.25) !important;
   display: inline-block;
 }
 
-:root[data-theme="light"] .markdown-body mark.search-keyword-match {
-  background: #0284c7 !important;
+[data-theme="twitter"] .markdown-body mark.search-keyword-match,
+[data-theme="dark"] .markdown-body mark.search-keyword-match,
+:root[data-theme="twitter"] .markdown-body mark.search-keyword-match,
+:root[data-theme="dark"] .markdown-body mark.search-keyword-match {
+  background: #1d9bf0 !important;
   color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .markdown-body mark.search-keyword-match {
+    background: #1d9bf0 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+  }
 }
 
 @keyframes searchPulse {
   0% {
-    box-shadow: 0 0 0 4px #1d9bf0, 0 0 28px rgba(29, 155, 240, 0.75);
-    background: rgba(29, 155, 240, 0.28);
+    box-shadow: 0 0 0 4px var(--accent, #0969da), 0 0 24px color-mix(in srgb, var(--accent, #0969da) 60%, transparent);
+    background: var(--accent-surface, rgba(9, 105, 218, 0.16));
   }
   50% {
-    box-shadow: 0 0 0 2px #1d9bf0, 0 6px 24px rgba(29, 155, 240, 0.35);
-    background: rgba(29, 155, 240, 0.16);
+    box-shadow: 0 0 0 2px var(--accent, #0969da), 0 4px 18px color-mix(in srgb, var(--accent, #0969da) 30%, transparent);
+    background: var(--accent-surface, rgba(9, 105, 218, 0.10));
   }
   100% {
-    box-shadow: 0 0 0 2px #1d9bf0, 0 6px 24px rgba(29, 155, 240, 0.35);
-    background: rgba(29, 155, 240, 0.16);
+    box-shadow: 0 0 0 2px var(--accent, #0969da), 0 4px 18px color-mix(in srgb, var(--accent, #0969da) 30%, transparent);
+    background: var(--accent-surface, rgba(9, 105, 218, 0.10));
   }
 }
 
