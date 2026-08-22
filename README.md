@@ -40,6 +40,11 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 ## 🌟 核心功能特性
 
 ### 1. v1.5.0 全新生产力与交互升级
+- **🎨 浅色主题暖橙黄高亮体系（Warm Amber-Orange Light Theme）**：
+  - 针对浅色模式全面定制了温暖雅致的暖橙黄色系（`#d97706` / `#f59e0b`），长时间阅读与写作柔和舒适、不刺眼。
+  - **编辑器端（CodeMirror 6）**：当前行激活背景、行号指示、光标（Caret）、选区高亮、搜索命中框均完美适配橙黄微光，一级标题与行内代码胶囊呈现温润暖色。
+  - **阅读器端（Reader）**：分屏双向同步选择高亮（`.sync-highlight-active`）、全文检索命中段落光晕与关键词徽标（`mark.search-keyword-match`）、原生 Markdown 高亮（`==高亮==` / `<mark>`）以及行内代码底色全链路自适应橙黄色调。
+  - **暗夜端保持极客纯粹**：极客暗夜（Lights Out）纯黑底色 (`#000000`) 与电光蓝 (`#1D9BF0`) 保持纯正质感。
 - **📑 多标签页协同编辑栏（Multi-Tabs Bar）**：
   - 顶部原生文档标签栏，打开多个 Markdown 章节或独立文档随心并行切换。
   - 支持未保存修改黄点呼吸灯状态（`isDirty`）、鼠标中键快速关闭。
@@ -49,6 +54,8 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
   - 点击正文中的任何图片或 Mermaid 渲染图，一键呼出高画质毛玻璃全屏灯箱。
   - 支持 0.2× ~ 6× 鼠标滚轮平滑缩放、鼠标任意拖拽平移及 `Esc` 退出。
   - **Mermaid 架构图一键导出超高清 PNG**：基于 DOM 实时矢量包围盒（`getBBox()`）与 CSS 深度内联，自动应用主题底色与安全边距，以 3× Retina 超高清画质生成全幅无裁切的 PNG 图片，原生保存对话框安全落盘。
+- **✨ 纯净启动与快速向导（Clean Standalone Startup）**：
+  - 独立双击打开软件时呈现清爽现代的无扰空白工作区与快捷操作引导（新建文档、打开文件/文件夹、常用快捷键向导），不再强制载入或弹窗提示示例文件。
 - **📁 目录树多级子目录折叠与展开（Collapsible Directory Tree）**：
   - 支持任意层级的 Markdown 目录树结构，子目录点击轻松折叠/展开。
   - 顶部提供「全部展开 / 全部折叠」快捷控制按钮。
@@ -60,14 +67,16 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
   - 一键隐藏侧边栏、目录树与状态栏，正文自动居中呈现（960px 黄金阅读视宽），沉浸写作。
 - **✍️ 打字机居中滚动模式（Typewriter Scrolling Mode / `Alt+T`）**：
   - 编辑时保持活动光标行始终位于视口垂直中心（45%~50% 视线黄金区），免去频繁低头。
-- **⚡ 源码模式交互深度防抖优化**：
+- **⚡ 源码模式交互深度防抖与光标稳定优化**：
+  - 解决标题语法输入与目录刷新时的光标跳转问题，保证大段持续编写与标题输入平滑连贯。
   - 优化源码模式下选区与行号联动机制，多行代码划选复制平滑稳定不抖动。
   - 源码模式下点击大纲 (TOC) 或目录精准平滑滚动定位到对应代码行。
 
 ### 2. 现代视觉与双主题交互系统
-- **极客暗夜主题（Twitter Dark / Lights Out）**：
-  - 采用 Lights Out 纯黑底色 (`#000000`)、电光蓝高亮 (`#1D9BF0`) 与发丝微边框 (`#2F3336`)。
-  - 支持 **☀️ 日光浅色 / ✨ 极客暗黑** 双重主题一键平滑切换。
+- **极客暗夜（Twitter Dark）与暖橙日光（Warm Light）双主题**：
+  - **极客暗夜主题**：采用 Lights Out 纯黑底色 (`#000000`)、电光蓝高亮 (`#1D9BF0`) 与发丝微边框 (`#2F3336`)。
+  - **日光浅色主题**：采用自然柔白底色 (`#ffffff` / `#f5f5f7`)、暖橙黄强调色 (`#D97706` / `#F59E0B`) 与温暖轻快的高亮配色。
+  - 支持快捷一键平滑无感切换。
 - **📐 界面多栏边界自由鼠标拖拽调整（Resizable Splitters）**：
   - **文档目录栏**（`ChapterList`，160px ~ 480px）、**大纲/书签/搜索侧栏**（`side-panel`，180px ~ 520px）以及**分屏模式下编辑器与预览窗口**（`DocumentWorkspace`，15% ~ 85%）均支持鼠标自由拖拽调整。
   - 分栏处配备专属 `.layout-resizer` 分隔线，鼠标悬停即变双向调整箭头（`col-resize`），拖拽时光晕高亮反馈，并锁定文字划选（`user-select: none`），体验极致丝滑。
@@ -253,11 +262,15 @@ release/                        # 便携版与 MSI 安装包发布输出目录
 
 ### Key Features
 
+- **Warm Amber-Orange Light Theme & Geek Dark Theme**:
+  - *Light Mode*: Specially tailored warm amber-orange accent palette (`#D97706` / `#F59E0B`) with soft yellow code badges, warm active line/gutter highlights, smooth split sync selections, and comfortable text marks for long reading/writing sessions.
+  - *Dark Mode*: Authentic Lights Out pure black background (`#000000`) with luminous electric blue accents (`#1D9BF0`) and hairline borders (`#2F3336`).
 - **Multi-Tabs Document Bar**: Native tabbed navigation allowing simultaneous multi-document editing, dirty state indicators, middle-click close, right-click context menu, and keyboard shortcuts (`Ctrl+W`, `Ctrl+Tab`).
 - **Media Lightbox & 3× Retina PNG Export**: Fullscreen glassmorphic lightbox with smooth zoom (0.2×~6×) and panning for both images and Mermaid diagrams. Exports complete, centered, ultra-high-resolution (3x Retina) PNG diagrams using precise vector `getBBox()` boundary calculation.
+- **Clean Standalone Startup**: Modern uncluttered empty workspace and quick start guide when launched standalone without opening demo files automatically.
 - **Collapsible Multi-Level Directory Tree**: Intuitive tree navigation supporting folder expand/collapse with persistent expansion state and global expand/collapse controls.
 - **Zen Mode & Typewriter Scrolling**: Focus mode (`F10`) for distraction-free reading/writing and typewriter scrolling (`Alt+T`) to keep active editing line vertically centered.
-- **Geek Dark & Light Themes**: Authentic Lights Out pure black background (`#000000`) with electric blue accents (`#1D9BF0`) and subtle hairline borders (`#2F3336`).
+- **Cursor Stability & Jitter-Free Typing**: Fixed outline heading regeneration cursor jump bugs, ensuring uninterrupted markdown heading syntax input.
 - **Resizable Layout Splitters**: Drag and resize the directory sidebar (160px~480px), side panels (180px~520px), and split editor/preview ratio (15%~85%) freely with persistent layout state saved in `localStorage`.
 - **Automatic Preview Line Numbers**: Zero-runtime-overhead gutter line numbering powered by Markdown AST `data-source-line` attributes with hover highlights and top bar toggle button (`#`).
 - **Three Editing & Reading Modes**: Read mode (clean reader), Split mode (side-by-side editing with live preview & draggable splitter, vertical responsive wrap on small screens), and Source mode (fullscreen code editor).
