@@ -132,6 +132,16 @@ function sendMenuCommand(command) {
 
 const windowInitialPaths = new Map();
 
+function getWindowFromEvent(event) {
+  if (event?.sender) {
+    try {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win && !win.isDestroyed()) return win;
+    } catch {}
+  }
+  return getActiveWindow();
+}
+
 async function createWindow(initialFilePath = null) {
   const iconIco = path.join(__dirname, "icon.ico");
   const iconPng = path.join(__dirname, "icon.png");
@@ -156,6 +166,12 @@ async function createWindow(initialFilePath = null) {
     },
   });
 
+  const winId = win.id;
+  let webContentsId = null;
+  try {
+    webContentsId = win.webContents?.id ?? null;
+  } catch {}
+
   windows.add(win);
   if (!mainWindow || mainWindow.isDestroyed()) {
     mainWindow = win;
@@ -163,8 +179,10 @@ async function createWindow(initialFilePath = null) {
 
   if (initialFilePath) {
     registerPath(initialFilePath);
-    windowInitialPaths.set(win.id, initialFilePath);
-    windowInitialPaths.set(win.webContents.id, initialFilePath);
+    windowInitialPaths.set(winId, initialFilePath);
+    if (webContentsId !== null) {
+      windowInitialPaths.set(webContentsId, initialFilePath);
+    }
   }
 
   win.on("close", (event) => {
@@ -175,7 +193,11 @@ async function createWindow(initialFilePath = null) {
       closeRequestId += 1;
       const reqId = closeRequestId;
 
-      win.webContents.send("bookmd:before-close", { requestId: reqId });
+      try {
+        if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+          win.webContents.send("bookmd:before-close", { requestId: reqId });
+        }
+      } catch {}
 
       // Fallback timeout in case renderer does not respond
       const timer = setTimeout(() => {
@@ -186,11 +208,13 @@ async function createWindow(initialFilePath = null) {
         clearTimeout(timer);
         if (result === "proceed") {
           windows.delete(win);
-          windowInitialPaths.delete(win.id);
-          windowInitialPaths.delete(win.webContents.id);
-          if (win && !win.isDestroyed()) {
-            win.destroy();
-          }
+          windowInitialPaths.delete(winId);
+          if (webContentsId !== null) windowInitialPaths.delete(webContentsId);
+          try {
+            if (!win.isDestroyed()) {
+              win.destroy();
+            }
+          } catch {}
           if (windows.size === 0 && process.platform !== "darwin") {
             app.quit();
           }
@@ -201,23 +225,27 @@ async function createWindow(initialFilePath = null) {
 
   win.on("closed", () => {
     windows.delete(win);
-    windowInitialPaths.delete(win.id);
-    windowInitialPaths.delete(win.webContents.id);
+    windowInitialPaths.delete(winId);
+    if (webContentsId !== null) windowInitialPaths.delete(webContentsId);
     if (mainWindow === win) {
       mainWindow = getActiveWindow();
     }
   });
 
   win.on("enter-full-screen", () => {
-    if (win && !win.isDestroyed()) {
-      win.webContents.send("bookmd:fullscreen-changed", true);
-    }
+    try {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+        win.webContents.send("bookmd:fullscreen-changed", true);
+      }
+    } catch {}
   });
 
   win.on("leave-full-screen", () => {
-    if (win && !win.isDestroyed()) {
-      win.webContents.send("bookmd:fullscreen-changed", false);
-    }
+    try {
+      if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+        win.webContents.send("bookmd:fullscreen-changed", false);
+      }
+    } catch {}
   });
 
   if (!app.isPackaged && devServerUrl) {
@@ -356,8 +384,12 @@ ipcMain.handle("bookmd:set-native-theme", (_event, theme) => {
   const isDark = theme === "twitter" || theme === "dark";
   const isLight = theme === "light";
   nativeTheme.themeSource = isDark ? "dark" : (isLight ? "light" : "system");
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setBackgroundColor(isDark ? "#000000" : "#f6f7f4");
+  for (const win of windows) {
+    try {
+      if (win && !win.isDestroyed()) {
+        win.setBackgroundColor(isDark ? "#000000" : "#f6f7f4");
+      }
+    } catch {}
   }
 });
 
@@ -378,8 +410,9 @@ ipcMain.handle("bookmd:resolve-before-close", (_event, { requestId, action }) =>
   }
 });
 
-ipcMain.handle("bookmd:open-directory", async () => {
-  const result = await dialog.showOpenDialog(mainWindow, {
+ipcMain.handle("bookmd:open-directory", async (event) => {
+  const targetWin = getWindowFromEvent(event);
+  const result = await dialog.showOpenDialog(targetWin || undefined, {
     title: "选择 Markdown 文件目录",
     properties: ["openDirectory"],
   });
@@ -446,12 +479,13 @@ ipcMain.handle("bookmd:save-markdown-file", async (_event, request) => {
   });
 });
 
-ipcMain.handle("bookmd:create-markdown-file", async (_event, options = {}) => {
+ipcMain.handle("bookmd:create-markdown-file", async (event, options = {}) => {
   let defaultDir = options.rootPath || app.getPath("documents");
   let defaultName = options.defaultName || "未命名.md";
   const defaultPath = path.join(defaultDir, defaultName);
+  const targetWin = getWindowFromEvent(event);
 
-  const result = await dialog.showSaveDialog(mainWindow, {
+  const result = await dialog.showSaveDialog(targetWin || undefined, {
     title: "新建 Markdown 文件",
     defaultPath,
     filters: [
@@ -492,10 +526,11 @@ ipcMain.handle("bookmd:create-markdown-file", async (_event, options = {}) => {
   };
 });
 
-ipcMain.handle("bookmd:save-markdown-file-as", async (_event, request = {}) => {
+ipcMain.handle("bookmd:save-markdown-file-as", async (event, request = {}) => {
   const defaultPath = request.currentPath || path.join(app.getPath("documents"), "未命名.md");
+  const targetWin = getWindowFromEvent(event);
 
-  const result = await dialog.showSaveDialog(mainWindow, {
+  const result = await dialog.showSaveDialog(targetWin || undefined, {
     title: "另存为 Markdown 文件",
     defaultPath,
     filters: [
@@ -531,27 +566,29 @@ ipcMain.handle("bookmd:save-markdown-file-as", async (_event, request = {}) => {
   };
 });
 
-ipcMain.handle("bookmd:toggle-fullscreen", () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return false;
-  const next = !mainWindow.isFullScreen();
-  mainWindow.setFullScreen(next);
+ipcMain.handle("bookmd:toggle-fullscreen", (event) => {
+  const targetWin = getWindowFromEvent(event);
+  if (!targetWin || targetWin.isDestroyed()) return false;
+  const next = !targetWin.isFullScreen();
+  targetWin.setFullScreen(next);
   return next;
 });
 
-ipcMain.handle("bookmd:is-fullscreen", () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return false;
-  return mainWindow.isFullScreen();
+ipcMain.handle("bookmd:is-fullscreen", (event) => {
+  const targetWin = getWindowFromEvent(event);
+  if (!targetWin || targetWin.isDestroyed()) return false;
+  return targetWin.isFullScreen();
 });
 
-ipcMain.handle("bookmd:save-png-data", async (_event, request = {}) => {
-  if (!mainWindow || mainWindow.isDestroyed()) return { success: false, message: "主窗口未就绪" };
+ipcMain.handle("bookmd:save-png-data", async (event, request = {}) => {
+  const targetWin = getWindowFromEvent(event);
   const { dataUrl, filename = "mermaid-diagram" } = request;
   if (!dataUrl) return { success: false, message: "缺少图片数据" };
 
   const cleanFilename = (filename || "mermaid-diagram").replace(/\.(svg|png)$/i, "");
   const defaultPath = path.join(app.getPath("downloads"), `${cleanFilename}.png`);
 
-  const saveResult = await dialog.showSaveDialog(mainWindow, {
+  const saveResult = await dialog.showSaveDialog(targetWin || undefined, {
     title: "导出 Mermaid 架构图为 PNG 高清图片",
     defaultPath,
     filters: [
@@ -575,16 +612,15 @@ ipcMain.handle("bookmd:save-png-data", async (_event, request = {}) => {
   }
 });
 
-ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
-  if (!mainWindow || mainWindow.isDestroyed()) return { success: false, message: "主窗口未就绪" };
-
+ipcMain.handle("bookmd:export-svg-as-png", async (event, request = {}) => {
+  const targetWin = getWindowFromEvent(event);
   const { svgHtml, theme = "twitter", filename = "mermaid-diagram" } = request;
   if (!svgHtml) return { success: false, message: "缺少 SVG 源码" };
 
   const cleanFilename = (filename || "mermaid-diagram").replace(/\.(svg|png)$/i, "");
   const defaultPath = path.join(app.getPath("downloads"), `${cleanFilename}.png`);
 
-  const saveResult = await dialog.showSaveDialog(mainWindow, {
+  const saveResult = await dialog.showSaveDialog(targetWin || undefined, {
     title: "导出 Mermaid 架构图为 PNG 高清图片",
     defaultPath,
     filters: [
