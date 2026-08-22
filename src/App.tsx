@@ -55,6 +55,7 @@ export function App() {
   const openRequestRef = useRef(0);
   const pendingActionRef = useRef<PendingAction | null>(null);
   const activeLoadedChapterIdRef = useRef<string>("");
+  const restoredChapterIdRef = useRef<string | null>(null);
 
   const [manifest, setManifest] = useState<BookManifest | null>(null);
   const [chapterId, setChapterId] = useState<string>("");
@@ -279,9 +280,9 @@ export function App() {
         }
       }
 
-      // 2. If Editor pane is present (source or split mode), scroll editor directly to heading line
+      // 2. If Editor pane is present (source or split mode), scroll editor directly to heading line only on explicit user navigation
       const editor = editorViewRef.current;
-      if (editor && session?.source) {
+      if (editor && session?.source && behavior === "smooth") {
         const allHeadings = renderedChapter?.headings?.length
           ? renderedChapter.headings
           : extractHeadingsFromSource(session.source);
@@ -1182,6 +1183,11 @@ export function App() {
   // Restore reading position or bookmark position
   useEffect(() => {
     if (!manifest || !renderedChapter || !chapterId) return;
+
+    // Only restore once per chapter load/switch, unless a bookmark was queued
+    if (restoredChapterIdRef.current === chapterId && !pendingBookmarkRef.current) return;
+    restoredChapterIdRef.current = chapterId;
+
     const pending = pendingBookmarkRef.current;
     if (pending) {
       pendingBookmarkRef.current = null;
