@@ -2934,12 +2934,28 @@ body.is-resizing-col * {
   color: var(--text);
   font-size: 12px;
   cursor: pointer;
-  transition: background 0.12s ease;
+  transition: all 0.12s ease;
 }
 
 .tab-context-menu .menu-item:hover {
   background: var(--accent);
   color: #ffffff;
+}
+
+.tab-context-menu .menu-item.menu-item-highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tab-context-menu .menu-item.menu-item-highlight:hover {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.tab-context-menu .menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
 }
 
 /* ==========================================================================
@@ -3246,4 +3262,223 @@ body.is-resizing-col * {
 .app-shell.is-fullscreen .cm-editor {
   width: 100%;
   height: 100%;
+}
+
+/* ==========================================================================
+   v1.6.0: Multi-Tab Dual-Document Split View & Borderless Layout
+   ========================================================================== */
+.tab-item.is-split-secondary {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.08);
+  color: #06b6d4;
+}
+
+.tab-split-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.tab-bar-split-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-right: 8px;
+}
+
+.tab-exit-split-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab-exit-split-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+/* Dual Document Workspace */
+.dual-document-workspace {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: calc(100vh - 36px);
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.dual-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.dual-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  user-select: none;
+  z-index: 2;
+}
+
+.dual-pane-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dual-pane-icon {
+  flex-shrink: 0;
+}
+
+.dual-pane-icon.text-orange {
+  color: #f59e0b;
+}
+
+.dual-pane-icon.text-cyan {
+  color: #06b6d4;
+}
+
+.dual-pane-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.dual-pane-tag.primary-tag {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.dual-pane-tag.secondary-tag {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.3);
+  color: #06b6d4;
+}
+
+.dual-pane-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dual-close-split-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.dual-close-split-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.dual-pane-content {
+  flex: 1;
+  height: calc(100% - 32px);
+  position: relative;
+  overflow: hidden;
+}
+
+.dual-pane-content .document-workspace,
+.dual-pane-content .reader-pane {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.dual-splitter {
+  width: 5px;
+  margin: 0 -2px;
+  z-index: 10;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.dual-splitter:hover,
+.dual-splitter.is-active {
+  background: var(--accent);
+}
+
+.dual-splitter .splitter-handle {
+  display: none;
+}
+
+/* When in Dual Split Mode: seamless full screen layout */
+.app-shell.is-dual-split-mode {
+  grid-template-columns: 1fr !important;
+}
+
+.app-shell.is-dual-split-mode .main-viewport-container {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.app-shell.is-dual-split-mode .workspace {
+  width: 100vw;
+  height: 100vh;
+}
+
+.app-shell.is-dual-split-mode .reader-frame {
+  width: 100%;
+  height: 100%;
+  border-left: none;
+}
+
+.app-shell.is-dual-split-mode .tab-bar-container {
+  border-top: none;
+  background: var(--surface);
 }

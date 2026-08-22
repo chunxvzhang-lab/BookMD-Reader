@@ -5,6 +5,7 @@ import { ActivityBar } from "./components/ActivityBar";
 import { BookmarkPanel } from "./components/BookmarkPanel";
 import { ChapterList } from "./components/ChapterList";
 import { DocumentWorkspace } from "./components/DocumentWorkspace";
+import { DualDocumentWorkspace } from "./components/DualDocumentWorkspace";
 import { FileConflictDialog } from "./components/FileConflictDialog";
 import { MediaLightbox, type LightboxMedia } from "./components/MediaLightbox";
 import { SearchPanel } from "./components/SearchPanel";
@@ -18,6 +19,7 @@ import type {
   Bookmark,
   ChapterManifest,
   EditorViewMode,
+  RenderedChapter,
   SearchResult,
   SidebarTab,
   ThemeMode,
@@ -27,7 +29,7 @@ import { useDocumentSession } from "./hooks/useDocumentSession";
 import { useReadingTracker } from "./hooks/useReadingTracker";
 import { createBookmark, resolveBookmark } from "./services/bookmarks";
 import { loadChapterMarkdown } from "./services/bookSource";
-import { extractExcerpt, extractHeadingsFromSource, findHeadingLineInSource, findInChapter } from "./services/markdown";
+import { extractExcerpt, extractHeadingsFromSource, findHeadingLineInSource, findInChapter, renderMarkdown } from "./services/markdown";
 import {
   loadBookmarks,
   loadPreferences,
@@ -63,6 +65,11 @@ export function App() {
 
   const [chapterId, setChapterId] = useState<string>("");
   const [tabs, setTabs] = useState<TabItem[]>([]);
+  const [dualSplitTabId, setDualSplitTabId] = useState<string | null>(null);
+  const [secondaryRenderedChapter, setSecondaryRenderedChapter] = useState<RenderedChapter | null>(null);
+  const secondaryReaderRef = useRef<HTMLElement | null>(null);
+  const isDualSplitMode = Boolean(dualSplitTabId && tabs.some((t) => t.id === dualSplitTabId));
+
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [directoryOpen, setDirectoryOpen] = useState(true);
@@ -647,8 +654,24 @@ export function App() {
     });
   }, [activeChapter, isDirty, chapterId]);
 
+  const handleOpenDualSplit = useCallback(
+    (tabId: string) => {
+      if (tabId === chapterId && tabs.length < 2) return;
+      setDualSplitTabId(tabId);
+      setNotice("已开启双文档分屏对比模式（按 Esc 或点击右上角退出）。");
+    },
+    [chapterId, tabs.length]
+  );
+
+  const handleCloseDualSplit = useCallback(() => {
+    setDualSplitTabId(null);
+  }, []);
+
   const handleCloseTab = useCallback(
     (tabId: string) => {
+      if (tabId === dualSplitTabId) {
+        setDualSplitTabId(null);
+      }
       setTabs((prev) => {
         const next = prev.filter((t) => t.id !== tabId);
         if (next.length === 0) {
@@ -664,17 +687,20 @@ export function App() {
         return next;
       });
     },
-    [chapterId, selectChapter]
+    [chapterId, dualSplitTabId, selectChapter]
   );
 
   const handleCloseOtherTabs = useCallback(
     (tabId: string) => {
+      if (dualSplitTabId && dualSplitTabId !== tabId) {
+        setDualSplitTabId(null);
+      }
       setTabs((prev) => prev.filter((t) => t.id === tabId));
       if (chapterId !== tabId) {
         selectChapter(tabId);
       }
     },
-    [chapterId, selectChapter]
+    [chapterId, dualSplitTabId, selectChapter]
   );
 
   const handleCloseRightTabs = useCallback(
@@ -683,6 +709,9 @@ export function App() {
         const idx = prev.findIndex((t) => t.id === tabId);
         if (idx === -1) return prev;
         const next = prev.slice(0, idx + 1);
+        if (dualSplitTabId && !next.some((t) => t.id === dualSplitTabId)) {
+          setDualSplitTabId(null);
+        }
         const activeStillExists = next.some((t) => t.id === chapterId);
         if (!activeStillExists) {
           selectChapter(tabId);
@@ -690,7 +719,7 @@ export function App() {
         return next;
       });
     },
-    [chapterId, selectChapter]
+    [chapterId, dualSplitTabId, selectChapter]
   );
 
   const toggleZenMode = useCallback(() => {
@@ -1269,6 +1298,47 @@ export function App() {
     };
   }, [chapterId, manifest, openSession, session?.chapterId, session?.absolutePath]);
 
+  // Load secondary chapter for dual split mode
+  useEffect(() => {
+    if (!dualSplitTabId) {
+      setSecondaryRenderedChapter(null);
+      return;
+    }
+
+    let cancelled = false;
+    const targetTab = tabs.find((t) => t.id === dualSplitTabId);
+    const targetChap = manifest?.chapters.find((c) => c.id === dualSplitTabId);
+
+    const targetAbsPath = targetTab?.absolutePath || targetChap?.absolutePath;
+
+    const loadPromise =
+      targetAbsPath && window.bookMDDesktop
+        ? window.bookMDDesktop.readMarkdownFile(targetAbsPath)
+        : manifest
+          ? loadChapterMarkdown(manifest, dualSplitTabId)
+          : null;
+
+    if (!loadPromise) return;
+
+    loadPromise
+      .then(async (source) => {
+        if (cancelled) return;
+        const rendered = await renderMarkdown(source.markdown, source.baseUrl);
+        if (!cancelled) {
+          setSecondaryRenderedChapter(rendered);
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setNotice(cause instanceof Error ? cause.message : "无法加载分屏文档内容。");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dualSplitTabId, manifest, tabs]);
+
   // Restore reading position or bookmark position
   useEffect(() => {
     if (!manifest || !renderedChapter || !chapterId) return;
@@ -1348,6 +1418,11 @@ export function App() {
         if (lightboxMedia) {
           event.preventDefault();
           setLightboxMedia(null);
+          return;
+        }
+        if (dualSplitTabId) {
+          event.preventDefault();
+          handleCloseDualSplit();
           return;
         }
         if (zenMode) {
@@ -1449,9 +1524,11 @@ export function App() {
     addBookmark,
     chapterId,
     createNewFile,
+    dualSplitTabId,
     focusSearch,
     goNext,
     goPrevious,
+    handleCloseDualSplit,
     handleCloseTab,
     isFullscreen,
     lightboxMedia,
@@ -1486,9 +1563,9 @@ export function App() {
 
   return (
     <div
-      className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${zenMode ? " is-zen-mode" : ""}`}
+      className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${zenMode ? " is-zen-mode" : ""}${isDualSplitMode ? " is-dual-split-mode" : ""}`}
     >
-      {!zenMode && (
+      {!zenMode && !isDualSplitMode && (
         <ActivityBar
           directoryOpen={directoryOpen}
           onToggleDirectory={() => setDirectoryOpen((open) => !open)}
@@ -1509,55 +1586,57 @@ export function App() {
       )}
 
       <div className="main-viewport-container">
-        <Toolbar
-          title={manifest?.title ?? "Markdown Viewer"}
-          chapterTitle={activeChapter?.title ?? "打开 Markdown 文件或目录"}
-          isDirty={isDirty}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          canGoPrevious={activeIndex > 0}
-          canGoNext={Boolean(manifest && activeIndex >= 0 && activeIndex < manifest.chapters.length - 1)}
-          sidebarOpen={sidebarOpen}
-          directoryOpen={directoryOpen}
-          theme={preferences.theme}
-          fontScale={preferences.fontScale}
-          showLineNumbers={preferences.showLineNumbers}
-          onToggleLineNumbers={() =>
-            setPreferences((prev) => {
-              const next = { ...prev, showLineNumbers: !prev.showLineNumbers };
-              savePreferences(next);
-              return next;
-            })
-          }
-          typewriterMode={typewriterMode}
-          onToggleTypewriterMode={toggleTypewriterMode}
-          zenMode={zenMode}
-          onToggleZenMode={toggleZenMode}
-          isFullscreen={isFullscreen}
-          onToggleFullscreen={toggleFullscreen}
-          onPrevious={goPrevious}
-          onNext={goNext}
-          onToggleSidebar={() => setSidebarOpen((open) => !open)}
-          onToggleDirectory={() => setDirectoryOpen((open) => !open)}
-          onAddBookmark={addBookmark}
-          onNewFile={window.bookMDDesktop ? createNewFile : undefined}
-          onSave={() => saveSession()}
-          canSave={Boolean(session?.writable)}
-          onOpenMarkdown={openMarkdownFile}
-          onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
-          onOpenAbout={() => setAboutOpen(true)}
-          onFocusSearch={focusSearch}
-          onFontScaleChange={(fontScale) => {
-            setPreferences((current) => {
-              const next = { ...current, fontScale };
-              savePreferences(next);
-              return next;
-            });
-          }}
-        />
+        {!isDualSplitMode && (
+          <Toolbar
+            title={manifest?.title ?? "Markdown Viewer"}
+            chapterTitle={activeChapter?.title ?? "打开 Markdown 文件或目录"}
+            isDirty={isDirty}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            canGoPrevious={activeIndex > 0}
+            canGoNext={Boolean(manifest && activeIndex >= 0 && activeIndex < manifest.chapters.length - 1)}
+            sidebarOpen={sidebarOpen}
+            directoryOpen={directoryOpen}
+            theme={preferences.theme}
+            fontScale={preferences.fontScale}
+            showLineNumbers={preferences.showLineNumbers}
+            onToggleLineNumbers={() =>
+              setPreferences((prev) => {
+                const next = { ...prev, showLineNumbers: !prev.showLineNumbers };
+                savePreferences(next);
+                return next;
+              })
+            }
+            typewriterMode={typewriterMode}
+            onToggleTypewriterMode={toggleTypewriterMode}
+            zenMode={zenMode}
+            onToggleZenMode={toggleZenMode}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
+            onPrevious={goPrevious}
+            onNext={goNext}
+            onToggleSidebar={() => setSidebarOpen((open) => !open)}
+            onToggleDirectory={() => setDirectoryOpen((open) => !open)}
+            onAddBookmark={addBookmark}
+            onNewFile={window.bookMDDesktop ? createNewFile : undefined}
+            onSave={() => saveSession()}
+            canSave={Boolean(session?.writable)}
+            onOpenMarkdown={openMarkdownFile}
+            onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
+            onOpenAbout={() => setAboutOpen(true)}
+            onFocusSearch={focusSearch}
+            onFontScaleChange={(fontScale) => {
+              setPreferences((current) => {
+                const next = { ...current, fontScale };
+                savePreferences(next);
+                return next;
+              });
+            }}
+          />
+        )}
 
       <div className="workspace">
-        {!zenMode && directoryOpen ? (
+        {!zenMode && !isDualSplitMode && directoryOpen ? (
           manifest ? (
             <div style={{ width: directoryWidth, flex: `0 0 ${directoryWidth}px` }} className="chapter-list-container">
               <ChapterList
@@ -1575,7 +1654,7 @@ export function App() {
           )
         ) : null}
 
-        {!zenMode && directoryOpen && (
+        {!zenMode && !isDualSplitMode && directoryOpen && (
           <div
             className={`layout-resizer ${resizingType === "dir" ? "is-active" : ""}`}
             onMouseDown={handleDirResizeMouseDown}
@@ -1586,7 +1665,7 @@ export function App() {
           />
         )}
 
-        {!zenMode && sidebarOpen && manifest ? (
+        {!zenMode && !isDualSplitMode && sidebarOpen && manifest ? (
           <>
             <aside className="side-panel" style={{ width: sidebarWidth, flex: `0 0 ${sidebarWidth}px` }}>
               <div className="tabs" role="tablist" aria-label="侧栏区域">
@@ -1664,13 +1743,44 @@ export function App() {
             <TabBar
               tabs={tabs}
               activeTabId={chapterId}
+              dualSplitTabId={dualSplitTabId}
               onSelectTab={selectChapter}
               onCloseTab={handleCloseTab}
               onCloseOtherTabs={handleCloseOtherTabs}
               onCloseRightTabs={handleCloseRightTabs}
+              onOpenDualSplit={handleOpenDualSplit}
+              onCloseDualSplit={handleCloseDualSplit}
             />
           )}
-          {session ? (
+          {isDualSplitMode && secondaryRenderedChapter ? (
+            <DualDocumentWorkspace
+              primaryTitle={activeChapter?.title ?? session?.fileName ?? "主文档"}
+              viewMode={viewMode}
+              source={session?.source ?? ""}
+              onSourceChange={updateSource}
+              renderedChapter={renderedChapter}
+              primaryContainerRef={readerRef}
+              theme={preferences.theme}
+              fontScale={preferences.fontScale}
+              mermaidTheme={resolveMermaidTheme(preferences.theme)}
+              onMermaidError={handleMermaidError}
+              onSave={() => saveSession()}
+              isLargeDocument={isLargeDocument}
+              autoPreviewPaused={autoPreviewPaused}
+              onRefreshPreview={renderPreviewNow}
+              readOnly={!session?.writable}
+              showLineNumbers={preferences.showLineNumbers}
+              typewriterMode={typewriterMode}
+              onOpenLightbox={(media) => setLightboxMedia(media)}
+              onEditorViewReady={(view) => {
+                editorViewRef.current = view;
+              }}
+              secondaryTitle={tabs.find((t) => t.id === dualSplitTabId)?.title ?? "对照文档"}
+              secondaryRenderedChapter={secondaryRenderedChapter}
+              secondaryContainerRef={secondaryReaderRef}
+              onCloseSecondary={handleCloseDualSplit}
+            />
+          ) : session ? (
             <DocumentWorkspace
               viewMode={viewMode}
               source={session.source}
