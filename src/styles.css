@@ -2214,6 +2214,33 @@ body.is-resizing-col * {
   }
 }
 
+@media (max-width: 680px) {
+  .toolbar {
+    gap: 8px;
+    padding: 6px 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar {
+    display: none;
+  }
+  .toolbar-left {
+    max-width: 140px;
+  }
+  .toolbar-actions {
+    gap: 4px;
+  }
+  .icon-button {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+  }
+  .view-mode-control button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
 /* Synchronized Selection Highlighting (Split Mode) */
 .markdown-body [data-source-line] {
   transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),

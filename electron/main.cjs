@@ -152,8 +152,8 @@ async function createWindow(initialFilePath = null) {
   const win = new BrowserWindow({
     width: 1320,
     height: 860,
-    minWidth: 960,
-    minHeight: 640,
+    minWidth: 360,
+    minHeight: 240,
     title: "BookMD 阅读器",
     icon: windowIcon,
     autoHideMenuBar: true,
