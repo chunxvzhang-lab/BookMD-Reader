@@ -84,6 +84,7 @@ export type BeforeCloseData = {
 declare global {
   interface Window {
     bookMDDesktop?: {
+      getInitialSyncData?: () => { filePath: string; source: ChapterSource | null } | null;
       getLaunchFilePath: () => Promise<string | null>;
       setNativeTheme: (theme: string) => Promise<void>;
       openDirectory: () => Promise<DirectoryOpenResult>;

@@ -131,6 +131,7 @@ function sendMenuCommand(command) {
 }
 
 const windowInitialPaths = new Map();
+const windowInitialData = new Map();
 
 function getWindowFromEvent(event) {
   if (event?.sender) {
@@ -154,6 +155,7 @@ async function createWindow(initialFilePath = null) {
     height: 860,
     minWidth: 360,
     minHeight: 240,
+    show: false,
     title: "BookMD 阅读器",
     icon: windowIcon,
     autoHideMenuBar: true,
@@ -163,6 +165,7 @@ async function createWindow(initialFilePath = null) {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      spellcheck: false,
     },
   });
 
@@ -183,7 +186,34 @@ async function createWindow(initialFilePath = null) {
     if (webContentsId !== null) {
       windowInitialPaths.set(webContentsId, initialFilePath);
     }
+    // Asynchronously pre-read Markdown source for instantaneous render on launch
+    readMarkdownSource(initialFilePath)
+      .then((source) => {
+        windowInitialData.set(winId, { filePath: initialFilePath, source });
+        if (webContentsId !== null) {
+          windowInitialData.set(webContentsId, { filePath: initialFilePath, source });
+        }
+      })
+      .catch(() => {});
   }
+
+  win.once("ready-to-show", () => {
+    try {
+      if (!win.isDestroyed() && !win.isVisible()) {
+        win.show();
+        win.focus();
+      }
+    } catch {}
+  });
+
+  const showFallbackTimer = setTimeout(() => {
+    try {
+      if (!win.isDestroyed() && !win.isVisible()) {
+        win.show();
+        win.focus();
+      }
+    } catch {}
+  }, 600);
 
   win.on("close", (event) => {
     if (isAppQuitting) return;
@@ -207,9 +237,14 @@ async function createWindow(initialFilePath = null) {
       pendingCloseResolvers.set(reqId, (result) => {
         clearTimeout(timer);
         if (result === "proceed") {
+          clearTimeout(showFallbackTimer);
           windows.delete(win);
           windowInitialPaths.delete(winId);
-          if (webContentsId !== null) windowInitialPaths.delete(webContentsId);
+          windowInitialData.delete(winId);
+          if (webContentsId !== null) {
+            windowInitialPaths.delete(webContentsId);
+            windowInitialData.delete(webContentsId);
+          }
           try {
             if (!win.isDestroyed()) {
               win.destroy();
@@ -224,9 +259,14 @@ async function createWindow(initialFilePath = null) {
   });
 
   win.on("closed", () => {
+    clearTimeout(showFallbackTimer);
     windows.delete(win);
     windowInitialPaths.delete(winId);
-    if (webContentsId !== null) windowInitialPaths.delete(webContentsId);
+    windowInitialData.delete(winId);
+    if (webContentsId !== null) {
+      windowInitialPaths.delete(webContentsId);
+      windowInitialData.delete(webContentsId);
+    }
     if (mainWindow === win) {
       mainWindow = getActiveWindow();
     }
@@ -355,6 +395,30 @@ ipcMain.handle("bookmd:open-in-new-window", async (_event, absolutePath) => {
     return true;
   }
   return false;
+});
+
+ipcMain.on("bookmd:get-sync-launch-data", (event) => {
+  const senderWebContentsId = event?.sender?.id;
+  const senderWin = event?.sender ? BrowserWindow.fromWebContents(event.sender) : null;
+  const winId = senderWin?.id;
+
+  let cachedData = null;
+  if (senderWebContentsId && windowInitialData.has(senderWebContentsId)) {
+    cachedData = windowInitialData.get(senderWebContentsId);
+  } else if (winId && windowInitialData.has(winId)) {
+    cachedData = windowInitialData.get(winId);
+  }
+
+  let filePath = null;
+  if (senderWebContentsId && windowInitialPaths.has(senderWebContentsId)) {
+    filePath = windowInitialPaths.get(senderWebContentsId);
+  } else if (winId && windowInitialPaths.has(winId)) {
+    filePath = windowInitialPaths.get(winId);
+  } else if (launchFilePath) {
+    filePath = launchFilePath;
+  }
+
+  event.returnValue = cachedData ? cachedData : (filePath ? { filePath, source: null } : null);
 });
 
 ipcMain.handle("bookmd:get-launch-file-path", async (event) => {

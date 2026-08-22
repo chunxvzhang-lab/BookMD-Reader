@@ -18,6 +18,7 @@ import type {
   BookManifest,
   Bookmark,
   ChapterManifest,
+  ChapterSource,
   EditorViewMode,
   RenderedChapter,
   SearchResult,
@@ -42,7 +43,7 @@ import {
 type PendingAction =
   | { type: "select-chapter"; chapterId: string }
   | { type: "open-file"; file: File }
-  | { type: "open-desktop-file"; absolutePath: string }
+  | { type: "open-desktop-file"; absolutePath: string; preloadedSource?: ChapterSource | null }
   | { type: "open-directory" }
   | { type: "new-file" }
   | { type: "close-window"; requestId: number };
@@ -533,7 +534,7 @@ export function App() {
           break;
         }
         case "open-desktop-file": {
-          await doOpenDesktopMarkdownPath(action.absolutePath);
+          await doOpenDesktopMarkdownPath(action.absolutePath, action.preloadedSource);
           break;
         }
         case "open-directory": {
@@ -812,7 +813,10 @@ export function App() {
     }
   };
 
-  const doOpenDesktopMarkdownPath = async (absolutePath: string) => {
+  const doOpenDesktopMarkdownPath = async (
+    absolutePath: string,
+    preloadedSource?: ChapterSource | null
+  ) => {
     if (!window.bookMDDesktop) return;
     if (!/\.(md|markdown)$/i.test(absolutePath)) {
       setNotice("请选择 .md 或 .markdown 文件。");
@@ -823,8 +827,8 @@ export function App() {
     openRequestRef.current = requestId;
 
     try {
-      // 1. Immediately read and display the file for instant opening
-      const source = await window.bookMDDesktop.readMarkdownFile(absolutePath);
+      // 1. Immediately read and display the file (use preloadedSource if available for zero-latency instant render)
+      const source = preloadedSource || (await window.bookMDDesktop.readMarkdownFile(absolutePath));
       if (openRequestRef.current !== requestId) return;
 
       const fileName = absolutePath.split(/[\\/]/).pop() ?? "Markdown.md";
@@ -1082,11 +1086,11 @@ export function App() {
   );
 
   const openDesktopMarkdownPath = useCallback(
-    (absolutePath: string) => {
+    (absolutePath: string, preloadedSource?: ChapterSource | null) => {
       if (session?.absolutePath && session.absolutePath.toLowerCase() === absolutePath.toLowerCase()) {
         return;
       }
-      guardAction({ type: "open-desktop-file", absolutePath });
+      guardAction({ type: "open-desktop-file", absolutePath, preloadedSource });
     },
     [session?.absolutePath, guardAction]
   );
@@ -1230,20 +1234,29 @@ export function App() {
   }, []);
 
   // Handle launch path once on startup and register global event listeners
+  const initialHandledRef = useRef(false);
   useEffect(() => {
     if (!window.bookMDDesktop) return undefined;
     let cancelled = false;
 
-    window.bookMDDesktop
-      .getLaunchFilePath()
-      .then((filePath) => {
-        if (!cancelled && filePath) {
-          openDesktopMarkdownPathRef.current(filePath);
-        }
-      })
-      .catch((cause: unknown) => {
-        setNotice(cause instanceof Error ? cause.message : "无法读取启动文件。");
-      });
+    // 1. Fast path: check if synchronous launch data & pre-read source was injected during window creation
+    const syncData = window.bookMDDesktop.getInitialSyncData?.();
+    if (syncData?.filePath && !initialHandledRef.current) {
+      initialHandledRef.current = true;
+      openDesktopMarkdownPathRef.current(syncData.filePath, syncData.source);
+    } else {
+      window.bookMDDesktop
+        .getLaunchFilePath()
+        .then((filePath) => {
+          if (!cancelled && filePath && !initialHandledRef.current) {
+            initialHandledRef.current = true;
+            openDesktopMarkdownPathRef.current(filePath);
+          }
+        })
+        .catch((cause: unknown) => {
+          setNotice(cause instanceof Error ? cause.message : "无法读取启动文件。");
+        });
+    }
 
     const unsubscribeOpen = window.bookMDDesktop.onOpenFilePath((filePath) => {
       openDesktopMarkdownPathRef.current(filePath);

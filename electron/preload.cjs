@@ -1,6 +1,12 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
+let initialSyncData = null;
+try {
+  initialSyncData = ipcRenderer.sendSync("bookmd:get-sync-launch-data");
+} catch {}
+
 contextBridge.exposeInMainWorld("bookMDDesktop", {
+  getInitialSyncData: () => initialSyncData,
   getLaunchFilePath: () => ipcRenderer.invoke("bookmd:get-launch-file-path"),
   setNativeTheme: (theme) => ipcRenderer.invoke("bookmd:set-native-theme", theme),
   openDirectory: () => ipcRenderer.invoke("bookmd:open-directory"),
