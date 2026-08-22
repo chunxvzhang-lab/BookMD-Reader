@@ -32,13 +32,22 @@
 
 ---
 
-BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入现代极客设计美学，支持多标签页多文档管理、代码块一键复制与高对比度高亮、图片与 Mermaid 架构图无损灯箱缩放、专注模式 (F10)、打字机居中滚动、多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、界面分栏自由拖拽缩放、正文预览行号显示、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
+BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入现代极客设计美学，支持多标签页多文档管理、多文档左右分屏对比查看、标签页分离为独立新窗口、Windows 桌面贴靠分栏无遮挡适配、代码块一键复制与高对比度高亮、图片与 Mermaid 架构图无损灯箱缩放与超清 PNG 导出、专注模式 (F10)、打字机居中滚动、多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、界面分栏自由拖拽缩放、正文预览行号显示、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
 
 ---
 
 ## 🌟 核心功能特性
 
 ### 1. v1.5.0 全新生产力与交互升级
+- **🪟 多文档左右分屏对比查看模式（Dual Document Split View）**：
+  - 在多标签页栏上右键任意未激活标签页，即可选择「🗗 开启左右分屏模式」，实现同一窗口内同时并排查看与对照两份不同的 Markdown 文档。
+  - **极简沉浸布局**：分屏模式下自动隐藏左侧 ActivityBar 导航栏，释放最大化水平可视面积；中间分割线支持鼠标自由拖拽调整双栏比例，支持右键一键「关闭分屏模式」。
+- **🗗 标签页分离为独立新窗口（Detach Tab to Independent Window）**：
+  - 标签页右键菜单支持「🗗 分离到独立新窗口」，支持将任意标签页秒级脱离为主窗口之外的完全独立新窗口。
+  - 多窗口并行运作，每个窗口均具备独立的阅读、编辑、目录大纲与安全保存状态，多屏办公极度高效。
+- **🪟 Windows 系统桌面贴靠/分栏（Snap Layouts）完美适配**：
+  - 针对 Windows 10/11 的桌面贴靠分栏（`Win + ← / →` 左右对半、3 栏并排、4 象限分栏及高 DPI 屏幕缩放）进行了深度优化。
+  - 优化系统级最小窗口尺寸限制（360×240），彻底杜绝在桌面多窗口分栏时发生窗口溢出或与相邻窗口互相遮挡的问题；在窄屏状态下自适应弹性排版，体验严丝合缝。
 - **🎨 浅色主题暖橙黄高亮体系（Warm Amber-Orange Light Theme）**：
   - 针对浅色模式全面定制了温暖雅致的暖橙黄色系（`#d97706` / `#f59e0b`），长时间阅读与写作柔和舒适、不刺眼。
   - **编辑器端（CodeMirror 6）**：当前行激活背景、行号指示、光标（Caret）、选区高亮、搜索命中框均完美适配橙黄微光，一级标题与行内代码胶囊呈现温润暖色。
@@ -47,14 +56,15 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 - **📑 多标签页协同编辑栏（Multi-Tabs Bar）**：
   - 顶部原生文档标签栏，打开多个 Markdown 章节或独立文档随心并行切换。
   - 支持未保存修改黄点呼吸灯状态（`isDirty`）、鼠标中键快速关闭。
-  - 右键上下文菜单支持：关闭当前、关闭其他、关闭右侧标签页。
+  - 右键上下文菜单支持：关闭当前、关闭其他、关闭右侧标签页、开启分屏对比、分离到独立新窗口。
   - 快捷键支持：`Ctrl + W` 关闭标签、`Ctrl + Tab` / `Ctrl + Shift + Tab` 前后循环切换。
 - **🔍 图片与 Mermaid 架构图无损灯箱 & 3× 超清 PNG 导出（Media Lightbox & Hi-DPI PNG Export）**：
   - 点击正文中的任何图片或 Mermaid 渲染图，一键呼出高画质毛玻璃全屏灯箱。
   - 支持 0.2× ~ 6× 鼠标滚轮平滑缩放、鼠标任意拖拽平移及 `Esc` 退出。
   - **Mermaid 架构图一键导出超高清 PNG**：基于 DOM 实时矢量包围盒（`getBBox()`）与 CSS 深度内联，自动应用主题底色与安全边距，以 3× Retina 超高清画质生成全幅无裁切的 PNG 图片，原生保存对话框安全落盘。
-- **✨ 纯净启动与快速向导（Clean Standalone Startup）**：
-  - 独立双击打开软件时呈现清爽现代的无扰空白工作区与快捷操作引导（新建文档、打开文件/文件夹、常用快捷键向导），不再强制载入或弹窗提示示例文件。
+- **✨ 纯净启动与文件秒开（Clean Startup & Instant File Loading）**：
+  - 独立双击打开软件时呈现清爽现代的无扰空白工作区与快捷操作引导（新建文档、打开文件/文件夹、常用快捷键向导），不强制加载示例文件。
+  - 完善 Windows 资源管理器双击 `.md` 文件关联唤起机制（`second-instance` 与启动文件映射），冷启动与多开场景下均可精准秒开对应文档。
 - **📁 目录树多级子目录折叠与展开（Collapsible Directory Tree）**：
   - 支持任意层级的 Markdown 目录树结构，子目录点击轻松折叠/展开。
   - 顶部提供「全部展开 / 全部折叠」快捷控制按钮。
@@ -180,18 +190,21 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 
 ### Key Features
 
+- **Dual Document Split View**: Right-click any inactive tab to launch side-by-side comparison mode, viewing two documents simultaneously with auto-hidden activity bar and draggable splitter.
+- **Detach Tab to Independent Window**: Right-click any tab to detach it into a standalone Electron window with isolated reading, editing, and saving states.
+- **Windows Desktop Snap Layouts Compatibility**: Optimized window minimum dimensions (360×240) preventing window overlap/clipping when snapping windows on Windows 10/11 desktops (1/2, 1/3, 1/4 grid tiles).
 - **Warm Amber-Orange Light Theme & Geek Dark Theme**:
   - *Light Mode*: Specially tailored warm amber-orange accent palette (`#D97706` / `#F59E0B`) with soft yellow code badges, warm active line/gutter highlights, smooth split sync selections, and comfortable text marks for long reading/writing sessions.
   - *Dark Mode*: Authentic Lights Out pure black background (`#000000`) with luminous electric blue accents (`#1D9BF0`) and hairline borders (`#2F3336`).
 - **Multi-Tabs Document Bar**: Native tabbed navigation allowing simultaneous multi-document editing, dirty state indicators, middle-click close, right-click context menu, and keyboard shortcuts (`Ctrl+W`, `Ctrl+Tab`).
 - **Media Lightbox & 3× Retina PNG Export**: Fullscreen glassmorphic lightbox with smooth zoom (0.2×~6×) and panning for both images and Mermaid diagrams. Exports complete, centered, ultra-high-resolution (3x Retina) PNG diagrams using precise vector `getBBox()` boundary calculation.
-- **Clean Standalone Startup**: Modern uncluttered empty workspace and quick start guide when launched standalone without opening demo files automatically.
+- **Clean Standalone Startup & Instant File Loading**: Modern uncluttered empty workspace and quick start guide when launched standalone without opening demo files automatically; instant file rendering on Windows file association double-clicks.
 - **Collapsible Multi-Level Directory Tree**: Intuitive tree navigation supporting folder expand/collapse with persistent expansion state and global expand/collapse controls.
 - **Zen Mode & Typewriter Scrolling**: Focus mode (`F10`) for distraction-free reading/writing and typewriter scrolling (`Alt+T`) to keep active editing line vertically centered.
 - **Cursor Stability & Jitter-Free Typing**: Fixed outline heading regeneration cursor jump bugs, ensuring uninterrupted markdown heading syntax input.
 - **Resizable Layout Splitters**: Drag and resize the directory sidebar (160px~480px), side panels (180px~520px), and split editor/preview ratio (15%~85%) freely with persistent layout state saved in `localStorage`.
 - **Automatic Preview Line Numbers**: Zero-runtime-overhead gutter line numbering powered by Markdown AST `data-source-line` attributes with hover highlights and top bar toggle button (`#`).
-- **Three Editing & Reading Modes**: Read mode (clean reader), Split mode (side-by-side editing with live preview & draggable splitter, vertical responsive wrap on small screens), and Source mode (fullscreen code editor).
+- **Three Editing & Reading Modes**: Read mode (clean reader), Split mode (side-by-side editing with live preview & draggable splitter), and Source mode (fullscreen code editor).
 - **Bidirectional Synchronized Scrolling & Selection Highlighting**: Line-mapped piecewise linear keyframe interpolation using AST `data-source-line` attributes, paired with frame-scheduled selection highlighting and smooth upper reading zone alignment.
 - **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, auto-closing brackets, and undo/redo history.
 - **Safe Atomic Saving & Conflict Detection**: Same-directory temporary write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings. Automatically detects external modifications before writing.
