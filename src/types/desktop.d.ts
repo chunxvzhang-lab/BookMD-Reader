@@ -108,6 +108,10 @@ declare global {
         theme?: string;
         filename?: string;
       }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
+      savePngData?: (params: {
+        dataUrl: string;
+        filename?: string;
+      }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
       onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
       onMenuCommand: (callback: (command: string) => void) => () => void;
       onBeforeClose: (callback: (data: BeforeCloseData) => void) => () => void;

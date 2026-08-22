@@ -457,6 +457,38 @@ ipcMain.handle("bookmd:is-fullscreen", () => {
   return mainWindow.isFullScreen();
 });
 
+ipcMain.handle("bookmd:save-png-data", async (_event, request = {}) => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { success: false, message: "主窗口未就绪" };
+  const { dataUrl, filename = "mermaid-diagram" } = request;
+  if (!dataUrl) return { success: false, message: "缺少图片数据" };
+
+  const cleanFilename = (filename || "mermaid-diagram").replace(/\.(svg|png)$/i, "");
+  const defaultPath = path.join(app.getPath("downloads"), `${cleanFilename}.png`);
+
+  const saveResult = await dialog.showSaveDialog(mainWindow, {
+    title: "导出 Mermaid 架构图为 PNG 高清图片",
+    defaultPath,
+    filters: [
+      { name: "PNG 高清图片 (*.png)", extensions: ["png"] },
+      { name: "所有文件 (*.*)", extensions: ["*"] },
+    ],
+  });
+
+  if (saveResult.canceled || !saveResult.filePath) {
+    return { canceled: true };
+  }
+
+  try {
+    const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64Data, "base64");
+    await fs.promises.writeFile(saveResult.filePath, buffer);
+    return { success: true, filePath: saveResult.filePath };
+  } catch (err) {
+    console.error("Failed to write PNG file:", err);
+    return { success: false, message: err.message };
+  }
+});
+
 ipcMain.handle("bookmd:export-svg-as-png", async (_event, request = {}) => {
   if (!mainWindow || mainWindow.isDestroyed()) return { success: false, message: "主窗口未就绪" };
 

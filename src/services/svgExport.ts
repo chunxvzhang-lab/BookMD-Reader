@@ -55,7 +55,7 @@ export function serializeSvgForExport(svgInput: string | SVGElement | HTMLElemen
 /**
  * Triggers browser file download helper
  */
-function triggerDownload(urlOrDataUri: string, filename: string, ext: string): void {
+export function triggerDownload(urlOrDataUri: string, filename: string, ext: string): void {
   const a = document.createElement("a");
   a.href = urlOrDataUri;
   const cleanName = filename.replace(/\.(svg|png)$/i, "");
@@ -63,6 +63,124 @@ function triggerDownload(urlOrDataUri: string, filename: string, ext: string): v
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+/**
+ * Renders an existing in-DOM SVGSVGElement into a pixel-perfect, high-DPI PNG Data URL.
+ * Automatically wraps content in precise getBBox boundaries with theme background and full styling.
+ */
+export async function rasterizeRenderedSvgToPng(
+  svgElement: SVGSVGElement,
+  theme = "twitter",
+  scale = 3
+): Promise<string> {
+  // 1. Measure real bounding box in the active DOM
+  let bbox: { x: number; y: number; width: number; height: number };
+  try {
+    bbox = svgElement.getBBox();
+  } catch {
+    const vb = svgElement.viewBox && svgElement.viewBox.baseVal;
+    bbox = {
+      x: vb ? vb.x : 0,
+      y: vb ? vb.y : 0,
+      width: vb?.width || svgElement.clientWidth || 800,
+      height: vb?.height || svgElement.clientHeight || 600,
+    };
+  }
+
+  // 4% padding around the bounding box (minimum 24px)
+  const pad = Math.max(24, Math.round(Math.min(bbox.width, bbox.height) * 0.04));
+  const minX = bbox.x - pad;
+  const minY = bbox.y - pad;
+  const totalWidth = Math.max(Math.ceil(bbox.width + pad * 2), 100);
+  const totalHeight = Math.max(Math.ceil(bbox.height + pad * 2), 80);
+
+  // 2. Clone the SVG element
+  const clone = svgElement.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute("viewBox", `${minX} ${minY} ${totalWidth} ${totalHeight}`);
+  clone.setAttribute("width", `${totalWidth}`);
+  clone.setAttribute("height", `${totalHeight}`);
+  clone.removeAttribute("style");
+  clone.style.width = `${totalWidth}px`;
+  clone.style.height = `${totalHeight}px`;
+
+  // 3. Add background rect inside the SVG
+  const isDark =
+    theme === "twitter" ||
+    (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  bgRect.setAttribute("x", `${minX}`);
+  bgRect.setAttribute("y", `${minY}`);
+  bgRect.setAttribute("width", `${totalWidth}`);
+  bgRect.setAttribute("height", `${totalHeight}`);
+  bgRect.setAttribute("fill", isDark ? "#000000" : "#ffffff");
+  clone.insertBefore(bgRect, clone.firstChild);
+
+  // 4. Collect and inject all document styles (Mermaid classes, font styles)
+  let cssText = "";
+  if (typeof document !== "undefined") {
+    try {
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          for (const rule of Array.from(sheet.cssRules)) {
+            cssText += rule.cssText + "\n";
+          }
+        } catch {
+          // Ignore cross-origin stylesheet errors
+        }
+      }
+    } catch {
+      // Ignore stylesheet errors
+    }
+  }
+
+  if (cssText) {
+    const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    styleEl.textContent = cssText;
+    clone.appendChild(styleEl);
+  }
+
+  // 5. Serialize
+  const serialized = serializeSvgForExport(clone);
+  const dataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(serialized);
+
+  // 6. Draw to canvas at scale
+  return new Promise<string>((resolve, reject) => {
+    const img = new Image();
+    const timeout = setTimeout(() => {
+      reject(new Error("Image rasterization timeout"));
+    }, 4000);
+
+    img.onload = () => {
+      clearTimeout(timeout);
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(totalWidth * scale);
+        canvas.height = Math.round(totalHeight * scale);
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          throw new Error("Cannot get canvas context");
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const pngDataUrl = canvas.toDataURL("image/png");
+        resolve(pngDataUrl);
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = (err) => {
+      clearTimeout(timeout);
+      reject(err);
+    };
+
+    img.src = dataUrl;
+  });
 }
 
 /**
@@ -224,3 +342,4 @@ export function downloadSvgFile(svgContent: string | SVGElement, filename: strin
     URL.revokeObjectURL(url);
   }, 100);
 }
+

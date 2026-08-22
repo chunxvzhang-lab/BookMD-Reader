@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { downloadSvgAsPng } from "../services/svgExport";
+import { downloadSvgAsPng, rasterizeRenderedSvgToPng, triggerDownload } from "../services/svgExport";
 
 export type LightboxMedia = {
   type: "image" | "mermaid";
@@ -32,38 +32,27 @@ export const MediaLightbox = memo(function MediaLightbox({
     }
   }, [media]);
 
-  // Handle ESC key to close
+  // Keyboard shortcut: Escape to close
   useEffect(() => {
-    if (!media) return undefined;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
-      } else if (e.key === "+" || e.key === "=") {
-        setScale((s) => Math.min(s * 1.25, 5));
-      } else if (e.key === "-" || e.key === "_") {
-        setScale((s) => Math.max(s / 1.25, 0.2));
-      } else if (e.key === "0") {
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [media, onClose]);
+  }, [onClose]);
 
-  // Wheel zoom
+  // Zoom with mouse wheel
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
-    setScale((prevScale) => {
-      const nextScale = Math.min(Math.max(prevScale * zoomFactor, 0.2), 6);
-      return nextScale;
-    });
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+    setScale((prev) => Math.min(Math.max(prev * zoomFactor, 0.2), 6));
   }, []);
 
-  // Mouse drag panning
+  // Pan with drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Left click only
+    if (e.button !== 0) return; // only left mouse button
     setIsDragging(true);
     dragStartRef.current = {
       x: e.clientX - position.x,
@@ -95,35 +84,49 @@ export const MediaLightbox = memo(function MediaLightbox({
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } else if (media.type === "mermaid" && media.svgHtml) {
+    } else if (media.type === "mermaid") {
       try {
         setIsExporting(true);
         const svgElem = contentRef.current?.querySelector<SVGSVGElement>("svg");
-        const rect = svgElem?.getBoundingClientRect();
+        const theme = document.documentElement.getAttribute("data-theme") || "twitter";
+        const filename = media.title || "mermaid-diagram";
 
-        let width = 1200;
-        let height = 800;
-        if (rect && rect.width > 0 && rect.height > 0) {
-          width = Math.round(rect.width);
-          height = Math.round(rect.height);
-        } else if (svgElem?.viewBox?.baseVal) {
-          width = Math.round(svgElem.viewBox.baseVal.width || 1200);
-          height = Math.round(svgElem.viewBox.baseVal.height || 800);
+        if (svgElem) {
+          try {
+            // 1. Direct high-DPI rasterization from the live rendered SVG in the active DOM
+            const pngDataUrl = await rasterizeRenderedSvgToPng(svgElem, theme, 3);
+            if (window.bookMDDesktop?.savePngData) {
+              const res = await window.bookMDDesktop.savePngData({
+                dataUrl: pngDataUrl,
+                filename,
+              });
+              if (res?.success || res?.canceled) {
+                return;
+              }
+            } else {
+              triggerDownload(pngDataUrl, filename, ".png");
+              return;
+            }
+          } catch (directErr) {
+            console.warn("Direct rendered SVG rasterization failed, falling back:", directErr);
+          }
         }
 
-        if (window.bookMDDesktop?.exportSvgAsPng) {
-          const theme = document.documentElement.getAttribute("data-theme") || "twitter";
+        // 2. Fallback to offscreen capture if direct rasterization is not available
+        if (media.svgHtml && window.bookMDDesktop?.exportSvgAsPng) {
           const res = await window.bookMDDesktop.exportSvgAsPng({
             svgHtml: media.svgHtml,
             theme,
-            filename: media.title || "mermaid-diagram",
+            filename,
           });
           if (res?.success || res?.canceled) {
             return;
           }
         }
 
-        await downloadSvgAsPng(media.svgHtml, media.title || "mermaid-diagram", svgElem, 3);
+        if (media.svgHtml) {
+          await downloadSvgAsPng(media.svgHtml, filename, svgElem, 3);
+        }
       } catch (err) {
         console.error("Export error:", err);
       } finally {
