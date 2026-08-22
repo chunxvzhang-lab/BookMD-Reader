@@ -75,4 +75,31 @@ describe("TabBar Dual Split Context Menu & Indicators", () => {
     fireEvent.click(exitBtn);
     expect(onCloseDualSplit).toHaveBeenCalledTimes(1);
   });
+
+  it("supports detaching a tab to a separate independent window via context menu", () => {
+    const onDetachTab = vi.fn();
+
+    render(
+      <TabBar
+        tabs={mockTabs}
+        activeTabId="doc-1"
+        dualSplitTabId={null}
+        onSelectTab={vi.fn()}
+        onCloseTab={vi.fn()}
+        onCloseOtherTabs={vi.fn()}
+        onCloseRightTabs={vi.fn()}
+        onDetachTab={onDetachTab}
+      />
+    );
+
+    const tab3 = screen.getByText("Chapter 3").closest(".tab-item");
+    expect(tab3).not.toBeNull();
+    fireEvent.contextMenu(tab3!);
+
+    const detachBtn = screen.getByText("🗗 分离到独立新窗口");
+    expect(detachBtn).toBeDefined();
+
+    fireEvent.click(detachBtn);
+    expect(onDetachTab).toHaveBeenCalledWith("doc-3");
+  });
 });

@@ -690,6 +690,34 @@ export function App() {
     [chapterId, dualSplitTabId, selectChapter]
   );
 
+  const handleDetachTab = useCallback(
+    async (tabId: string) => {
+      const targetTab = tabs.find((t) => t.id === tabId);
+      const targetChap = manifest?.chapters.find((c) => c.id === tabId);
+      const absPath = targetTab?.absolutePath || targetChap?.absolutePath;
+
+      if (absPath && window.bookMDDesktop?.openInNewWindow) {
+        try {
+          await window.bookMDDesktop.openInNewWindow(absPath);
+          setNotice(`已将文档「${targetTab?.title ?? "Markdown"}」分离至独立新窗口。`);
+          if (tabs.length > 1) {
+            handleCloseTab(tabId);
+          }
+        } catch (err: unknown) {
+          setNotice(err instanceof Error ? err.message : "无法分离到新窗口。");
+        }
+      } else {
+        try {
+          window.open(window.location.href, "_blank");
+          setNotice(`已在独立新窗口打开。`);
+        } catch {
+          setNotice("浏览器拦截了新窗口弹出。");
+        }
+      }
+    },
+    [handleCloseTab, manifest?.chapters, tabs]
+  );
+
   const handleCloseOtherTabs = useCallback(
     (tabId: string) => {
       if (dualSplitTabId && dualSplitTabId !== tabId) {
@@ -1750,6 +1778,7 @@ export function App() {
               onCloseRightTabs={handleCloseRightTabs}
               onOpenDualSplit={handleOpenDualSplit}
               onCloseDualSplit={handleCloseDualSplit}
+              onDetachTab={handleDetachTab}
             />
           )}
           {isDualSplitMode && secondaryRenderedChapter ? (

@@ -13,6 +13,7 @@ const {
 
 const devServerUrl = process.env.BOOKMD_DEV_SERVER_URL;
 
+const windows = new Set();
 let mainWindow = null;
 let launchFilePath = findMarkdownPathFromArgs(process.argv);
 let isAppQuitting = false;
@@ -22,6 +23,16 @@ let documentState = {
   activePath: null,
   isDirty: false,
 };
+
+function getActiveWindow() {
+  const focused = BrowserWindow.getFocusedWindow();
+  if (focused && !focused.isDestroyed()) return focused;
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow;
+  for (const win of windows) {
+    if (!win.isDestroyed()) return win;
+  }
+  return null;
+}
 
 function buildApplicationMenu() {
   const isMac = process.platform === "darwin";
@@ -38,8 +49,8 @@ function buildApplicationMenu() {
           label: "打开文件...",
           accelerator: "Ctrl+O",
           click: async () => {
-            if (!mainWindow) return;
-            const result = await dialog.showOpenDialog(mainWindow, {
+            const activeWin = getActiveWindow();
+            const result = await dialog.showOpenDialog(activeWin || undefined, {
               title: "打开 Markdown 文件",
               filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
               properties: ["openFile"],
@@ -70,11 +81,7 @@ function buildApplicationMenu() {
           label: "退出",
           accelerator: isMac ? "Cmd+Q" : "Ctrl+Q",
           click: () => {
-            if (mainWindow) {
-              mainWindow.close();
-            } else {
-              app.quit();
-            }
+            app.quit();
           },
         },
       ],
@@ -118,18 +125,19 @@ function buildApplicationMenu() {
 }
 
 function sendMenuCommand(command) {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  mainWindow.webContents.send("bookmd:menu-command", command);
+  const win = getActiveWindow();
+  if (!win || win.isDestroyed()) return;
+  win.webContents.send("bookmd:menu-command", command);
 }
 
-async function createWindow() {
+async function createWindow(initialFilePath = null) {
   const iconIco = path.join(__dirname, "icon.ico");
   const iconPng = path.join(__dirname, "icon.png");
   const windowIcon = process.platform === "win32" && fs.existsSync(iconIco)
     ? iconIco
     : (fs.existsSync(iconPng) ? iconPng : undefined);
 
-  mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 1320,
     height: 860,
     minWidth: 960,
@@ -146,7 +154,12 @@ async function createWindow() {
     },
   });
 
-  mainWindow.on("close", (event) => {
+  windows.add(win);
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    mainWindow = win;
+  }
+
+  win.on("close", (event) => {
     if (isAppQuitting) return;
 
     if (documentState.isDirty) {
@@ -154,7 +167,7 @@ async function createWindow() {
       closeRequestId += 1;
       const reqId = closeRequestId;
 
-      mainWindow.webContents.send("bookmd:before-close", { requestId: reqId });
+      win.webContents.send("bookmd:before-close", { requestId: reqId });
 
       // Fallback timeout in case renderer does not respond
       const timer = setTimeout(() => {
@@ -164,33 +177,57 @@ async function createWindow() {
       pendingCloseResolvers.set(reqId, (result) => {
         clearTimeout(timer);
         if (result === "proceed") {
-          isAppQuitting = true;
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.close();
+          windows.delete(win);
+          if (win && !win.isDestroyed()) {
+            win.destroy();
+          }
+          if (windows.size === 0 && process.platform !== "darwin") {
+            app.quit();
           }
         }
       });
     }
   });
 
-  mainWindow.on("enter-full-screen", () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("bookmd:fullscreen-changed", true);
+  win.on("closed", () => {
+    windows.delete(win);
+    if (mainWindow === win) {
+      mainWindow = getActiveWindow();
     }
   });
 
-  mainWindow.on("leave-full-screen", () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("bookmd:fullscreen-changed", false);
+  win.on("enter-full-screen", () => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("bookmd:fullscreen-changed", true);
+    }
+  });
+
+  win.on("leave-full-screen", () => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("bookmd:fullscreen-changed", false);
     }
   });
 
   if (!app.isPackaged && devServerUrl) {
-    await mainWindow.loadURL(devServerUrl);
-    mainWindow.webContents.openDevTools({ mode: "detach" });
+    await win.loadURL(devServerUrl);
   } else {
-    await mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    await win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
+
+  if (initialFilePath) {
+    const send = () => {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send("bookmd:open-file-path", initialFilePath);
+      }
+    };
+    if (win.webContents.isLoading()) {
+      win.webContents.once("did-finish-load", send);
+    } else {
+      send();
+    }
+  }
+
+  return win;
 }
 
 function findMarkdownPathFromArgs(argv) {
@@ -220,23 +257,25 @@ function normalizeLaunchPath(value) {
 function sendOpenFilePath(filePath) {
   if (!filePath) return;
   launchFilePath = filePath;
-  if (!mainWindow) return;
-  const send = () => mainWindow?.webContents.send("bookmd:open-file-path", filePath);
-  if (mainWindow.webContents.isLoading()) {
-    mainWindow.webContents.once("did-finish-load", send);
+  const win = getActiveWindow();
+  if (!win) return;
+  const send = () => win?.webContents.send("bookmd:open-file-path", filePath);
+  if (win.webContents.isLoading()) {
+    win.webContents.once("did-finish-load", send);
   } else {
     send();
   }
-  mainWindow.focus();
+  win.focus();
 }
 
 app.whenReady().then(() => {
   buildApplicationMenu();
-  createWindow();
+  createWindow(launchFilePath);
+  launchFilePath = null;
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+  if (windows.size === 0) {
     createWindow();
   }
 });
@@ -260,6 +299,18 @@ app.on("open-file", (event, filePath) => {
 });
 
 // IPC handlers
+ipcMain.handle("bookmd:open-in-new-window", async (_event, absolutePath) => {
+  if (typeof absolutePath !== "string" || !isValidMarkdownPath(absolutePath)) {
+    throw new Error("无效的 Markdown 文件路径。");
+  }
+  const newWin = await createWindow(absolutePath);
+  if (newWin) {
+    newWin.focus();
+    return true;
+  }
+  return false;
+});
+
 ipcMain.handle("bookmd:get-launch-file-path", async () => {
   const current = launchFilePath;
   launchFilePath = null;

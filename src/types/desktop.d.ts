@@ -112,6 +112,7 @@ declare global {
         dataUrl: string;
         filename?: string;
       }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
+      openInNewWindow?: (absolutePath: string) => Promise<boolean>;
       onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
       onMenuCommand: (callback: (command: string) => void) => () => void;
       onBeforeClose: (callback: (data: BeforeCloseData) => void) => () => void;

@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld("bookMDDesktop", {
   isFullScreen: () => ipcRenderer.invoke("bookmd:is-fullscreen"),
   exportSvgAsPng: (params) => ipcRenderer.invoke("bookmd:export-svg-as-png", params),
   savePngData: (params) => ipcRenderer.invoke("bookmd:save-png-data", params),
+  openInNewWindow: (absolutePath) => ipcRenderer.invoke("bookmd:open-in-new-window", absolutePath),
 
   onOpenFilePath: (callback) => {
     const listener = (_event, filePath) => callback(filePath);

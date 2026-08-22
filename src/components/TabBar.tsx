@@ -18,6 +18,7 @@ type TabBarProps = {
   onCloseRightTabs: (tabId: string) => void;
   onOpenDualSplit?: (tabId: string) => void;
   onCloseDualSplit?: () => void;
+  onDetachTab?: (tabId: string) => void;
 };
 
 type ContextMenuState = {
@@ -37,6 +38,7 @@ export const TabBar = memo(function TabBar({
   onCloseRightTabs,
   onOpenDualSplit,
   onCloseDualSplit,
+  onDetachTab,
 }: TabBarProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
   const tabListRef = useRef<HTMLDivElement | null>(null);
@@ -175,6 +177,19 @@ export const TabBar = memo(function TabBar({
               }}
             >
               ✕ 退出双文档分屏
+            </button>
+          )}
+          {onDetachTab && (
+            <button
+              type="button"
+              className="menu-item"
+              onClick={() => {
+                onDetachTab(contextMenu.tabId);
+                setContextMenu(null);
+              }}
+              title="在新的独立窗口中打开并分离此标签页"
+            >
+              🗗 分离到独立新窗口
             </button>
           )}
           <div className="menu-divider" />
