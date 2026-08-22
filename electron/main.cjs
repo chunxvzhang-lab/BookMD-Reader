@@ -130,6 +130,8 @@ function sendMenuCommand(command) {
   win.webContents.send("bookmd:menu-command", command);
 }
 
+const windowInitialPaths = new Map();
+
 async function createWindow(initialFilePath = null) {
   const iconIco = path.join(__dirname, "icon.ico");
   const iconPng = path.join(__dirname, "icon.png");
@@ -159,6 +161,12 @@ async function createWindow(initialFilePath = null) {
     mainWindow = win;
   }
 
+  if (initialFilePath) {
+    registerPath(initialFilePath);
+    windowInitialPaths.set(win.id, initialFilePath);
+    windowInitialPaths.set(win.webContents.id, initialFilePath);
+  }
+
   win.on("close", (event) => {
     if (isAppQuitting) return;
 
@@ -178,6 +186,8 @@ async function createWindow(initialFilePath = null) {
         clearTimeout(timer);
         if (result === "proceed") {
           windows.delete(win);
+          windowInitialPaths.delete(win.id);
+          windowInitialPaths.delete(win.webContents.id);
           if (win && !win.isDestroyed()) {
             win.destroy();
           }
@@ -191,6 +201,8 @@ async function createWindow(initialFilePath = null) {
 
   win.on("closed", () => {
     windows.delete(win);
+    windowInitialPaths.delete(win.id);
+    windowInitialPaths.delete(win.webContents.id);
     if (mainWindow === win) {
       mainWindow = getActiveWindow();
     }
@@ -214,23 +226,11 @@ async function createWindow(initialFilePath = null) {
     await win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
-  if (initialFilePath) {
-    const send = () => {
-      if (win && !win.isDestroyed()) {
-        win.webContents.send("bookmd:open-file-path", initialFilePath);
-      }
-    };
-    if (win.webContents.isLoading()) {
-      win.webContents.once("did-finish-load", send);
-    } else {
-      send();
-    }
-  }
-
   return win;
 }
 
 function findMarkdownPathFromArgs(argv) {
+  if (!Array.isArray(argv)) return null;
   for (const arg of argv) {
     const filePath = normalizeLaunchPath(arg);
     if (filePath && isValidMarkdownPath(filePath)) {
@@ -243,7 +243,7 @@ function findMarkdownPathFromArgs(argv) {
 function normalizeLaunchPath(value) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim().replace(/^"|"$/g, "");
-  if (!trimmed || trimmed.startsWith("--")) return null;
+  if (!trimmed || trimmed.startsWith("--") || trimmed.startsWith("-")) return null;
   try {
     if (/^file:/i.test(trimmed)) {
       return fileURLToPath(trimmed);
@@ -256,23 +256,40 @@ function normalizeLaunchPath(value) {
 
 function sendOpenFilePath(filePath) {
   if (!filePath) return;
-  launchFilePath = filePath;
+  registerPath(filePath);
   const win = getActiveWindow();
-  if (!win) return;
-  const send = () => win?.webContents.send("bookmd:open-file-path", filePath);
-  if (win.webContents.isLoading()) {
-    win.webContents.once("did-finish-load", send);
-  } else {
-    send();
+  if (!win || win.isDestroyed()) {
+    createWindow(filePath);
+    return;
   }
+  if (win.isMinimized()) win.restore();
   win.focus();
+  win.webContents.send("bookmd:open-file-path", filePath);
 }
 
-app.whenReady().then(() => {
-  buildApplicationMenu();
-  createWindow(launchFilePath);
-  launchFilePath = null;
-});
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (_event, commandLine) => {
+    const filePath = findMarkdownPathFromArgs(commandLine);
+    if (filePath) {
+      sendOpenFilePath(filePath);
+    } else {
+      const win = getActiveWindow();
+      if (win) {
+        if (win.isMinimized()) win.restore();
+        win.focus();
+      }
+    }
+  });
+
+  app.whenReady().then(() => {
+    buildApplicationMenu();
+    createWindow(launchFilePath);
+    launchFilePath = null;
+  });
+}
 
 app.on("activate", () => {
   if (windows.size === 0) {
@@ -303,6 +320,7 @@ ipcMain.handle("bookmd:open-in-new-window", async (_event, absolutePath) => {
   if (typeof absolutePath !== "string" || !isValidMarkdownPath(absolutePath)) {
     throw new Error("无效的 Markdown 文件路径。");
   }
+  registerPath(absolutePath);
   const newWin = await createWindow(absolutePath);
   if (newWin) {
     newWin.focus();
@@ -311,10 +329,27 @@ ipcMain.handle("bookmd:open-in-new-window", async (_event, absolutePath) => {
   return false;
 });
 
-ipcMain.handle("bookmd:get-launch-file-path", async () => {
-  const current = launchFilePath;
-  launchFilePath = null;
-  return current;
+ipcMain.handle("bookmd:get-launch-file-path", async (event) => {
+  const senderWebContentsId = event?.sender?.id;
+  const senderWin = event?.sender ? BrowserWindow.fromWebContents(event.sender) : null;
+
+  if (senderWebContentsId && windowInitialPaths.has(senderWebContentsId)) {
+    const filePath = windowInitialPaths.get(senderWebContentsId);
+    windowInitialPaths.delete(senderWebContentsId);
+    if (senderWin) windowInitialPaths.delete(senderWin.id);
+    return filePath;
+  }
+  if (senderWin && windowInitialPaths.has(senderWin.id)) {
+    const filePath = windowInitialPaths.get(senderWin.id);
+    windowInitialPaths.delete(senderWin.id);
+    return filePath;
+  }
+  if (launchFilePath) {
+    const filePath = launchFilePath;
+    launchFilePath = null;
+    return filePath;
+  }
+  return null;
 });
 
 ipcMain.handle("bookmd:set-native-theme", (_event, theme) => {
