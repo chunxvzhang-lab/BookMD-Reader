@@ -38,7 +38,12 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 
 ## 🌟 核心功能特性
 
-### 1. v1.5.0 全新生产力与交互升级
+### 1. v1.5.0 全新生产力、性能与视觉升级
+- **💎 全新 Onyx 黑曜石专属应用图标（Onyx Aesthetic Icon）**：
+  - 全面换装质感典雅的 Onyx 黑曜石风格应用图标与高透底徽标，覆盖 Windows `.exe` 原生可执行文件、窗口标题栏、任务栏以及内部关于界面与侧边活动栏。
+- **⚡ 独立新窗口毫秒秒开与性能极速优化（Instant Window Launch & Bundle Splitting）**：
+  - **84% 首屏 JS 体积大幅缩减**：对 Mermaid、CodeMirror 6、Highlight.js、KaTeX 等庞大模块进行细粒度 Rollup 代码分包，主入口体积从 2,001 kB 锐减至 332 kB，极大降低 Chromium V8 脚本解析执行耗时。
+  - **主进程异步预读与同步即时握手**：分离标签页拉起新窗口时，主进程在后台并行预读 Markdown，并通过预加载脚本同步注入文档数据，React 挂载首帧即刻完成正文渲染，彻底告别等待与白屏。
 - **🪟 多文档左右分屏对比查看模式（Dual Document Split View）**：
   - 在多标签页栏上右键任意未激活标签页，即可选择「🗗 开启左右分屏模式」，实现同一窗口内同时并排查看与对照两份不同的 Markdown 文档。
   - **极简沉浸布局**：分屏模式下自动隐藏左侧 ActivityBar 导航栏，释放最大化水平可视面积；中间分割线支持鼠标自由拖拽调整双栏比例，支持右键一键「关闭分屏模式」。
@@ -190,6 +195,8 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 
 ### Key Features
 
+- **Onyx Aesthetic Icon**: Brand new refined Onyx gemstone icon styling and transparent logo branding across Windows `.exe` native binaries, title bars, taskbars, and in-app interfaces.
+- **Instant Detached Window Launch & Bundle Optimization**: 84% reduction in main entry JavaScript bundle size (down to 332 kB via smart Rollup chunks) paired with main-process asynchronous pre-reading and synchronous preload handshakes, eliminating startup latency and blank frames entirely.
 - **Dual Document Split View**: Right-click any inactive tab to launch side-by-side comparison mode, viewing two documents simultaneously with auto-hidden activity bar and draggable splitter.
 - **Detach Tab to Independent Window**: Right-click any tab to detach it into a standalone Electron window with isolated reading, editing, and saving states.
 - **Windows Desktop Snap Layouts Compatibility**: Optimized window minimum dimensions (360×240) preventing window overlap/clipping when snapping windows on Windows 10/11 desktops (1/2, 1/3, 1/4 grid tiles).
