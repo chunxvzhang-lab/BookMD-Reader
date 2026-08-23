@@ -1,7 +1,8 @@
 # 🪐 KnowSpace 产品演进与后续版本迭代路线图
 > **KnowSpace · Personal Knowledge Workspace（个人知识工作台）**  
 > **核心使命**：*Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）*  
-> **文档版本**：`v1.0.0` | **规划基线**：基于 KnowSpace `v1.5.0` 当前架构与产品定义
+> **文档版本**：`v1.1.0` | **规划基线**：基于 KnowSpace `v1.5.0` 当前架构与产品定义  
+> **算力标定**：已完整标注各功能特性的 **本地 GPU / 显存 / CPU / 云端** 算力分配与动态降级策略
 
 ---
 
@@ -23,37 +24,52 @@ KnowSpace 从单文档 Markdown 阅读与编辑出发，逐步演进为高颜值
 
 ---
 
-## 🗺️ 二、 迭代路线图与里程碑规划 (Milestones)
+## ⚡ 二、 本地算力与硬件资源分级图例 (Compute & Hardware Legend)
+
+为了确保各类设备（从轻薄办公本到专业工作站）均能获得流畅体验，KnowSpace 将所有能力进行算力分类标注：
+
+| 标识徽章 | 算力等级 | 硬件需求说明 | 典型功能场景 | 降级容灾方案 |
+| :--- | :--- | :--- | :--- | :--- |
+| 🔴 **`[⚡ GPU 强依赖 · 专属显存]`** | **Heavy GPU** | 依赖本地独立 GPU（NVIDIA CUDA / AMD ROCm / Apple Metal），推荐 **4GB~16GB+ 专属显存 (VRAM)** | 本地大模型离线推理（DeepSeek-R1 / Qwen 2.5 / Llama 3）、全库 RAG 本地生成 | 自动降级为 CPU Q4 量化模型，或一键无缝切换至云端 API（Gemini / Claude / OpenAI） |
+| 🟡 **`[⚡ GPU 算力加速可选 · WebGPU]`** | **Medium GPU** | 可纯 CPU 运行；启用 **WebGPU / DirectML** GPU 加速时可获得 **10×~20× 吞吐提升** | 本地轻量 Embedding 向量生成（BGE / MiniLM）、全库知识库批量向量索引构建 | 无 GPU 时由多线程 CPU（WASM SIMD）后台平滑构建索引，不阻塞 UI 渲染 |
+| 🟢 **`[⚡ GPU 图形渲染加速 · WebGL]`** | **Light GPU** | 仅依赖基础图形加速（标准**集成显卡 / 核显**或独显），显存占用极低（< 150MB） | 2D/3D 动态交互式知识图谱（Force-directed Graph 物理仿真、星系连线粒子动效） | 低配核显自动降低粒子帧率与物理步长，或切换至 2D 极简静态拓扑模式 |
+| ⚪ **`[🌱 纯 CPU / 零 GPU 依赖]`** | **Zero GPU** | 100% 运行于 CPU 与系统内存，**对显卡零要求**，老旧设备及轻薄本极速流畅 | SQLite FTS5 / BM25 精确检索、CodeMirror 6 极客编辑、AST 解析、双链拓扑、E2EE 本地加密 | 天然低耗电、低发热，开箱即用 |
+
+---
+
+## 🗺️ 三、 迭代路线图与里程碑规划 (Milestones)
 
 ```mermaid
 gantt
-    title KnowSpace 后续版本迭代路线图
+    title KnowSpace 后续版本迭代路线图 (含算力标定)
     dateFormat  YYYY-MM
-    section v1.6.x Connect
-    双向链接 [[Wikilink]] 与反向链接面板      :2026-09, 30d
-    2D/3D 交互式动态知识图谱 (Knowledge Graph)   :2026-09, 35d
-    块级引用与嵌入 (![[doc#heading]])          :2026-10, 25d
-    section v1.7.x Know
-    离线轻量向量引擎与混合检索 (BM25 + Vector)  :2026-10, 40d
-    全局命令中心 (Command Palette / Ctrl+K)    :2026-11, 20d
-    关联知识推荐与阅读轨迹追踪                  :2026-11, 30d
-    section v2.0.x AI Co-pilot
-    Local/Cloud AI 混合知识问答 (RAG)         :2026-12, 45d
-    闪念胶囊 (Flash Notes) 与浮动快捷收集       :2027-01, 30d
-    AI 辅助写作、结构梳理与自动打标             :2027-01, 35d
-    section v2.5.x Ecosystem
-    插件体系与 SDK (Plugin Extension API)      :2027-02, 60d
-    端到端加密同步 (E2EE Sync / WebDAV / S3)   :2027-03, 45d
+    section v1.6.x Connect (图谱与双链)
+    双向链接 [[Wikilink]] 与反向链接面板 [🌱纯CPU]      :2026-09, 30d
+    2D/3D 交互式动态知识图谱 [🟢GPU渲染]               :2026-09, 35d
+    块级引用与嵌入 (![[doc#heading]]) [🌱纯CPU]         :2026-10, 25d
+    section v1.7.x Know (混合语义检索)
+    离线向量引擎 (BM25 + Vector) [🟡GPU加速可选]       :2026-10, 40d
+    全局命令中心 (Command Palette / Ctrl+K) [🌱纯CPU]  :2026-11, 20d
+    关联知识实时推荐与轨迹追踪 [🟡GPU加速可选]          :2026-11, 30d
+    section v2.0.x AI Co-pilot (知识协作者)
+    本地离线大模型对话 (Ollama/DeepSeek) [🔴GPU强依赖]  :2026-12, 45d
+    云端大模型混合直连 (Gemini 2.5 API) [🌱纯CPU]     :2026-12, 45d
+    闪念胶囊 (Flash Notes) 浮窗速记 [🌱纯CPU]          :2027-01, 30d
+    AI 智能结构梳理与脑图自动生成 [🔴GPU/🌱云端可选]     :2027-01, 35d
+    section v2.5.x Ecosystem (生态与协同)
+    插件体系与 SDK (Plugin Extension API) [🌱纯CPU]    :2027-02, 60d
+    端到端加密安全同步 (E2EE WebDAV/S3) [🌱纯CPU]      :2027-03, 45d
 ```
 
 ---
 
-## 📌 三、 各版本核心特性与技术方案深度设计
+## 📌 四、 各版本核心特性、技术方案与算力深度设计
 
 ### 🔗 Milestone 1: KnowSpace v1.6.x —「Connect · 知识互联与多维图谱」
 > **版本核心**：消除文档孤岛，建立网状双向知识链接与交互式图谱可视化。
 
-#### 1. 双向链接（Bidirectional Linking）与反向链接面板
+#### 1. 双向链接（Bidirectional Linking）与反向链接面板 ⚪ `[🌱 纯 CPU / 零 GPU 依赖]`
+- **算力分析**：纯字符串解析与 AST 遍历，耗时 < 5ms，完全依赖 CPU 单核性能。
 - **语法规范**：
   - `[[文档名称]]`：跨文档链接，自动补全与模糊联想。
   - `[[文档名称|自定义别名]]`：支持别名渲染。
@@ -62,14 +78,17 @@ gantt
   - **显式链接（Linked Mentions）**：解析正文中明确引用当前文档的上下文卡片。
   - **隐式提及（Unlinked Mentions）**：智能扫描工作区中提及当前文档标题但未加链接的段落，支持“一键转为链接”。
 
-#### 2. 全局与局部交互式知识图谱（Interactive Knowledge Graph）
-- **渲染技术栈**：WebGL / Force-Directed Graph（力导向图）物理引擎驱动。
+#### 2. 全局与局部交互式知识图谱（Interactive Knowledge Graph） 🟢 `[⚡ GPU 图形渲染加速 · WebGL]`
+- **算力分析**：
+  - **GPU 计算**：力导向物理引擎（Barnes-Hut 空间分割算法）由 WebGL / Canvas 2D 着色器硬件加速，保障 5,000+ 节点时保持 **60 FPS** 顺滑渲染。
+  - **显存开销**：约 **50MB ~ 120MB**（普通核显 / 独立显卡均可秒级驱动）。
 - **双模态呈现**：
   - **全局星系图（Global Space Graph）**：俯瞰整个工作区知识脉络，节点大小随引用权重自适应，支持颜色按标签/目录聚类。
   - **局部脉络图（Local Focus Graph）**：在文档右侧栏实时呈现以当前文档为中心、1~3 跳（Hops）的微观关联网。
 - **交互特性**：平滑缩放平移、节点孤岛过滤、搜索高亮路径、双击直接飞跃到对应文档。
 
-#### 3. 块级引用与嵌入（Block-level Reference & Embed）
+#### 3. 块级引用与嵌入（Block-level Reference & Embed） ⚪ `[🌱 纯 CPU / 零 GPU 依赖]`
+- **算力分析**：虚拟 DOM 增量渲染，零显卡算力开销。
 - 支持使用 `![[文档名称]]` 直接将外部文档片段嵌入正文实时渲染。
 - 独特的毛玻璃嵌入容器卡片，支持独立折叠、源码定位与独立刷新。
 
@@ -78,117 +97,109 @@ gantt
 ### 🧠 Milestone 2: KnowSpace v1.7.x —「Know · 离线语义与混合检索」
 > **版本核心**：将检索能力从“精确字符串匹配”提升到“理解上下文意图的混合语义召回”。
 
-#### 1. 100% 本地离线混合搜索引擎（Hybrid Search Engine）
-- **底层架构**：
-  - **关键词检索层**：基于 SQLite FTS5 / BM25 算法，保障行号、代码、特殊符号的 0 误差定位。
-  - **语义向量层**：轻量级本地 Embedding 模型（如 `all-MiniLM-L6-v2` / `BGE-Micro` ONNX 运行时），在本地安全生成向量索引。
-  - **混合重排（Reciprocal Rank Fusion）**：结合字面精确度与语义相关度综合评分，呈现最具价值的知识切片。
+#### 1. 100% 本地离线混合搜索引擎（Hybrid Search Engine） 🟡 `[⚡ GPU 算力加速可选 · WebGPU]` + ⚪ `[🌱 纯 CPU]`
+- **算力分析**：
+  - **字面搜索层（BM25）** ⚪ `[🌱 纯 CPU]`：基于 SQLite FTS5 倒排索引，毫秒级定位精准代码与行号，内存占用 < 30MB。
+  - **向量语义层（Embedding）** 🟡 `[⚡ GPU 算力加速可选]`：
+    - 模型采用小巧精悍的 `bge-small-zh-v1.5` 或 `all-MiniLM-L6-v2`（ONNX 格式，仅 ~45MB）。
+    - **GPU 加速模式**：启用 WebGPU / DirectML 时，批量向量化吞吐达 **1,200 段落/秒**（仅需 200MB 共享显存）。
+    - **CPU 降级模式**：利用 WASM SIMD 多核并行计算，吞吐约 **150 段落/秒**，在后台空闲时增量建立，不卡顿前台交互。
+  - **混合重排（Reciprocal Rank Fusion · RRF）** ⚪ `[🌱 纯 CPU]`：结合字面与向量评分排序。
 
-#### 2. 全能命令中心（KnowSpace Command Palette · `Ctrl + K` / `Ctrl + P`）
+#### 2. 全能命令中心（Command Palette · `Ctrl + K` / `Ctrl + P`） ⚪ `[🌱 纯 CPU / 零 GPU 依赖]`
+- **算力分析**：纯内存 Trie 树与模糊匹配算法（Fzf-like），查询耗时 < 1ms。
 - 统一交互入口：
   - 键入 `?`：列出所有快捷指令与操作动作。
   - 键入 `@`：按标题或正文极速定位章节。
   - 键入 `#`：按 Tag 标签聚类筛选文档。
   - 键入 `>`：执行系统级功能（切换主题、导出 PDF、分屏、聚焦模式等）。
 
-#### 3. 关联知识即时推荐（Contextual Knowledge Insights）
-- 在文档右侧提供「可能相关的知识（Related in Space）」悬浮胶囊：阅读或编写当前文档时，系统在后台基于上下文向量实时探测工作区内相似主题的沉睡笔记。
+#### 3. 关联知识即时推荐（Contextual Knowledge Insights） 🟡 `[⚡ GPU 算力加速可选]`
+- 在文档右侧提供「可能相关的知识（Related in Space）」悬浮胶囊：在后台利用轻量级向量余弦相似度计算，实时探测工作区内相似主题的沉睡笔记。
 
 ---
 
 ### 🌌 Milestone 3: KnowSpace v2.0.x —「AI Co-pilot · 个人知识伙伴与智能辅助」
 > **版本核心**：本地隐私模型与主流云端大模型无缝融合，提供基于个人知识库的专属 RAG 问答与结构梳理。
 
-#### 1. 知识库对话与溯源问答（Chat with Your Knowledge Base）
-- **多引擎自由切换**：
-  - **本地完全离线**：支持 Ollama（Llama 3 / Qwen 2.5 / DeepSeek-R1 本地运行），零数据泄露风险。
-  - **云端高精度**：支持 Google Gemini 2.5 / OpenAI / Claude API 自定义 Key 直连。
+#### 1. 知识库本地/云端混合 RAG 对话（Chat with Knowledge Base）
+- 模式 A：**本地完全离线模式** 🔴 **`[⚡ GPU 强依赖 · 专属显存]`**
+  - **算力分析**：
+    - 接入本地 Ollama 运行时（支持 `DeepSeek-R1-Distill-Qwen-7B` / `Qwen-2.5-7B/14B` / `Llama-3-8B`）。
+    - **显存与硬件要求**：
+      - **7B 模型 (Q4_K_M)**：需 **5.5GB ~ 8GB VRAM**（如 RTX 3060 / 4060 / Apple M 系列 16G 统一内存），生成速度 35~60 tokens/s。
+      - **14B 模型 (Q4_K_M)**：需 **10GB ~ 16GB VRAM**（如 RTX 4070Ti / 4080 / 3090）。
+    - **极致隐私**：100% 知识库数据不离开物理设备，物理断网依然可思考问答。
+- 模式 B：**云端高性能模式** ⚪ **`[🌱 纯 CPU / 零 GPU 依赖]`**
+  - **算力分析**：本地仅做 HTTP/SSE 流式通讯，显卡 0 占用，普通办公本即可获得顶级智能。
+  - **接入生态**：一键直连 Google Gemini 2.5 Pro / Flash、OpenAI GPT-4o、Anthropic Claude 3.5 Sonnet。
 - **可信溯源**：AI 回答的每一个论点均标注引用出处（`[Doc A: L42-56]`），点击即可高亮跳回原文。
 
-#### 2. 闪念胶囊与全局浮动速记（Flash Notes / Quick Capture）
-- 全局热键（如 `Alt + Space` / `Win + Alt + N`）呼出极简半透明磨砂速记浮窗。
-- 随手记录灵感、代码片段、待办事项，自动按时间戳原子落盘并归档至 `Inbox/`，后续支持一键整理合并。
+#### 2. 闪念胶囊与全局浮动速记（Flash Notes / Quick Capture） ⚪ `[🌱 纯 CPU / 零 GPU 依赖]`
+- 全局热键（如 `Alt + Space` / `Win + Alt + N`）呼出极简半透明磨砂速记浮窗，原子级快速记录并自动归档至 `Inbox/`。
 
-#### 3. 智能排版与图表公式自动生成
-- 选中文本一键润色、提取 Executive Summary（摘要）、生成思维导图（Mermaid Mindmap）。
-- 复杂数学公式（LaTeX）与架构图自动修补补全。
+#### 3. 智能排版与结构化梳理 🔴 **`[⚡ 本地 GPU (Ollama)]`** / ⚪ **`[🌱 云端 API (Gemini)]`**
+- 选中文本一键提取 Executive Summary、一键转化生成 Mermaid 架构/思维脑图、自动修复 LaTeX 复杂公式语法。
 
 ---
 
 ### 🧩 Milestone 4: KnowSpace v2.5.x —「Ecosystem & Security · 开放生态与多端协同」
 > **版本核心**：打造插件化开放体系，提供无感端到端加密跨设备安全同步。
 
-#### 1. 插件化架构（KnowSpace Plugin SDK）
-- 基于微内核 + 沙箱（Sandbox）机制，开放 UI 挂载点（ActivityBar、StatusBar、Editor Extensions、Command Palette）。
-- 社区可贡献：自定义代码高亮语言、图表渲染器、第三方数据导入导出器、个性化主题包。
+#### 1. 插件化架构（KnowSpace Plugin SDK） ⚪ `[🌱 纯 CPU / 零 GPU 依赖]`
+- 微内核 + 沙箱隔离机制，开放 UI 挂载点，零显存开销。
 
-#### 2. 本地优先的端到端加密同步（E2EE Local-First Sync）
-- **零信任加密**：在本地完成 AES-256-GCM 文件加密后再上传。
-- **多存储后端支持**：
-  - WebDAV（坚果云、Nextcloud、群晖 NAS）
-  - 对象存储（AWS S3、Cloudflare R2、阿里云 OSS、腾讯云 COS）
-  - 自建局域网 P2P 同步（LAN Sync）
+#### 2. 本地优先的端到端加密同步（E2EE Local-First Sync） ⚪ `[🌱 纯 CPU / 零 GPU 依赖]`
+- 纯 CPU 硬件级 AES-NI 指令集加速，文件加密/解密速度 > 1.5 GB/s，支持 WebDAV、S3/R2 与局域网 P2P 同步。
 
-#### 3. 多格式高保真资产流动
-- **PDF 深度阅读与划线批注**：直接在 KnowSpace 中批注 PDF 并将高亮划线一键导出为 Markdown 知识卡片。
-- **Notion / Obsidian / Logseq 零损迁移向导**：自动转换双链、属性与附件路径。
+#### 3. PDF 深度阅读与划线批注 ⚪ `[🌱 纯 CPU]` / 🟢 `[⚡ GPU 页面渲染]`
+- 基于 PDF.js 的硬件加速渲染，批注一键导出为 Markdown 知识卡片。
 
 ---
 
-## 🏗️ 四、 关键技术架构演进方案
+## 📊 五、 算力消耗与硬件规格全景矩阵表
 
-```
-┌────────────────────────────────────────────────────────┐
-│               KnowSpace UI Layer (React 19)            │
-│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ │
-│  │ CodeMirror 6  │ │  Render View  │ │ Graph / WebGL │ │
-│  │ Editor Core   │ │  Markdown AST │ │ Visualization │ │
-│  └───────────────┘ └───────────────┘ └───────────────┘ │
-├────────────────────────────────────────────────────────┤
-│             KnowSpace Service Bus (TypeScript)         │
-│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ │
-│  │ Link & Graph  │ │ Hybrid Search │ │  AI Co-pilot  │ │
-│  │ Index Engine  │ │ BM25 + Vector │ │ (Ollama/Cloud)│ │
-│  └───────────────┘ └───────────────┘ └───────────────┘ │
-├────────────────────────────────────────────────────────┤
-│           Electron Desktop & Native IO Layer           │
-│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ │
-│  │ Atomic FileIO │ │ SQLite / FTS5 │ │ ONNX Runtime  │ │
-│  │ & Safe Write  │ │ & Key-Val DB  │ │ Local Embed   │ │
-│  └───────────────┘ └───────────────┘ └───────────────┘ │
-└────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📊 五、 版本演进路线对照矩阵
-
-| 能力维度 | 当前版本 (`v1.5.0`) | `v1.6.x` (Connect) | `v1.7.x` (Know) | `v2.0.x` (AI Co-pilot) | `v2.5.x` (Ecosystem) |
+| 功能模块 | 所属版本 | 算力类型 | 最低显存/内存要求 | 推荐 GPU / 硬件配置 | CPU / 无显卡降级表现 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **文档关系** | 树形目录管理 | `[[双向链接]]` + 反链 | 关系拓扑聚类 | 语义动态关联 | 跨库网络连接 |
-| **图谱可视化** | — | 2D/3D 交互式力导向图 | 局部聚焦脉络图 | 知识演化时间线 | 概念拓扑脑图 |
-| **检索能力** | 实时字面关键词匹配 | 链接/标签联合过滤 | BM25 + 本地向量混合检索 | 自然语言意图问答 | 跨模态知识搜索 |
-| **智能辅助** | — | — | 相似知识自动推荐 | 本地/云端 RAG 对话 | 自动打标/结构重构 |
-| **信息收集** | 手动新建文档 | 块级嵌入引用 | 快捷命令面板定位 | 闪念胶囊浮窗速记 | 浏览器剪藏插件 |
-| **扩展与同步** | 本地文件系统 | 本地文件系统 | 本地 FTS/Vector 索引 | 多模型接口配置 | 开放插件SDK + E2EE同步 |
+| **Markdown 渲染与双向编辑** | `v1.5.0` | ⚪ 纯 CPU | 2GB RAM / 0 显存 | 任何双核 CPU | 完美流畅 (60fps) |
+| **左右多文档分屏与独立新窗口** | `v1.5.0` | ⚪ 纯 CPU | 4GB RAM / 0 显存 | 任何主流 CPU | 完美流畅 (<50ms 秒开) |
+| **`[[双向链接]]` 索引与反向链接** | `v1.6.x` | ⚪ 纯 CPU | 4GB RAM / 0 显存 | 任何主流 CPU | 毫秒级即时索引 |
+| **2D/3D 动态交互式知识图谱** | `v1.6.x` | 🟢 **GPU 图形** | 128MB 显存 | Intel/AMD 核显 或 独显 | 降级为 2D 静态轻量图谱 |
+| **SQLite FTS5 + BM25 搜索** | `v1.7.x` | ⚪ 纯 CPU | 4GB RAM / 0 显存 | 任何主流 CPU | 毫秒级字面定位 |
+| **本地轻量向量 Embedding (ONNX)** | `v1.7.x` | 🟡 **GPU 加速** | 256MB 显存 (WebGPU) | 核显 / GTX 1650 以上 | CPU WASM 后台平滑索引 (无感) |
+| **本地离线大模型问答 (Ollama 7B)** | `v2.0.x` | 🔴 **GPU 强算力** | **6GB~8GB 独显显存** | **RTX 3060/4060 / Apple M1+** | CPU Q4 生成较慢 (5~10 t/s) 或用云端 |
+| **本地离线大模型问答 (Ollama 14B)** | `v2.0.x` | 🔴 **GPU 强算力** | **12GB~16GB 独显显存** | **RTX 4070Ti/3090/4080** | 不建议 CPU 运行，自动引导云端 API |
+| **云端大模型问答 (Gemini/OpenAI)** | `v2.0.x` | ⚪ 纯 CPU | 4GB RAM / 0 显存 | 任何联网设备 | 极速流式返回，显卡 0 负担 |
+| **E2EE 端到端本地加密与同步** | `v2.5.x` | ⚪ 纯 CPU | 4GB RAM / 0 显存 | 支持 AES-NI 的 CPU | 满速加密上传 (<1% CPU) |
 
 ---
 
-## 🎯 六、 近期（v1.6.0）实施规划与行动清单
+## 🛡️ 六、 智能硬件自适应与动态降级策略 (Graceful Degradation)
 
-### 第一阶段（1-2 周）：双向链接核心语法与索引引擎
-1. **Markdown AST 扩展**：在 `remark`/`unified` 解析流中增加 `[[Wikilink]]` 自定义语法插件支持。
-2. **内存索引表构建**：主进程启动时建立全工作区的文件名、别名、标题（Headings）倒排索引。
-3. **编辑器补全提示**：在 CodeMirror 6 中键入 `[[` 时呼出模糊搜索下拉列表。
+KnowSpace 坚持 **“硬件高配发挥极致、低配稳定丝滑”** 的自适应原则，底层内置智能环境嗅探器（`HardwareProbe`）：
 
-### 第二阶段（2-3 周）：反向链接面板与关系解析
-1. **文档关联解析器**：在文件保存时原子更新双向引用关系拓扑。
-2. **侧边栏 Backlinks 组件**：实现显式引用与隐式提及卡片，支持上下文预览与一键跳转。
+```
+                       ┌────────────────────────┐
+                       │   KnowSpace 启动探测   │
+                       │   Hardware Probe Init  │
+                       └───────────┬────────────┘
+                                   │
+                    ┌──────────────┴──────────────┐
+                    ▼                             ▼
+         【检测到 Dedicated GPU】        【仅检测到 CPU / 核显】
+        (VRAM ≥ 6GB, CUDA/Metal)        (无独显 / 显存 < 2GB)
+                    │                             │
+       ┌────────────┴────────────┐   ┌────────────┴────────────┐
+       ▼                         ▼   ▼                         ▼
+  🚀 激活全速本地 AI         🌐 激活 WebGPU   💡 推荐云端 API (Gemini)   🧵 CPU WASM 增量索引
+  - Ollama 7B/14B 本地满血   - 向量秒级建库    - 0 显卡负担/极速响应      - 线程池后台静默运行
+  - 3D 粒子星系图谱 (60fps)  - 实时上下文推荐  - 降级 2D 轻量力导向图     - 绝不阻塞前台打字与阅读
+```
 
-### 第三阶段（3-4 周）：知识图谱可视化（WebGL）
-1. **图谱渲染器集成**：引入高性能 2D/3D Force-Directed Graph 引擎。
-2. **样式深度适配**：完美契合深色极夜黑与浅色暖橙黄主题，融入「超立方空间」设计语言。
+1. **零阻断原则（Non-blocking UI）**：任何本地算力密集型任务（如 Embedding 向量构建、大模型推理）均严格运行在 **Worker 子进程 / 独立主进程管道** 中，绝不占用渲染主线程，确保码字编辑与阅读始终维持 0 延迟。
+2. **弹性按需加载（On-demand Allocation）**：图谱仅在用户切换到图谱标签页时初始化 WebGL 上下文，离开后自动释放 GPU 纹理与显存缓存。
+3. **混合双模无缝切换**：用户既可以在家里使用高配台式机运行纯离线本地 DeepSeek/Qwen 获得极致隐私，也可以在轻薄笔记本外出时一键切换至 Gemini API 获得毫秒级云端响应。
 
 ---
 
-> 💡 **总结**：KnowSpace 正在从一款极致好用的 Markdown 查看与编辑利器，稳步进化为兼具高美感、高速度、强安全与网状认知力的一站式个人知识工作台。
+> 💡 **总结**：通过清晰的 **[🔴 GPU 强依赖]**、**[🟡 GPU 加速可选]**、**[🟢 GPU 图形加速]** 与 **[🌱 纯 CPU]** 分级标定，KnowSpace 既能充分释放高性能硬件的 AI 与图谱潜力，又能坚守轻巧、高效、低耗电的个人知识工作台底色。
