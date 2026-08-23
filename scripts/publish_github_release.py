@@ -34,7 +34,7 @@ def main():
         sys.exit(1)
     
     owner = "chunxvzhang-lab"
-    repo = "BookMD-Reader"
+    repo = "KnowSpace"
     tag = "v1.5.0"
     title = "KnowSpace v1.5.0 - 全新品牌「个人知识工作台」、超立方空间图标与多文档分屏"
     
@@ -55,21 +55,24 @@ def main():
     }
 
     rel_data = None
-    try:
-        req = urllib.request.Request(
-            f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}",
-            headers=headers
-        )
-        with urllib.request.urlopen(req) as resp:
-            rel_data = json.loads(resp.read().decode("utf-8"))
-            print(f"Existing release found: {rel_data.get('html_url')}")
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            print(f"No existing release found for {tag}, will create one.")
-        else:
-            print(f"HTTP error checking release: {e}")
-    except Exception as e:
-        print(f"Notice: {e}")
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(
+                f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}",
+                headers=headers
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                rel_data = json.loads(resp.read().decode("utf-8"))
+                print(f"Existing release found: {rel_data.get('html_url')}")
+                break
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                print(f"No existing release found for {tag}, will create one.")
+                break
+            print(f"Notice HTTP {e.code}: {e}")
+        except Exception as e:
+            print(f"Attempt {attempt+1} query notice: {e}")
+            time.sleep(2)
 
     # 3. Create Release Body
     body_md = """# 🚀 KnowSpace v1.5.0

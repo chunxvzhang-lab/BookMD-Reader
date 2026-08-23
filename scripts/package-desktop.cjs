@@ -15,8 +15,14 @@ async function main() {
   console.log("1. Ensuring dist is built...");
   await assertExists(path.join(root, "dist", "index.html"), "dist is missing. Run npm run build first.");
 
-  console.log("2. Generating unpacked application via electron-builder with custom icon...");
-  await execPromise("npx electron-builder --win dir", { cwd: root });
+  console.log("2. Checking unpacked application binary...");
+  try {
+    await fs.access(path.join(winUnpacked, "KnowSpace.exe"));
+    console.log("Found existing release/win-unpacked, skipping electron-builder dir build.");
+  } catch {
+    console.log("Generating unpacked application via electron-builder...");
+    await execPromise("npx electron-builder --win dir", { cwd: root });
+  }
 
   console.log("3. Copying unpacked binaries into release/KnowSpace-win-x64...");
   await fs.mkdir(releaseRoot, { recursive: true });
@@ -90,7 +96,7 @@ async function main() {
     await fs.copyFile(path.join(root, "LICENSE"), path.join(docsDir, "LICENSE"));
   } catch (e) {}
   try {
-    const readmeTxt = `KnowSpace v${appVersion}\nPersonal Knowledge Workspace (个人知识工作台)\n\nDirect Run: Double-click 'KnowSpace.exe'\nInstaller: Locate MSI in 'release/KnowSpace-${appVersion}.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
+    const readmeTxt = `KnowSpace v${appVersion}\nPersonal Knowledge Workspace (个人知识工作台)\n\nDirect Run: Double-click 'KnowSpace.exe'\nInstaller: Locate MSI in 'release/KnowSpace-${appVersion}.msi'\nGitHub: https://github.com/chunxvzhang-lab/KnowSpace\n`;
     await fs.writeFile(path.join(docsDir, "README.txt"), readmeTxt, "utf8");
   } catch (e) {}
   try {
@@ -123,8 +129,19 @@ async function copyDirectory(source, destination) {
 
 async function createPortableZip() {
   await fs.rm(portableZip, { force: true }).catch(() => {});
-  const command = `Compress-Archive -Path '${appDir}\\*' -DestinationPath '${portableZip}' -Force`;
-  await execPromise(`powershell -NoProfile -Command "${command}"`, { cwd: root });
+  const pyCode = [
+    "import zipfile, os",
+    `zip_path = r"${portableZip}"`,
+    `source_dir = r"${appDir}"`,
+    "with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zf:",
+    "    for root, dirs, files in os.walk(source_dir):",
+    "        for file in files:",
+    "            full_path = os.path.join(root, file)",
+    "            rel_path = os.path.relpath(full_path, source_dir)",
+    "            zf.write(full_path, rel_path)",
+    "print('Zip archive created successfully.')",
+  ].join("\n");
+  await execFileAsync("python", ["-c", pyCode], { cwd: root });
 }
 
 async function assertExists(filePath, message) {
