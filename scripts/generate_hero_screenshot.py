@@ -74,7 +74,7 @@ def main():
     # Left & Right Top Badges
     draw_rounded_rect(draw, [120, 40, 390, 86], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
     draw.ellipse([140, 58, 150, 68], fill=(29, 155, 240, 255))
-    draw.text((160, 50), "★ Onyx 黑曜石应用图标", fill=(29, 155, 240), font=font_badge)
+    draw.text((160, 50), "★ 超立方空间应用图标", fill=(29, 155, 240), font=font_badge)
 
     draw_rounded_rect(draw, [W - 400, 40, W - 120, 86], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
     draw.ellipse([W - 380, 58, W - 370, 68], fill=(74, 222, 128, 255))
