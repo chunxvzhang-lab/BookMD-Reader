@@ -14,6 +14,9 @@ import {
   Sparkles,
   ShieldCheck,
   Box,
+  History,
+  Zap,
+  Wrench,
 } from "lucide-react";
 import appLogo from "../assets/icon.png";
 
@@ -95,7 +98,44 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </p>
           </div>
 
-          {/* 2. 视觉构型：超立方空间 */}
+          {/* 2. 版本更新日志 */}
+          <div className="about-card about-changelog-card">
+            <div className="about-card-title">
+              <History size={16} className="about-icon text-blue" />
+              <span>版本更新日志 · What&apos;s New</span>
+              <span className="about-changelog-version-badge">v1.5.0</span>
+            </div>
+            <div className="about-changelog-list">
+              <div className="about-changelog-group">
+                <div className="about-changelog-group-label">
+                  <Zap size={12} className="text-amber" />
+                  <span>新功能</span>
+                </div>
+                <ul className="about-changelog-items">
+                  <li>🏗️ 全面重构为 <strong>KnowSpace</strong> 个人知识工作台，品牌与架构同步升级</li>
+                  <li>✨ 六大核心能力体系（Reader · Editor · Library · Search · Visual · Security）</li>
+                  <li>🔍 段落卡片聚合即时检索，支持多级大纲随动追踪</li>
+                  <li>🌳 多级目录树展开记忆，单文档与多层知识库智能载入</li>
+                  <li>📊 Mermaid 图表 3× 超清导出，支持高质毛玻璃灯箱平移缩放</li>
+                  <li>🛡️ 物理事务原子落盘，UTF-8 换行保真与写入冲突拦截</li>
+                </ul>
+              </div>
+              <div className="about-changelog-group">
+                <div className="about-changelog-group-label">
+                  <Wrench size={12} className="text-green" />
+                  <span>优化与修复</span>
+                </div>
+                <ul className="about-changelog-items">
+                  <li>⚡ 双向零延迟同步滚动，行号精度与编辑器联动精准度大幅提升</li>
+                  <li>🎨 重新设计品牌视觉，采用「超立方空间」HyperSpace Cube 主题图标</li>
+                  <li>🔒 优化外部链接安全策略，统一 openExternal API 调用</li>
+                  <li>💾 修复大文件保存偶发丢失换行符的边界问题</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. 视觉构型：超立方空间 */}
           <div className="about-card">
             <div className="about-card-title">
               <Box size={16} className="about-icon text-orange" />
