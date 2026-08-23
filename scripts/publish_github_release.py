@@ -77,7 +77,7 @@ def main():
     # 3. Create Release Body
     body_md = """# 🚀 KnowSpace v1.5.0
 
-**KnowSpace**（原 BookMD Reader）现已全面完成品牌与架构升级！
+**KnowSpace** 现已全面完成品牌与架构升级！
 > **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
@@ -197,25 +197,35 @@ def main():
     html_url = rel_data["html_url"]
     existing_assets = {a["name"]: a["id"] for a in rel_data.get("assets", [])}
 
+    # Clean legacy assets
+    for asset_name, asset_id in list(existing_assets.items()):
+        if "bookmd" in asset_name.lower():
+            print(f"Cleaning legacy asset {asset_name} (ID: {asset_id})...")
+            del_req = urllib.request.Request(
+                f"https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}",
+                headers=headers,
+                method="DELETE"
+            )
+            try:
+                with urllib.request.urlopen(del_req) as del_resp:
+                    print(f"Deleted legacy asset {asset_name}: HTTP {del_resp.status}")
+                existing_assets.pop(asset_name, None)
+            except Exception as e:
+                print(f"Notice deleting legacy asset: {e}")
+
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
         r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.5.0.msi",
         r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.5.0.msi",
         r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.5.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.5.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.5.0.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
             msi_path = p
             break
 
-    portable_zip_path = (
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64-portable.zip"
-        if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64-portable.zip")
-        else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64-portable.zip"
-    )
+    portable_zip_path = r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64-portable.zip"
 
     assets_to_upload = [
         (
@@ -232,7 +242,7 @@ def main():
 
     import time
     for file_path, name, content_type in assets_to_upload:
-        if not os.path.exists(file_path):
+        if not file_path or not os.path.exists(file_path):
             print(f"Warning: file not found {file_path}")
             continue
         
@@ -264,7 +274,7 @@ def main():
                     headers={
                         "Authorization": f"token {token}",
                         "Content-Type": content_type,
-                        "User-Agent": "BookMD-Release-Script",
+                        "User-Agent": "KnowSpace-Release-Script",
                         "Content-Length": str(len(file_data))
                     },
                     method="POST"
@@ -280,7 +290,7 @@ def main():
                 else:
                     raise
 
-    print("\n[SUCCESS] Release v1.4.0 published successfully!")
+    print("\n[SUCCESS] Release v1.5.0 published successfully!")
     print(f"View Release: {html_url}")
 
 if __name__ == "__main__":
