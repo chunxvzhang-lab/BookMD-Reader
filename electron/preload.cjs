@@ -5,7 +5,7 @@ try {
   initialSyncData = ipcRenderer.sendSync("bookmd:get-sync-launch-data");
 } catch {}
 
-contextBridge.exposeInMainWorld("bookMDDesktop", {
+const desktopApi = {
   getInitialSyncData: () => initialSyncData,
   getLaunchFilePath: () => ipcRenderer.invoke("bookmd:get-launch-file-path"),
   setNativeTheme: (theme) => ipcRenderer.invoke("bookmd:set-native-theme", theme),
@@ -45,4 +45,7 @@ contextBridge.exposeInMainWorld("bookMDDesktop", {
     ipcRenderer.on("bookmd:fullscreen-changed", listener);
     return () => ipcRenderer.removeListener("bookmd:fullscreen-changed", listener);
   },
-});
+};
+
+contextBridge.exposeInMainWorld("knowSpaceDesktop", desktopApi);
+contextBridge.exposeInMainWorld("bookMDDesktop", desktopApi);

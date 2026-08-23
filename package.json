@@ -1,9 +1,9 @@
 {
-  "name": "codex-book-md-viewer",
+  "name": "knowspace",
   "private": true,
   "version": "1.5.0",
-  "description": "BookMD Reader - Modern high performance Markdown reader and editor",
-  "author": "Codex BookMD Team",
+  "description": "KnowSpace - Personal Knowledge Workspace",
+  "author": "KnowSpace Team",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -18,8 +18,8 @@
     "test:watch": "vitest"
   },
   "build": {
-    "appId": "com.codex.bookmdviewer",
-    "productName": "BookMD Reader",
+    "appId": "com.knowspace.app",
+    "productName": "KnowSpace",
     "icon": "build/icon.ico",
     "directories": {
       "output": "release"
@@ -39,7 +39,8 @@
       "oneClick": false,
       "perMachine": false,
       "runAfterFinish": true,
-      "shortcutName": "BookMD Reader"
+      "shortcutName": "KnowSpace",
+      "artifactName": "KnowSpace-${version}.${ext}"
     }
   },
   "dependencies": {

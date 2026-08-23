@@ -156,7 +156,7 @@ async function createWindow(initialFilePath = null) {
     minWidth: 360,
     minHeight: 240,
     show: false,
-    title: "BookMD 阅读器",
+    title: "KnowSpace",
     icon: windowIcon,
     autoHideMenuBar: true,
     backgroundColor: nativeTheme.shouldUseDarkColors ? "#000000" : "#f6f7f4",

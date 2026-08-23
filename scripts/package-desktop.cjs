@@ -6,8 +6,8 @@ const { promisify } = require("node:util");
 const root = path.resolve(__dirname, "..");
 const releaseRoot = path.join(root, "release");
 const winUnpacked = path.join(releaseRoot, "win-unpacked");
-const appDir = path.join(releaseRoot, "BookMD-Reader-win-x64");
-const portableZip = path.join(releaseRoot, "BookMD-Reader-win-x64-portable.zip");
+const appDir = path.join(releaseRoot, "KnowSpace-win-x64");
+const portableZip = path.join(releaseRoot, "KnowSpace-win-x64-portable.zip");
 const execPromise = promisify(exec);
 const execFileAsync = promisify(execFile);
 
@@ -18,7 +18,7 @@ async function main() {
   console.log("2. Generating unpacked application via electron-builder with custom icon...");
   await execPromise("npx electron-builder --win dir", { cwd: root });
 
-  console.log("3. Copying unpacked binaries into release/BookMD-Reader-win-x64...");
+  console.log("3. Copying unpacked binaries into release/KnowSpace-win-x64...");
   await fs.mkdir(releaseRoot, { recursive: true });
 
   // Clean old target folder
@@ -33,11 +33,11 @@ async function main() {
 
   await copyDirectory(winUnpacked, appDir);
 
-  console.log("3.5 Embedding icon & PE version info into BookMD Reader.exe...");
+  console.log("3.5 Embedding icon & PE version info into KnowSpace.exe...");
   const pkg = require("../package.json");
-  const appVersion = pkg.version || "1.2.0";
+  const appVersion = pkg.version || "1.5.0";
   const rcedit = path.join(root, "node_modules", "electron-winstaller", "vendor", "rcedit.exe");
-  const targetExe = path.join(appDir, "BookMD Reader.exe");
+  const targetExe = path.join(appDir, "KnowSpace.exe");
   const iconIco = path.join(root, "build", "icon.ico");
   try {
     await execFileAsync(rcedit, [
@@ -47,10 +47,10 @@ async function main() {
       "--set-product-version", appVersion,
       "--set-version-string", "CompanyName", "摸鱼Lab",
       "--set-version-string", "LegalCopyright", "Copyright © 2026 摸鱼Lab",
-      "--set-version-string", "FileDescription", "BookMD Reader",
-      "--set-version-string", "ProductName", "BookMD Reader",
+      "--set-version-string", "FileDescription", "KnowSpace · Personal Knowledge Workspace",
+      "--set-version-string", "ProductName", "KnowSpace",
     ]);
-    console.log(`Successfully embedded icon and PE metadata (v${appVersion}) into BookMD Reader.exe.`);
+    console.log(`Successfully embedded icon and PE metadata (v${appVersion}) into KnowSpace.exe.`);
   } catch (err) {
     console.warn("rcedit notice:", err.message);
   }
@@ -66,15 +66,15 @@ async function main() {
 
   // Copy MSI if exists
   const possibleMsiSources = [
+    path.join(releaseRoot, `KnowSpace ${appVersion}.msi`),
+    path.join(releaseRoot, `KnowSpace-${appVersion}.msi`),
     path.join(releaseRoot, `BookMD Reader ${appVersion}.msi`),
     path.join(releaseRoot, `BookMD-Reader-${appVersion}.msi`),
-    path.join(releaseRoot, "BookMD Reader 1.0.0.msi"),
-    path.join(releaseRoot, "BookMD-Reader-1.0.0.msi"),
   ];
   for (const src of possibleMsiSources) {
     try {
-      await fs.copyFile(src, path.join(releaseSubDir, `BookMD-Reader-${appVersion}.msi`));
-      console.log(`Included MSI installer: ${src} -> BookMD-Reader-${appVersion}.msi`);
+      await fs.copyFile(src, path.join(releaseSubDir, `KnowSpace-${appVersion}.msi`));
+      console.log(`Included MSI installer: ${src} -> KnowSpace-${appVersion}.msi`);
       break;
     } catch (e) {}
   }
@@ -90,7 +90,7 @@ async function main() {
     await fs.copyFile(path.join(root, "LICENSE"), path.join(docsDir, "LICENSE"));
   } catch (e) {}
   try {
-    const readmeTxt = `BookMD Reader v${appVersion}\nModern Local-First Markdown Reader & Editor\n\nDirect Run: Double-click 'BookMD Reader.exe'\nInstaller: Locate MSI in 'release/BookMD-Reader-${appVersion}.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
+    const readmeTxt = `KnowSpace v${appVersion}\nPersonal Knowledge Workspace (个人知识工作台)\n\nDirect Run: Double-click 'KnowSpace.exe'\nInstaller: Locate MSI in 'release/KnowSpace-${appVersion}.msi'\nGitHub: https://github.com/chunxvzhang-lab/BookMD-Reader\n`;
     await fs.writeFile(path.join(docsDir, "README.txt"), readmeTxt, "utf8");
   } catch (e) {}
   try {

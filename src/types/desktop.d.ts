@@ -81,44 +81,47 @@ export type BeforeCloseData = {
   requestId: number;
 };
 
+export type KnowSpaceDesktopAPI = {
+  getInitialSyncData?: () => { filePath: string; source: ChapterSource | null } | null;
+  getLaunchFilePath: () => Promise<string | null>;
+  setNativeTheme: (theme: string) => Promise<void>;
+  openDirectory: () => Promise<DirectoryOpenResult>;
+  refreshDirectory: (rootPath: string) => Promise<BookManifest & { rootPath: string }>;
+  readMarkdownFile: (absolutePath: string) => Promise<ChapterSource>;
+  getDirectoryForFile: (absolutePath: string) => Promise<{
+    directory: BookManifest & { rootPath: string };
+    activeChapterId: string | null;
+  }>;
+  saveMarkdownFile: (request: SaveMarkdownRequest) => Promise<SaveMarkdownResult>;
+  createMarkdownFile: (options?: CreateMarkdownOptions) => Promise<CreateMarkdownResult>;
+  saveMarkdownFileAs: (request?: SaveMarkdownAsRequest) => Promise<SaveMarkdownAsResult>;
+  setDocumentState: (state: { activePath: string | null; isDirty: boolean }) => Promise<void>;
+  resolveBeforeClose: (result: { requestId: number; action: "proceed" | "cancel" }) => Promise<void>;
+  openExternal?: (url: string) => Promise<boolean>;
+  toggleFullScreen?: () => Promise<boolean>;
+  isFullScreen?: () => Promise<boolean>;
+  exportSvgAsPng?: (params: {
+    svgHtml: string;
+    width?: number;
+    height?: number;
+    theme?: string;
+    filename?: string;
+  }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
+  savePngData?: (params: {
+    dataUrl: string;
+    filename?: string;
+  }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
+  openInNewWindow?: (absolutePath: string) => Promise<boolean>;
+  onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
+  onMenuCommand: (callback: (command: string) => void) => () => void;
+  onBeforeClose: (callback: (data: BeforeCloseData) => void) => () => void;
+  onFullScreenChanged?: (callback: (isFullscreen: boolean) => void) => () => void;
+};
+
 declare global {
   interface Window {
-    bookMDDesktop?: {
-      getInitialSyncData?: () => { filePath: string; source: ChapterSource | null } | null;
-      getLaunchFilePath: () => Promise<string | null>;
-      setNativeTheme: (theme: string) => Promise<void>;
-      openDirectory: () => Promise<DirectoryOpenResult>;
-      refreshDirectory: (rootPath: string) => Promise<BookManifest & { rootPath: string }>;
-      readMarkdownFile: (absolutePath: string) => Promise<ChapterSource>;
-      getDirectoryForFile: (absolutePath: string) => Promise<{
-        directory: BookManifest & { rootPath: string };
-        activeChapterId: string | null;
-      }>;
-      saveMarkdownFile: (request: SaveMarkdownRequest) => Promise<SaveMarkdownResult>;
-      createMarkdownFile: (options?: CreateMarkdownOptions) => Promise<CreateMarkdownResult>;
-      saveMarkdownFileAs: (request?: SaveMarkdownAsRequest) => Promise<SaveMarkdownAsResult>;
-      setDocumentState: (state: { activePath: string | null; isDirty: boolean }) => Promise<void>;
-      resolveBeforeClose: (result: { requestId: number; action: "proceed" | "cancel" }) => Promise<void>;
-      openExternal?: (url: string) => Promise<boolean>;
-      toggleFullScreen?: () => Promise<boolean>;
-      isFullScreen?: () => Promise<boolean>;
-      exportSvgAsPng?: (params: {
-        svgHtml: string;
-        width?: number;
-        height?: number;
-        theme?: string;
-        filename?: string;
-      }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
-      savePngData?: (params: {
-        dataUrl: string;
-        filename?: string;
-      }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
-      openInNewWindow?: (absolutePath: string) => Promise<boolean>;
-      onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
-      onMenuCommand: (callback: (command: string) => void) => () => void;
-      onBeforeClose: (callback: (data: BeforeCloseData) => void) => () => void;
-      onFullScreenChanged?: (callback: (isFullscreen: boolean) => void) => () => void;
-    };
+    knowSpaceDesktop?: KnowSpaceDesktopAPI;
+    bookMDDesktop?: KnowSpaceDesktopAPI;
   }
 }
 

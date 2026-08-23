@@ -68,8 +68,8 @@ def main():
     )
     # Glow dot
     draw.ellipse([pill_x + 22, pill_y + 18, pill_x + 34, pill_y + 30], fill=(29, 155, 240, 255))
-    draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.5.0", fill=(231, 233, 234), font=font_pill_title)
-    draw.text((pill_x + 335, pill_y + 12), "•  多标签页 & 左右对比分屏 & 独立新窗口  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
+    draw.text((pill_x + 46, pill_y + 10), "KnowSpace v1.5.0", fill=(231, 233, 234), font=font_pill_title)
+    draw.text((pill_x + 295, pill_y + 12), "•  Personal Knowledge Workspace · 个人知识工作台  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
 
     # Left & Right Top Badges
     draw_rounded_rect(draw, [120, 40, 390, 86], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
@@ -476,7 +476,7 @@ def main():
     font_dock_bold = get_font(13, bold=True)
     draw.text((win_x + 20, dock_y + 10), "● 已安全保存 (原子落盘)", fill=(74, 222, 128), font=font_dock_bold)
     draw.text((win_x + 210, dock_y + 10), "2,840 字符  •  约 6 分钟阅读", fill=(160, 166, 172), font=font_dock)
-    draw.text((win_x + win_w - 460, dock_y + 10), "LF  •  UTF-8  •  BookMD Engine v1.5.0  •  极客暗黑", fill=(113, 118, 123), font=font_dock)
+    draw.text((win_x + win_w - 470, dock_y + 10), "LF  •  UTF-8  •  KnowSpace Engine v1.5.0  •  极客暗黑", fill=(113, 118, 123), font=font_dock)
 
     # 4. Floating Feature Showcase Cards around the main window
     # Left Floating Badge Card
@@ -502,6 +502,7 @@ def main():
         r"C:\Users\chunxvzhang\Desktop\codex\screenshot.png",
         r"C:\Users\chunxvzhang\Desktop\codex\public\screenshot.png",
         r"C:\Users\chunxvzhang\Desktop\codex\dist\screenshot.png",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\assets\screenshot.png",
         r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\assets\screenshot.png",
     ]
 

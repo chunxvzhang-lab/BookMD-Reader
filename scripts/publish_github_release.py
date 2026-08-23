@@ -36,7 +36,7 @@ def main():
     owner = "chunxvzhang-lab"
     repo = "BookMD-Reader"
     tag = "v1.5.0"
-    title = "BookMD Reader v1.5.0 -「超立方空间」HyperSpace Cube图标、多文档左右分屏、标签页独立新窗口与极速秒开"
+    title = "KnowSpace v1.5.0 - 全新品牌「个人知识工作台」、超立方空间图标与多文档分屏"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -72,13 +72,27 @@ def main():
         print(f"Notice: {e}")
 
     # 3. Create Release Body
-    body_md = """# 🚀 BookMD Reader v1.5.0
+    body_md = """# 🚀 KnowSpace v1.5.0
 
-BookMD Reader v1.5.0 现已正式发布！本次版本迭代带来了 **「超立方空间」HyperSpace Cube 全新品牌应用图标**、**多文档左右分屏对比模式**、**标签页分离独立新窗口**、**84% 首屏包体积压缩与毫秒秒开**、**Windows 桌面贴靠分栏无遮挡适配** 以及 **暖橙黄浅色高亮体系**！
+**KnowSpace**（原 BookMD Reader）现已全面完成品牌与架构升级！
+> **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
+> **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
+
+本次版本迭代带来了 **「超立方空间」HyperSpace Cube 全新品牌应用图标**、**多文档左右分屏对比模式**、**标签页分离独立新窗口**、**84% 首屏包体积压缩与毫秒秒开**、**Windows 桌面贴靠分栏无遮挡适配** 以及 **暖橙黄浅色高亮体系**！
 
 ---
 
-### ✨ 核心更新亮点
+### 🏛️ KnowSpace 核心能力体系
+
+- **📖 Reader** — 现代化 Markdown 沉浸式阅读与排版引擎
+- **✍️ Editor** — CodeMirror 6 极客编辑、零延迟 AST 语法高精度映射
+- **📚 Library** — 文档与多级知识库树形管理、展开状态智能持久化
+- **🔍 Search** — 全文精准定位、大纲（TOC）实时追踪与高亮
+- **🎨 Visual & Lightbox** — Mermaid 架构图 3× 超清全幅导出、图片高质无损灯箱
+
+---
+
+### ✨ v1.5.0 核心更新亮点
 
 1. **💎 全新「超立方空间」HyperSpace Cube 专属应用图标**：
    - **构型**：一个半透明悬浮的等距等角投影（Isometric）多面体空间，内部悬浮着一颗发光的知识晶体核心（Knowledge Core）。
@@ -131,8 +145,8 @@ BookMD Reader v1.5.0 现已正式发布！本次版本迭代带来了 **「超�
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`BookMD-Reader-1.5.0.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
-| **`BookMD-Reader-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `BookMD Reader.exe` 即可运行 |
+| **`KnowSpace-1.5.0.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
+| **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `KnowSpace.exe` 即可运行 |
 
 ---
 
@@ -181,25 +195,34 @@ BookMD Reader v1.5.0 现已正式发布！本次版本迭代带来了 **「超�
     existing_assets = {a["name"]: a["id"] for a in rel_data.get("assets", [])}
 
     # 4. Upload Assets
-    msi_path = (
-        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.5.0.msi"
-        if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.5.0.msi")
-        else (
-            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.5.0.msi"
-            if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.5.0.msi")
-            else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\release\BookMD-Reader-1.5.0.msi"
-        )
+    msi_path = None
+    msi_candidates = [
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.5.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.5.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.5.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD Reader 1.5.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-1.5.0.msi",
+    ]
+    for p in msi_candidates:
+        if os.path.exists(p):
+            msi_path = p
+            break
+
+    portable_zip_path = (
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64-portable.zip"
+        if os.path.exists(r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64-portable.zip")
+        else r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64-portable.zip"
     )
 
     assets_to_upload = [
         (
             msi_path,
-            "BookMD-Reader-1.5.0.msi",
+            "KnowSpace-1.5.0.msi",
             "application/x-msi"
         ),
         (
-            r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64-portable.zip",
-            "BookMD-Reader-win-x64-portable.zip",
+            portable_zip_path,
+            "KnowSpace-win-x64-portable.zip",
             "application/zip"
         )
     ]

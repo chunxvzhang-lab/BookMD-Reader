@@ -67,9 +67,9 @@ export function ActivityBar({
   return (
     <nav className="activity-bar" aria-label="快捷工具栏">
       {/* Top Brand Logo */}
-      <div className="activity-brand" data-tooltip="BookMD Reader (摸鱼Lab)">
+      <div className="activity-brand" data-tooltip="KnowSpace · 个人知识工作台 (摸鱼Lab)">
         <div className="brand-badge">
-          <img src={appLogo} alt="BookMD Logo" className="brand-logo-img" />
+          <img src={appLogo} alt="KnowSpace Logo" className="brand-logo-img" />
         </div>
       </div>
 

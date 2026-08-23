@@ -67,10 +67,10 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </div>
             <div>
               <div className="about-header-title-row">
-                <span className="about-app-name">BookMD Reader</span>
+                <span className="about-app-name">KnowSpace</span>
                 <span className="about-version-badge">v1.5.0</span>
               </div>
-              <p className="about-tagline">现代化高颜值本地优先 Markdown 阅读与编辑工作台</p>
+              <p className="about-tagline">Personal Knowledge Workspace · 个人知识工作台</p>
             </div>
           </div>
           <button type="button" className="about-close-btn" onClick={onClose} title="关闭 (Esc)" aria-label="关闭">
@@ -84,10 +84,10 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
           <div className="about-card">
             <div className="about-card-title">
               <BookOpen size={16} className="about-icon text-orange" />
-              <span>项目简介</span>
+              <span>品牌理念与简介</span>
             </div>
             <p className="about-description">
-              BookMD Reader 是一款采用现代设计美学的本地优先（Local-First）Markdown 知识阅读与写作桌面应用。支持多标签页多文档协同、代码块一键复制与高对比度高亮、图片/架构图无损灯箱缩放预览、专注模式 (F10)、打字机居中滚动、目录树结构化管理、双向高精度行号映射同步滚动、双侧选择联动高亮、CodeMirror 6 极客编辑、GFM 表格与 Mermaid 动态图表。
+              <strong>KnowSpace</strong> 是一款现代设计美学的本地优先（Local-First）个人知识工作台。以「超立方空间」HyperSpace Cube 为视觉载体，秉持 <em>“Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）”</em> 品牌理念。深度集成多标签页协同、双文档左右分屏对比、独立新窗口秒级分离、图片与架构图 3× 超清导出、专注模式 (F10)、打字机居中滚动、多级目录大纲追踪、双向高精度同步滚动与原子事务落盘。
             </p>
           </div>
 

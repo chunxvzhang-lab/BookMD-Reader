@@ -85,7 +85,7 @@ export function StatusBar({
         <span className="status-pill">UTF-8</span>
         <span className="status-brand">
           <Cpu size={11} />
-          <span>BookMD</span>
+          <span>KnowSpace</span>
         </span>
       </div>
     </footer>

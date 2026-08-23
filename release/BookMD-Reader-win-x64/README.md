@@ -1,11 +1,12 @@
-# BookMD Reader
+# KnowSpace
 
 <p align="center">
-  <img src="icon.png" alt="BookMD Reader Logo" width="128" />
+  <img src="icon.png" alt="KnowSpace Logo" width="128" />
 </p>
 
 <p align="center">
-  <strong>现代化高颜值 Markdown 书籍阅读与编辑桌面应用 | Modern High-Performance Markdown Reader & Editor</strong>
+  <strong>KnowSpace · Personal Knowledge Workspace | 现代化个人知识工作台</strong><br />
+  <em>Write. Read. Connect. Know. (记录 · 阅读 · 连接 · 认知)</em>
 </p>
 
 <p align="center">
@@ -19,20 +20,31 @@
 </p>
 
 <p align="center">
-  <img src="screenshot.png" alt="BookMD Reader Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);" />
+  <img src="screenshot.png" alt="KnowSpace Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);" />
 </p>
 
 <p align="center">
-  <a href="#-核心功能特性">中文文档</a> •
-  <a href="#️-平台开发架构与语言构成">技术架构</a> •
-  <a href="#-key-features">English Docs</a> •
+  <a href="#-核心能力体系">核心体系</a> •
+  <a href="#-核心功能特性">功能特性</a> •
+  <a href="#-键盘快捷键">快捷键</a> •
   <a href="#-便携版与-msi-安装包">下载运行</a> •
-  <a href="#-键盘快捷键">快捷键</a>
+  <a href="#-english">English</a>
 </p>
 
 ---
 
-BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编辑桌面应用。由 **摸鱼Lab** 研发，融入现代极客设计美学，支持多标签页多文档管理、多文档左右分屏对比查看、标签页分离为独立新窗口、Windows 桌面贴靠分栏无遮挡适配、代码块一键复制与高对比度高亮、图片与 Mermaid 架构图无损灯箱缩放与超清 PNG 导出、专注模式 (F10)、打字机居中滚动、多级目录树浏览、多级大纲实时追踪、分屏双向高精度同步滚动与双侧联动高亮、界面分栏自由拖拽缩放、正文预览行号显示、书签与阅读进度记忆、安全原子落盘保存、外部冲突检测，并提供 Windows MSI 安装包与绿色便携版。
+**KnowSpace** 是一个本地优先、高颜值的现代化个人知识工作台（Personal Knowledge Workspace）。由 **摸鱼Lab** 研发，秉承 **“Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）”** 的产品理念，以「超立方空间」HyperSpace Cube 为设计核心，旨在为你打造一个收纳所有想法、文档、图表与知识的私密安全空间。
+
+---
+
+## 🏛️ 核心能力体系
+
+- **📖 Reader（阅读）**：纯净沉浸的 Markdown 排版阅读引擎，支持正文源码行号自动映射与双侧联动高亮。
+- **✍️ Editor（编辑）**：基于 CodeMirror 6 的现代编辑体验，毫秒级实时防抖渲染与零延迟双向同步滚动。
+- **📚 Library（知识库）**：多级文档目录树折叠展开、展开状态持久化记忆、单文档与多层级知识库智能载入。
+- **🔍 Search（检索与大纲）**：全文段落卡片聚合即时检索、多级目录大纲（TOC）随动追踪与书签记忆。
+- **🎨 Visual & Lightbox（视觉与导出）**：Mermaid 架构图 3× Retina 超清 PNG 导出、图片/图表高质毛玻璃灯箱缩放平移。
+- **🛡️ Security（安全基石）**：本地优先物理事务原子落盘、UTF-8 BOM/换行符保真、外部修改冲突检测与丢稿拦截守卫。
 
 ---
 
@@ -99,14 +111,14 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
   - 分栏处配备专属 `.layout-resizer` 分隔线，鼠标悬停即变双向调整箭头（`col-resize`），拖拽时光晕高亮反馈，并锁定文字划选（`user-select: none`），体验极致丝滑。
   - 用户自定义分栏宽度与比例自动保存至本地 `localStorage`，重启软件自动恢复。
 - **左侧 Activity Bar 功能活动栏**：
-  - 顶部品牌专属 BookMD 橙光书卷 Logo 徽章（摸鱼Lab 研发出品）。
+  - 顶部品牌专属 KnowSpace 超立方空间 Logo 徽章（摸鱼Lab 研发出品）。
   - 快捷切换：📁 **文档目录树**、📑 **文档大纲 (TOC)**、⭐ **精选书签**、🔍 **全文即时检索**。
   - 快速操作：➕ **新建文档** (`Ctrl+N`)、📂 **打开目录** (`Ctrl+Shift+O`)。
   - 底部控制：微型三段式视图切换器、精选双主题无缝切换（☀️ 日光浅色 / ✨ 极客暗黑）。
 - **底部实时状态信息栏（Footer Dock Bar）**：
   - **保存状态徽章**：绿色已保存（`● 已保存`）、橙色修改中（`● 未保存`）、青色只读标识。
   - **实时文档统计**：字数、词数统计及阅读预估时长（例如 `2,450 字符 • 约 6 分钟阅读`）。
-  - **环境指标胶囊**：当前视图模式、换行符格式（`LF / CRLF`）、`UTF-8` 编码与 `BookMD` 引擎标识。
+  - **环境指标胶囊**：当前视图模式、换行符格式（`LF / CRLF`）、`UTF-8` 编码与 `KnowSpace` 引擎标识。
 - **弹性动力学动效**：全局接入 `cubic-bezier(0.16, 1, 0.3, 1)` 弹性物理缓动，抽屉展开与弹窗呼出丝滑轻快。
 
 ### 3. 编辑与创作
@@ -171,12 +183,12 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`BookMD-Reader-1.5.0.msi`
+- **文件**：`KnowSpace-1.5.0.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版
-- **文件**：`BookMD-Reader-win-x64-portable.zip`
-- **直接运行**：解压后双击 `BookMD Reader.exe`
+- **文件**：`KnowSpace-win-x64-portable.zip`
+- **直接运行**：解压后双击 `KnowSpace.exe`
 - **特点**：解压即用，无需配置 Node.js、Electron 等任何运行时；支持右键"打开方式"关联 `.md` 文件。
 
 ---
@@ -195,6 +207,12 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 ---
 
 ## 🌐 English
+
+**KnowSpace** is a modern, local-first personal knowledge workspace built for developers, writers, and knowledge creators.
+
+> **KnowSpace — Write. Read. Connect. Know.**
+
+### Key Features
 
 - **「HyperSpace Cube」Aesthetic Icon**:
   - *Structure*: A semi-transparent floating isometric polyhedron space housing a luminous Knowledge Core.
@@ -221,7 +239,7 @@ BookMD Reader 是一个本地优先、高颜值的 Markdown 文档阅读与编�
 - **CodeMirror 6 Editor**: Syntax highlighting, line numbers, code folding, auto-closing brackets, and undo/redo history.
 - **Safe Atomic Saving & Conflict Detection**: Same-directory temporary write + `fsync` + atomic rename, preserving UTF-8 BOM and CRLF/LF line endings. Automatically detects external modifications before writing.
 - **Status Bar Dock**: Real-time word count, character count, estimated read time, dirty status indicator badge, line ending format, and encoding.
-- **Distribution Packages**: Windows MSI installer (`BookMD-Reader-1.5.0.msi`) and zero-dependency portable package (`BookMD-Reader-win-x64-portable.zip`).
+- **Distribution Packages**: Windows MSI installer (`KnowSpace-1.5.0.msi`) and zero-dependency portable package (`KnowSpace-win-x64-portable.zip`).
 
 ---
 
