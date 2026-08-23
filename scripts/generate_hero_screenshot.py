@@ -54,9 +54,9 @@ def main():
     font_badge = get_font(18, bold=True)
 
     # Top Central Floating Pill
-    pill_w, pill_h = 820, 48
+    pill_w, pill_h = 860, 48
     pill_x = (W - pill_w) // 2
-    pill_y = 40
+    pill_y = 38
     
     draw_rounded_rect(
         draw,
@@ -68,17 +68,17 @@ def main():
     )
     # Glow dot
     draw.ellipse([pill_x + 22, pill_y + 18, pill_x + 34, pill_y + 30], fill=(29, 155, 240, 255))
-    draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.4.2", fill=(231, 233, 234), font=font_pill_title)
-    draw.text((pill_x + 335, pill_y + 12), "•  自由拖拽分栏 & 正文预览行号  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
+    draw.text((pill_x + 46, pill_y + 10), "BookMD Reader v1.5.0", fill=(231, 233, 234), font=font_pill_title)
+    draw.text((pill_x + 335, pill_y + 12), "•  多标签页 & 左右对比分屏 & 独立新窗口  •  摸鱼Lab", fill=(113, 118, 123), font=font_pill_sub)
 
     # Left & Right Top Badges
-    draw_rounded_rect(draw, [120, 42, 390, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
-    draw.ellipse([140, 60, 150, 70], fill=(29, 155, 240, 255))
-    draw.text((160, 52), "📐 界面分栏自由拖拽", fill=(29, 155, 240), font=font_badge)
+    draw_rounded_rect(draw, [120, 40, 390, 86], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
+    draw.ellipse([140, 58, 150, 68], fill=(29, 155, 240, 255))
+    draw.text((160, 50), "★ Onyx 黑曜石应用图标", fill=(29, 155, 240), font=font_badge)
 
-    draw_rounded_rect(draw, [W - 400, 42, W - 120, 88], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
-    draw.ellipse([W - 380, 60, W - 370, 70], fill=(74, 222, 128, 255))
-    draw.text((W - 360, 52), "🔢 正文预览行号显示", fill=(74, 222, 128), font=font_badge)
+    draw_rounded_rect(draw, [W - 400, 40, W - 120, 86], radius=23, fill=(15, 20, 25, 220), outline=(47, 51, 54, 255), width=1)
+    draw.ellipse([W - 380, 58, W - 370, 68], fill=(74, 222, 128, 255))
+    draw.text((W - 360, 50), "★ 独立新窗口毫秒秒开", fill=(74, 222, 128), font=font_badge)
 
     # 3. Main Showcase Window Mockup (Twitter Lights Out #000000 + Surface #0f1419 + Border #2f3336)
     win_x = 120
@@ -125,20 +125,37 @@ def main():
     draw.ellipse([win_x + 46, win_y + 21, win_x + 60, win_y + 35], fill=(251, 191, 36, 255))
     draw.ellipse([win_x + 68, win_y + 21, win_x + 82, win_y + 35], fill=(74, 222, 128, 255))
 
-    # Center Document Title Capsule
-    font_tab = get_font(16, bold=True)
-    font_subtab = get_font(15, bold=False)
-    doc_pill_x = win_x + (win_w - 580) // 2
-    draw_rounded_rect(
-        draw,
-        [doc_pill_x, win_y + 10, doc_pill_x + 580, win_y + title_h - 10],
-        radius=18,
-        fill=(22, 24, 28, 255),
-        outline=(47, 51, 54, 255),
-        width=1
-    )
-    draw.text((doc_pill_x + 22, win_y + 15), "02-AST双向零延迟同步.md", fill=(231, 233, 234), font=font_tab)
-    draw.text((doc_pill_x + 360, win_y + 16), "[极客暗黑版]", fill=(29, 155, 240), font=font_subtab)
+    # Multi-tabs Bar directly rendered inside Header
+    font_tab = get_font(15, bold=True)
+    font_tab_normal = get_font(14, bold=False)
+    font_subtab = get_font(13, bold=False)
+
+    tabs = [
+        ("01-架构与设计.md", False, False),
+        ("02-AST双向零延迟同步.md", True, False),
+        ("03-Mermaid图表导出.md", False, True),  # Dirty indicator
+        ("04-对比分屏模式.md", False, False),
+    ]
+
+    tab_start_x = win_x + 110
+    tab_cur_x = tab_start_x
+    for name, is_active, is_dirty in tabs:
+        t_width = 240 if is_active else 210
+        t_y = win_y + 10
+        t_h = title_h - 10
+        if is_active:
+            draw_rounded_rect(draw, [tab_cur_x, t_y, tab_cur_x + t_width, t_y + t_h], radius=8, fill=(0, 0, 0, 255), outline=(47, 51, 54, 255), width=1)
+            draw.line([tab_cur_x + 1, t_y + t_h, tab_cur_x + t_width - 1, t_y + t_h], fill=(29, 155, 240, 255), width=2)
+            draw.text((tab_cur_x + 16, t_y + 11), name, fill=(231, 233, 234), font=font_tab)
+            draw.text((tab_cur_x + t_width - 24, t_y + 9), "×", fill=(113, 118, 123), font=get_font(16))
+        else:
+            draw_rounded_rect(draw, [tab_cur_x, t_y, tab_cur_x + t_width, t_y + t_h], radius=8, fill=(15, 20, 25, 200))
+            draw.text((tab_cur_x + 16, t_y + 11), name, fill=(160, 166, 172), font=font_tab_normal)
+            if is_dirty:
+                draw.ellipse([tab_cur_x + t_width - 26, t_y + 15, tab_cur_x + t_width - 18, t_y + 23], fill=(245, 158, 11, 255))
+            else:
+                draw.text((tab_cur_x + t_width - 24, t_y + 9), "×", fill=(75, 80, 85), font=get_font(16))
+        tab_cur_x += t_width + 8
 
     # Right Window Control Buttons (View Switcher Pills + Hash line number button)
     v_pill_x = win_x + win_w - 320
@@ -439,15 +456,15 @@ def main():
     # Message Arrows
     draw.line([p1_x + 75, py + 60, p2_x + 75, py + 60], fill=(29, 155, 240, 255), width=2)
     draw.polygon([(p2_x + 75, py + 60), (p2_x + 65, py + 55), (p2_x + 65, py + 65)], fill=(29, 155, 240, 255))
-    draw.text((p1_x + 85, py + 42), "1. 编辑器滚动 & 行号映射", fill=(200, 210, 220), font=get_font(12))
+    draw.text((p1_x + 85, py + 42), "1. 标签分离 / 分屏同步", fill=(200, 210, 220), font=get_font(12))
 
     draw.line([p2_x + 75, py + 100, p3_x + 75, py + 100], fill=(74, 222, 128, 255), width=2)
     draw.polygon([(p3_x + 75, py + 100), (p3_x + 65, py + 95), (p3_x + 65, py + 105)], fill=(74, 222, 128, 255))
-    draw.text((p2_x + 85, py + 82), "2. 毫秒级分段插值更新", fill=(74, 222, 128), font=get_font(12))
+    draw.text((p2_x + 85, py + 82), "2. 毫秒级即时预读渲染", fill=(74, 222, 128), font=get_font(12))
 
     draw.line([p3_x + 75, py + 140, p1_x + 75, py + 140], fill=(168, 85, 247, 255), width=2)
     draw.polygon([(p1_x + 75, py + 140), (p1_x + 85, py + 135), (p1_x + 85, py + 145)], fill=(168, 85, 247, 255))
-    draw.text((p1_x + 130, py + 122), "3. 丝滑视口渲染 & 双侧高亮", fill=(168, 85, 247), font=get_font(12))
+    draw.text((p1_x + 130, py + 122), "3. 丝滑视口渲染 & 双侧联动高亮", fill=(168, 85, 247), font=get_font(12))
 
     # 3.5 Bottom Dock Status Bar
     dock_y = win_y + win_h - 38
@@ -459,31 +476,32 @@ def main():
     font_dock_bold = get_font(13, bold=True)
     draw.text((win_x + 20, dock_y + 10), "● 已安全保存 (原子落盘)", fill=(74, 222, 128), font=font_dock_bold)
     draw.text((win_x + 210, dock_y + 10), "2,840 字符  •  约 6 分钟阅读", fill=(160, 166, 172), font=font_dock)
-    draw.text((win_x + win_w - 460, dock_y + 10), "LF  •  UTF-8  •  BookMD Engine v1.4.2  •  极客暗黑", fill=(113, 118, 123), font=font_dock)
+    draw.text((win_x + win_w - 460, dock_y + 10), "LF  •  UTF-8  •  BookMD Engine v1.5.0  •  极客暗黑", fill=(113, 118, 123), font=font_dock)
 
     # 4. Floating Feature Showcase Cards around the main window
     # Left Floating Badge Card
     fc1_x = 45
-    fc1_y = 600
-    fc1_w = 250
-    fc1_h = 140
+    fc1_y = 580
+    fc1_w = 260
+    fc1_h = 160
     draw_rounded_rect(draw, [fc1_x, fc1_y, fc1_x + fc1_w, fc1_y + fc1_h], radius=16, fill=(15, 20, 25, 240), outline=(29, 155, 240, 160), width=2)
-    draw.text((fc1_x + 20, fc1_y + 18), "★ 分栏自由拖拽", fill=(29, 155, 240), font=get_font(18, bold=True))
-    draw.text((fc1_x + 20, fc1_y + 50), "• 目录/侧栏/分屏自由调\n• 本地配置自动持久化\n• 双向光晕指示条", fill=(200, 205, 210), font=get_font(14))
+    draw.text((fc1_x + 20, fc1_y + 18), "★ 双文档分屏 & 独立窗口", fill=(29, 155, 240), font=get_font(17, bold=True))
+    draw.text((fc1_x + 20, fc1_y + 50), "• 标签页右键开启左右对比\n• 秒级脱离为完全独立窗口\n• Windows 贴靠分栏无遮挡\n• 多屏协同办公极度高效", fill=(200, 205, 210), font=get_font(13))
 
     # Right Floating Badge Card
-    fc2_x = W - 295
-    fc2_y = 600
-    fc2_w = 250
-    fc2_h = 140
+    fc2_x = W - 305
+    fc2_y = 580
+    fc2_w = 260
+    fc2_h = 160
     draw_rounded_rect(draw, [fc2_x, fc2_y, fc2_x + fc2_w, fc2_y + fc2_h], radius=16, fill=(15, 20, 25, 240), outline=(29, 155, 240, 160), width=2)
-    draw.text((fc2_x + 20, fc2_y + 18), "★ 正文预览行号", fill=(29, 155, 240), font=get_font(18, bold=True))
-    draw.text((fc2_x + 20, fc2_y + 50), "• AST 零开销行号槽位\n• 等宽对齐与悬停发光\n• 工具栏一键显隐切换", fill=(200, 205, 210), font=get_font(14))
+    draw.text((fc2_x + 20, fc2_y + 18), "★ 极速加载 & 智能分包", fill=(29, 155, 240), font=get_font(17, bold=True))
+    draw.text((fc2_x + 20, fc2_y + 50), "• 首屏 JS 体积缩减 84%\n• 多进程异步预读即时渲染\n• AST 零开销行号自动映射\n• Mermaid 3x 超清导出", fill=(200, 205, 210), font=get_font(13))
 
     # 5. Save image to all required target paths
     target_paths = [
         r"C:\Users\chunxvzhang\Desktop\codex\screenshot.png",
         r"C:\Users\chunxvzhang\Desktop\codex\public\screenshot.png",
+        r"C:\Users\chunxvzhang\Desktop\codex\dist\screenshot.png",
         r"C:\Users\chunxvzhang\Desktop\codex\release\BookMD-Reader-win-x64\assets\screenshot.png",
     ]
 
