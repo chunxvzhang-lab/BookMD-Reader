@@ -1,6 +1,6 @@
 import mermaid from "mermaid";
 
-export type MermaidTheme = "default" | "dark";
+export type MermaidTheme = "default" | "dark" | "neutral";
 
 type RenderMermaidOptions = {
   theme?: MermaidTheme;

@@ -9,6 +9,7 @@ import {
   Search,
   Sun,
   Sparkles,
+  Feather,
   FileText,
   Info,
   Maximize2,
@@ -54,16 +55,6 @@ export function ActivityBar({
   onOpenAbout,
   isDirty = false,
 }: ActivityBarProps) {
-  const getNextTheme = (current: ThemeMode): ThemeMode => {
-    if (current === "twitter") return "light";
-    return "twitter";
-  };
-
-  const getThemeTitle = (current: ThemeMode): string => {
-    if (current === "twitter") return "当前: 极客暗黑 (点击切换日光浅色)";
-    return "当前: 日光浅色 (点击切换极客暗黑)";
-  };
-
   return (
     <nav className="activity-bar" aria-label="快捷工具栏">
       {/* Top Brand Logo */}
@@ -198,19 +189,35 @@ export function ActivityBar({
           </button>
         )}
 
-        <button
-          type="button"
-          className={`activity-btn ${theme === "twitter" ? "theme-twitter-active" : ""}`}
-          onClick={() => onThemeChange(getNextTheme(theme))}
-          data-tooltip={getThemeTitle(theme)}
-          aria-label="切换主题"
-        >
-          {theme === "twitter" ? (
-            <Sparkles size={18} color="#1d9bf0" />
-          ) : (
-            <Sun size={18} />
-          )}
-        </button>
+        <div className="activity-viewmodes activity-thememodes" role="group" aria-label="主题模式">
+          <button
+            type="button"
+            className={`activity-btn mini ${theme === "light" ? "active" : ""}`}
+            onClick={() => onThemeChange("light")}
+            data-tooltip="日光浅色 (Light)"
+            aria-label="日光浅色"
+          >
+            <Sun size={15} />
+          </button>
+          <button
+            type="button"
+            className={`activity-btn mini ${theme === "eink" ? "active theme-eink-active" : ""}`}
+            onClick={() => onThemeChange("eink")}
+            data-tooltip="仿电子墨水屏 (E-ink Paper)"
+            aria-label="仿电子墨水屏"
+          >
+            <Feather size={15} />
+          </button>
+          <button
+            type="button"
+            className={`activity-btn mini ${theme === "twitter" ? "active theme-twitter-active" : ""}`}
+            onClick={() => onThemeChange("twitter")}
+            data-tooltip="极客暗黑 (Geek Dark)"
+            aria-label="极客暗黑"
+          >
+            <Sparkles size={15} />
+          </button>
+        </div>
       </div>
     </nav>
   );

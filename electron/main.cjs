@@ -446,12 +446,12 @@ ipcMain.handle("bookmd:get-launch-file-path", async (event) => {
 
 ipcMain.handle("bookmd:set-native-theme", (_event, theme) => {
   const isDark = theme === "twitter" || theme === "dark";
-  const isLight = theme === "light";
+  const isLight = theme === "light" || theme === "eink";
   nativeTheme.themeSource = isDark ? "dark" : (isLight ? "light" : "system");
   for (const win of windows) {
     try {
       if (win && !win.isDestroyed()) {
-        win.setBackgroundColor(isDark ? "#000000" : "#f6f7f4");
+        win.setBackgroundColor(isDark ? "#000000" : (theme === "eink" ? "#f4f1ea" : "#f6f7f4"));
       }
     } catch {}
   }

@@ -30,6 +30,7 @@ import { useDocumentSession } from "./hooks/useDocumentSession";
 import { useReadingTracker } from "./hooks/useReadingTracker";
 import { createBookmark, resolveBookmark } from "./services/bookmarks";
 import { loadChapterMarkdown } from "./services/bookSource";
+import { renderMermaid, type MermaidTheme } from "./services/mermaid";
 import { extractExcerpt, extractHeadingsFromSource, findHeadingLineInSource, findInChapter, renderMarkdown } from "./services/markdown";
 import {
   loadBookmarks,
@@ -76,7 +77,6 @@ export function App() {
   const [directoryOpen, setDirectoryOpen] = useState(true);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("toc");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [zenMode, setZenMode] = useState(false);
   const [typewriterMode, setTypewriterMode] = useState(() => {
     try {
       return localStorage.getItem("bookmd.editor.typewriter") === "true";
@@ -750,10 +750,6 @@ export function App() {
     },
     [chapterId, dualSplitTabId, selectChapter]
   );
-
-  const toggleZenMode = useCallback(() => {
-    setZenMode((prev) => !prev);
-  }, []);
 
   const toggleTypewriterMode = useCallback(() => {
     setTypewriterMode((prev) => {
@@ -1443,12 +1439,6 @@ export function App() {
         target?.isContentEditable ||
         target?.closest(".cm-editor");
 
-      if (event.key === "F10") {
-        event.preventDefault();
-        toggleZenMode();
-        return;
-      }
-
       if (event.key === "F11") {
         event.preventDefault();
         toggleFullscreen();
@@ -1464,11 +1454,6 @@ export function App() {
         if (dualSplitTabId) {
           event.preventDefault();
           handleCloseDualSplit();
-          return;
-        }
-        if (zenMode) {
-          event.preventDefault();
-          setZenMode(false);
           return;
         }
         if (isFullscreen) {
@@ -1580,8 +1565,6 @@ export function App() {
     tabs,
     toggleFullscreen,
     toggleTypewriterMode,
-    toggleZenMode,
-    zenMode,
   ]);
 
   // Toast auto-clear
@@ -1604,9 +1587,9 @@ export function App() {
 
   return (
     <div
-      className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${zenMode ? " is-zen-mode" : ""}${isDualSplitMode ? " is-dual-split-mode" : ""}`}
+      className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${isDualSplitMode ? " is-dual-split-mode" : ""}`}
     >
-      {!zenMode && !isDualSplitMode && (
+      {!isDualSplitMode && (
         <ActivityBar
           directoryOpen={directoryOpen}
           onToggleDirectory={() => setDirectoryOpen((open) => !open)}
@@ -1650,8 +1633,6 @@ export function App() {
             }
             typewriterMode={typewriterMode}
             onToggleTypewriterMode={toggleTypewriterMode}
-            zenMode={zenMode}
-            onToggleZenMode={toggleZenMode}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
             onPrevious={goPrevious}
@@ -1664,8 +1645,6 @@ export function App() {
             canSave={Boolean(session?.writable)}
             onOpenMarkdown={openMarkdownFile}
             onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
-            onOpenAbout={() => setAboutOpen(true)}
-            onFocusSearch={focusSearch}
             onFontScaleChange={(fontScale) => {
               setPreferences((current) => {
                 const next = { ...current, fontScale };
@@ -1677,7 +1656,7 @@ export function App() {
         )}
 
       <div className="workspace">
-        {!zenMode && !isDualSplitMode && directoryOpen ? (
+        {!isDualSplitMode && directoryOpen ? (
           manifest ? (
             <div style={{ width: directoryWidth, flex: `0 0 ${directoryWidth}px` }} className="chapter-list-container">
               <ChapterList
@@ -1695,7 +1674,7 @@ export function App() {
           )
         ) : null}
 
-        {!zenMode && !isDualSplitMode && directoryOpen && (
+        {!isDualSplitMode && directoryOpen && (
           <div
             className={`layout-resizer ${resizingType === "dir" ? "is-active" : ""}`}
             onMouseDown={handleDirResizeMouseDown}
@@ -1706,7 +1685,7 @@ export function App() {
           />
         )}
 
-        {!zenMode && !isDualSplitMode && sidebarOpen && manifest ? (
+        {!isDualSplitMode && sidebarOpen && manifest ? (
           <>
             <aside className="side-panel" style={{ width: sidebarWidth, flex: `0 0 ${sidebarWidth}px` }}>
               <div className="tabs" role="tablist" aria-label="侧栏区域">
@@ -1882,18 +1861,16 @@ export function App() {
         </section>
       </div>
 
-      {!zenMode && (
-        <StatusBar
-          fileName={session?.fileName}
-          chapterTitle={activeChapter?.title}
-          source={session?.source}
-          isDirty={isDirty}
-          writable={session?.writable}
-          lineEnding={session?.lineEnding}
-          viewMode={viewMode}
-          isLargeDocument={isLargeDocument}
-        />
-      )}
+      <StatusBar
+        fileName={session?.fileName}
+        chapterTitle={activeChapter?.title}
+        source={session?.source}
+        isDirty={isDirty}
+        writable={session?.writable}
+        lineEnding={session?.lineEnding}
+        viewMode={viewMode}
+        isLargeDocument={isLargeDocument}
+      />
     </div>
 
       {/* Media Lightbox Modal */}
@@ -1944,8 +1921,9 @@ const tabLabels: Record<SidebarTab, string> = {
   search: "搜索",
 };
 
-function resolveMermaidTheme(theme: ThemeMode): "default" | "dark" {
+function resolveMermaidTheme(theme: ThemeMode): MermaidTheme {
   if (theme === "twitter") return "dark";
+  if (theme === "eink") return "neutral";
   if (theme === "light") return "default";
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "default";
 }

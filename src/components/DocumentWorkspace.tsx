@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { EditorViewMode, RenderedChapter, ThemeMode } from "../core/types";
+import type { MermaidTheme } from "../services/mermaid";
 import { EditorPane } from "./EditorPane";
 import { ReaderPane } from "./ReaderPane";
 import { RefreshCw, AlertCircle, Link2, Link2Off } from "lucide-react";
@@ -18,7 +19,7 @@ type DocumentWorkspaceProps = {
   containerRef: React.RefObject<HTMLElement | null>;
   theme: ThemeMode;
   fontScale: number;
-  mermaidTheme: "default" | "dark";
+  mermaidTheme: MermaidTheme;
   onMermaidError: () => void;
   onSave?: () => void;
   isLargeDocument?: boolean;

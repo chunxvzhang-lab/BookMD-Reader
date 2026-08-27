@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.5.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.5.0" />
-  <img src="https://img.shields.io/badge/Theme-Geek_Dark-1D9BF0?style=flat-square" alt="Geek Dark Theme" />
+  <img src="https://img.shields.io/badge/Version-v1.5.1-1D9BF0?style=flat-square&logo=github" alt="Version 1.5.1" />
+  <img src="https://img.shields.io/badge/Theme-E--ink%20Paper%20%7C%20Geek%20Dark-1D9BF0?style=flat-square" alt="Themes" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
   <img src="https://img.shields.io/badge/Electron_42-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron 42" />
@@ -101,11 +101,12 @@
   - 优化源码模式下选区与行号联动机制，多行代码划选复制平滑稳定不抖动。
   - 源码模式下点击大纲 (TOC) 或目录精准平滑滚动定位到对应代码行。
 
-### 2. 现代视觉与双主题交互系统
-- **极客暗夜（Twitter Dark）与暖橙日光（Warm Light）双主题**：
-  - **极客暗夜主题**：采用 Lights Out 纯黑底色 (`#000000`)、电光蓝高亮 (`#1D9BF0`) 与发丝微边框 (`#2F3336`)。
-  - **日光浅色主题**：采用自然柔白底色 (`#ffffff` / `#f5f5f7`)、暖橙黄强调色 (`#D97706` / `#F59E0B`) 与温暖轻快的高亮配色。
-  - 支持快捷一键平滑无感切换。
+### 2. 现代视觉与三主题无缝交互系统
+- **三款专属调优主题（日光浅色 · 仿电子墨水屏 · 极客暗黑）**：
+  - **📖 仿电子墨水屏主题（E-ink Paper，v1.5.1 新增）**：模拟实体电子纸温润质感，采用高对比度黑白灰排版（`#f4f1ea` 纸白背景与 `#1a1a1a` 沉墨字色）、精致衬线排版、CodeMirror 6 专属墨水屏印刷风高亮以及 Mermaid 纯净灰度墨水矢量渲染，长时间沉浸阅读护眼无疲劳。
+  - **☀️ 日光浅色主题（Warm Light）**：采用自然柔白底色 (`#ffffff` / `#f5f5f7`)、暖橙黄强调色 (`#D97706` / `#F59E0B`) 与温暖轻快的高亮配色。
+  - **✨ 极客暗夜主题（Geek Dark）**：采用 Lights Out 纯黑底色 (`#000000`)、电光蓝高亮 (`#1D9BF0`) 与发丝微边框 (`#2F3336`)。
+  - **无缝平滑轮播**：活动栏底部一键三态循环切换（日光浅色 ⇄ 仿电子墨水屏 ⇄ 极客暗黑）。
 - **📐 界面多栏边界自由鼠标拖拽调整（Resizable Splitters）**：
   - **文档目录栏**（`ChapterList`，160px ~ 480px）、**大纲/书签/搜索侧栏**（`side-panel`，180px ~ 520px）以及**分屏模式下编辑器与预览窗口**（`DocumentWorkspace`，15% ~ 85%）均支持鼠标自由拖拽调整。
   - 分栏处配备专属 `.layout-resizer` 分隔线，鼠标悬停即变双向调整箭头（`col-resize`），拖拽时光晕高亮反馈，并锁定文字划选（`user-select: none`），体验极致丝滑。
@@ -114,7 +115,7 @@
   - 顶部品牌专属 KnowSpace 超立方空间 Logo 徽章（摸鱼Lab 研发出品）。
   - 快捷切换：📁 **文档目录树**、📑 **文档大纲 (TOC)**、⭐ **精选书签**、🔍 **全文即时检索**。
   - 快速操作：➕ **新建文档** (`Ctrl+N`)、📂 **打开目录** (`Ctrl+Shift+O`)。
-  - 底部控制：微型三段式视图切换器、精选双主题无缝切换（☀️ 日光浅色 / ✨ 极客暗黑）。
+  - 底部控制：微型三段式视图切换器、精选三主题无缝切换（☀️ 日光浅色 / 📖 仿电子墨水屏 / ✨ 极客暗黑）。
 - **底部实时状态信息栏（Footer Dock Bar）**：
   - **保存状态徽章**：绿色已保存（`● 已保存`）、橙色修改中（`● 未保存`）、青色只读标识。
   - **实时文档统计**：字数、词数统计及阅读预估时长（例如 `2,450 字符 • 约 6 分钟阅读`）。

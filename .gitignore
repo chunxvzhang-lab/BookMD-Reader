@@ -4,15 +4,13 @@
 # Build and release outputs
 /dist
 /release/*
-!/release/BookMD-Reader-win-x64
-/release/BookMD-Reader-win-x64/*
-!/release/BookMD-Reader-win-x64/release
-!/release/BookMD-Reader-win-x64/release/**
-!/release/BookMD-Reader-win-x64/docs
-!/release/BookMD-Reader-win-x64/docs/**
-!/release/BookMD-Reader-win-x64/assets
-!/release/BookMD-Reader-win-x64/assets/**
-!/release/BookMD-Reader-win-x64/*.md
+!/release/KnowSpace-win-x64
+/release/KnowSpace-win-x64/*
+!/release/KnowSpace-win-x64/docs
+!/release/KnowSpace-win-x64/docs/**
+!/release/KnowSpace-win-x64/assets
+!/release/KnowSpace-win-x64/assets/**
+!/release/KnowSpace-win-x64/*.md
 
 
 # Local agent and Gemini files

@@ -7,13 +7,10 @@ import {
   FileUp,
   FilePlus2,
   Save,
-  Search,
   Type,
-  Info,
   Maximize2,
   Minimize2,
   Hash,
-  Sparkles,
   Eye,
 } from "lucide-react";
 import type { EditorViewMode, ThemeMode } from "../core/types";
@@ -35,8 +32,6 @@ type ToolbarProps = {
   onToggleLineNumbers?: () => void;
   typewriterMode?: boolean;
   onToggleTypewriterMode?: () => void;
-  zenMode?: boolean;
-  onToggleZenMode?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   onPrevious: () => void;
@@ -49,10 +44,8 @@ type ToolbarProps = {
   canSave?: boolean;
   onOpenMarkdown: (file: File) => void;
   onOpenDirectory?: () => void;
-  onFocusSearch: () => void;
   onThemeChange?: (theme: ThemeMode) => void;
   onFontScaleChange: (scale: number) => void;
-  onOpenAbout?: () => void;
 };
 
 export function Toolbar(props: ToolbarProps) {
@@ -121,15 +114,6 @@ export function Toolbar(props: ToolbarProps) {
           <ChevronRight size={18} />
         </button>
 
-        <button
-          aria-label="搜索文档内容"
-          className="icon-button"
-          onClick={props.onFocusSearch}
-          title="搜索内容 (Ctrl+F)"
-        >
-          <Search size={17} />
-        </button>
-
         <input
           ref={fileInputRef}
           className="visually-hidden"
@@ -177,17 +161,6 @@ export function Toolbar(props: ToolbarProps) {
           </button>
         )}
 
-        {props.onToggleZenMode && (
-          <button
-            className={`icon-button ${props.zenMode ? "active" : ""}`}
-            onClick={props.onToggleZenMode}
-            aria-label={props.zenMode ? "退出专注模式" : "进入专注模式"}
-            title={props.zenMode ? "专注模式：已开启（F10 / Esc）" : "专注模式：已关闭（F10）"}
-          >
-            <Sparkles size={17} />
-          </button>
-        )}
-
         {props.onToggleLineNumbers && (
           <button
             className={`icon-button ${props.showLineNumbers ? "active" : ""}`}
@@ -196,17 +169,6 @@ export function Toolbar(props: ToolbarProps) {
             title={props.showLineNumbers ? "正文行号：已开启（点击隐藏）" : "正文行号：已隐藏（点击开启）"}
           >
             <Hash size={17} />
-          </button>
-        )}
-
-        {props.onOpenAbout && (
-          <button
-            className="icon-button"
-            onClick={props.onOpenAbout}
-            aria-label="关于应用"
-            title="关于 BookMD Reader"
-          >
-            <Info size={18} />
           </button>
         )}
 

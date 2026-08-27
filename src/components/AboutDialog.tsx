@@ -77,7 +77,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div>
               <div className="about-header-title-row">
                 <span className="about-app-name">KnowSpace</span>
-                <span className="about-version-badge">v1.5.0</span>
+                <span className="about-version-badge">v1.5.1</span>
               </div>
               <p className="about-tagline">Personal Knowledge Workspace · 个人知识工作台</p>
             </div>
@@ -103,33 +103,30 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div className="about-card-title">
               <History size={16} className="about-icon text-blue" />
               <span>版本更新日志 · What&apos;s New</span>
-              <span className="about-changelog-version-badge">v1.5.0</span>
+              <span className="about-changelog-version-badge">v1.5.1</span>
             </div>
             <div className="about-changelog-list">
               <div className="about-changelog-group">
                 <div className="about-changelog-group-label">
                   <Zap size={12} className="text-amber" />
-                  <span>新功能</span>
+                  <span>v1.5.1 新增仿电子墨水屏风格</span>
                 </div>
                 <ul className="about-changelog-items">
-                  <li>🏗️ 全面重构为 <strong>KnowSpace</strong> 个人知识工作台，品牌与架构同步升级</li>
-                  <li>✨ 六大核心能力体系（Reader · Editor · Library · Search · Visual · Security）</li>
-                  <li>🔍 段落卡片聚合即时检索，支持多级大纲随动追踪</li>
-                  <li>🌳 多级目录树展开记忆，单文档与多层知识库智能载入</li>
-                  <li>📊 Mermaid 图表 3× 超清导出，支持高质毛玻璃灯箱平移缩放</li>
-                  <li>🛡️ 物理事务原子落盘，UTF-8 换行保真与写入冲突拦截</li>
+                  <li>📖 <strong>仿电子墨水屏 (E-ink Paper)</strong> 护眼阅读与写作沉浸主题上线，模拟温润纸质质感</li>
+                  <li>🖋️ <strong>CodeMirror 6 专属墨水语法</strong>：高对比黑白墨水排版、内敛行高亮与低噪字形</li>
+                  <li>⚖️ <strong>三主题无缝平滑轮播</strong>：日光浅色 (Light) ⇄ 仿电子墨水屏 (E-ink) ⇄ 极客暗黑 (Dark)</li>
+                  <li>📊 <strong>Monochrome 墨水架构图</strong>：Mermaid 图表自动适配 Neutral 纯净灰度墨水矢量渲染</li>
                 </ul>
               </div>
               <div className="about-changelog-group">
                 <div className="about-changelog-group-label">
                   <Wrench size={12} className="text-green" />
-                  <span>优化与修复</span>
+                  <span>v1.5.0 历史特性</span>
                 </div>
                 <ul className="about-changelog-items">
-                  <li>⚡ 双向零延迟同步滚动，行号精度与编辑器联动精准度大幅提升</li>
-                  <li>🎨 重新设计品牌视觉，采用「超立方空间」HyperSpace Cube 主题图标</li>
-                  <li>🔒 优化外部链接安全策略，统一 openExternal API 调用</li>
-                  <li>💾 修复大文件保存偶发丢失换行符的边界问题</li>
+                  <li>🏗️ 升级为 <strong>KnowSpace</strong> 个人知识工作台，升级六大核心知识管理能力体系</li>
+                  <li>🔍 段落卡片聚合即时检索与多级目录树展开记忆</li>
+                  <li>🛡️ 物理事务原子落盘与外部链接安全防护体系</li>
                 </ul>
               </div>
             </div>

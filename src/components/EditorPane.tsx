@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { EditorState, Compartment } from "@codemirror/state";
+import { EditorState, Compartment, type Extension } from "@codemirror/state";
 import {
   EditorView,
   keymap,
@@ -68,16 +68,86 @@ const lightHighlightStyle = HighlightStyle.define([
   { tag: tags.invalid, color: "#cf222e" },
 ]);
 
-function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode = false) {
-  const accentColor = isDarkMode ? "#1d9bf0" : "#d97706";
+// Monochrome, book-press typography highlighting for E-ink Theme
+const einkHighlightStyle = HighlightStyle.define([
+  { tag: tags.heading, color: "#111111", fontWeight: "700" },
+  { tag: tags.heading1, color: "#000000", fontWeight: "800", textDecoration: "underline" },
+  { tag: tags.heading2, color: "#1a1a1a", fontWeight: "700" },
+  { tag: tags.heading3, color: "#222222", fontWeight: "600" },
+  { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword], color: "#111111", fontWeight: "700" },
+  { tag: [tags.name, tags.deleted, tags.character, tags.macroName], color: "#222222", fontWeight: "600" },
+  { tag: [tags.propertyName], color: "#1a1a1a" },
+  { tag: [tags.variableName, tags.definition(tags.variableName)], color: "#262626" },
+  { tag: [tags.function(tags.variableName), tags.labelName], color: "#111111", fontWeight: "600" },
+  { tag: [tags.color, tags.constant(tags.name), tags.standard(tags.name)], color: "#333333", fontWeight: "600" },
+  { tag: [tags.definition(tags.typeName), tags.typeName], color: "#111111", fontWeight: "600" },
+  { tag: [tags.number, tags.changed, tags.annotation, tags.modifier, tags.self, tags.namespace], color: "#222222" },
+  { tag: [tags.operator, tags.operatorKeyword, tags.url, tags.escape, tags.regexp, tags.special(tags.string)], color: "#333333" },
+  { tag: [tags.meta, tags.comment], color: "#666666", fontStyle: "italic" },
+  { tag: tags.strong, fontWeight: "700", color: "#000000" },
+  { tag: tags.emphasis, fontStyle: "italic" },
+  { tag: tags.strikethrough, textDecoration: "line-through" },
+  { tag: tags.link, color: "#111111", textDecoration: "underline" },
+  { tag: tags.monospace, color: "#1a1a1a", backgroundColor: "rgba(0, 0, 0, 0.05)", borderRadius: "3px" },
+  { tag: [tags.string, tags.inserted], color: "#3a3a3a", fontStyle: "italic" },
+  { tag: [tags.atom, tags.bool, tags.special(tags.variableName)], color: "#111111", fontWeight: "600" },
+  { tag: tags.invalid, color: "#555555", textDecoration: "underline wavy" },
+]);
+
+function buildCustomTheme(theme: ThemeMode, fontScale: number, typewriterMode = false) {
+  const isDarkMode =
+    theme === "twitter" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+  const isEink = theme === "eink";
+
+  const accentColor = isDarkMode ? "#1d9bf0" : isEink ? "#1a1a1a" : "#d97706";
+  const activeLineIndicator = isDarkMode ? "#1d9bf0" : isEink ? "#9c9586" : "#d97706";
+  const bgColor = isDarkMode ? "#000000" : isEink ? "#f8f6f0" : "#ffffff";
+  const textColor = isDarkMode ? "#f1f5f9" : isEink ? "#1a1a1a" : "#1f2328";
+  const gutterBg = isDarkMode ? "#0a0d12" : isEink ? "#ede8df" : "#f8fafc";
+  const gutterColor = isDarkMode ? "#71767b" : isEink ? "#7c776e" : "#64748b";
+  const gutterBorder = isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : isEink ? "1px solid #d5cfc0" : "1px solid #e2e8f0";
+  const activeLineBg = isDarkMode
+    ? "rgba(29, 155, 240, 0.16) !important"
+    : isEink
+    ? "#ded9cd !important"
+    : "rgba(245, 158, 11, 0.10) !important";
+  const activeGutterBg = isDarkMode
+    ? "rgba(29, 155, 240, 0.22) !important"
+    : isEink
+    ? "#ded9cd !important"
+    : "rgba(245, 158, 11, 0.16) !important";
+  const activeGutterColor = isDarkMode
+    ? "#1d9bf0 !important"
+    : isEink
+    ? "#1a1a1a !important"
+    : "#d97706 !important";
+  const selectionBg = isDarkMode
+    ? "rgba(29, 155, 240, 0.35) !important"
+    : isEink
+    ? "rgba(0, 0, 0, 0.10) !important"
+    : "rgba(245, 158, 11, 0.25) !important";
+  const matchBg = isDarkMode
+    ? "rgba(29, 155, 240, 0.25) !important"
+    : isEink
+    ? "#d5cebf !important"
+    : "rgba(245, 158, 11, 0.18) !important";
+  const matchOutline = isDarkMode
+    ? "1px solid rgba(29, 155, 240, 0.6) !important"
+    : isEink
+    ? "1px solid #a8a090 !important"
+    : "1px solid rgba(217, 119, 6, 0.45) !important";
+
   return EditorView.theme(
     {
       "&": {
         height: "100%",
         fontSize: `${14 * fontScale}px`,
         fontFamily: '"Cascadia Code", "Fira Code", Consolas, "Courier New", monospace',
-        backgroundColor: isDarkMode ? "#000000" : "#ffffff",
-        color: isDarkMode ? "#f1f5f9" : "#1f2328",
+        backgroundColor: bgColor,
+        color: textColor,
       },
       ".cm-scroller": {
         overflow: "auto",
@@ -94,44 +164,46 @@ function buildCustomTheme(isDarkMode: boolean, fontScale: number, typewriterMode
         borderLeftWidth: "2.5px !important",
       },
       ".cm-gutters": {
-        backgroundColor: isDarkMode ? "#0a0d12" : "#f8fafc",
-        color: isDarkMode ? "#71767b" : "#64748b",
-        borderRight: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
+        backgroundColor: gutterBg,
+        color: gutterColor,
+        borderRight: gutterBorder,
         paddingRight: "6px",
       },
-      // Active line: distinct luminous background with inset accent edge
       ".cm-activeLine": {
-        backgroundColor: isDarkMode
-          ? "rgba(29, 155, 240, 0.16) !important"
-          : "rgba(245, 158, 11, 0.10) !important",
-        boxShadow: `inset 3.5px 0 0 0 ${accentColor} !important`,
+        backgroundColor: activeLineBg,
+        boxShadow: `inset 3.5px 0 0 0 ${activeLineIndicator} !important`,
       },
-      // Active line gutter line number
       ".cm-activeLineGutter": {
-        backgroundColor: isDarkMode
-          ? "rgba(29, 155, 240, 0.22) !important"
-          : "rgba(245, 158, 11, 0.16) !important",
-        color: `${accentColor} !important`,
+        backgroundColor: activeGutterBg,
+        color: activeGutterColor,
         fontWeight: "bold",
       },
-      // Selection highlight
       ".cm-selectionBackground, .cm-selectionLayer .cm-selectionBackground, ::selection": {
-        backgroundColor: isDarkMode
-          ? "rgba(29, 155, 240, 0.35) !important"
-          : "rgba(245, 158, 11, 0.25) !important",
+        backgroundColor: selectionBg,
       },
-      // Selection search match
       ".cm-selectionMatch": {
-        backgroundColor: isDarkMode
-          ? "rgba(29, 155, 240, 0.25) !important"
-          : "rgba(245, 158, 11, 0.18) !important",
-        outline: isDarkMode
-          ? "1px solid rgba(29, 155, 240, 0.6) !important"
-          : "1px solid rgba(217, 119, 6, 0.45) !important",
+        backgroundColor: matchBg,
+        outline: matchOutline,
       },
     },
     { dark: isDarkMode }
   );
+}
+
+function resolveHighlightExtensions(theme: ThemeMode, customBaseTheme: Extension): Extension[] {
+  const isDarkMode =
+    theme === "twitter" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+
+  if (isDarkMode) {
+    return [oneDark, customBaseTheme];
+  }
+  if (theme === "eink") {
+    return [customBaseTheme, syntaxHighlighting(einkHighlightStyle), syntaxHighlighting(defaultHighlightStyle, { fallback: true })];
+  }
+  return [customBaseTheme, syntaxHighlighting(lightHighlightStyle), syntaxHighlighting(defaultHighlightStyle, { fallback: true })];
 }
 
 export function EditorPane({
@@ -211,7 +283,7 @@ export function EditorPane({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale, typewriterMode);
+    const customBaseTheme = buildCustomTheme(theme, fontScale, typewriterMode);
 
     const saveKeyBinding = keymap.of([
       {
@@ -259,11 +331,7 @@ export function EditorPane({
           ...foldKeymap,
         ]),
         saveKeyBinding,
-        themeCompartment.current.of(
-          isDarkMode
-            ? [oneDark, customBaseTheme]
-            : [customBaseTheme, syntaxHighlighting(lightHighlightStyle), syntaxHighlighting(defaultHighlightStyle, { fallback: true })]
-        ),
+        themeCompartment.current.of(resolveHighlightExtensions(theme, customBaseTheme)),
         readOnlyCompartment.current.of(EditorState.readOnly.of(readOnly)),
         fontSizeCompartment.current.of(
           EditorView.theme({
@@ -335,18 +403,14 @@ export function EditorPane({
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
-    const customBaseTheme = buildCustomTheme(isDarkMode, fontScale, typewriterMode);
+    const customBaseTheme = buildCustomTheme(theme, fontScale, typewriterMode);
     view.dispatch({
-      effects: themeCompartment.current.reconfigure(
-        isDarkMode
-          ? [oneDark, customBaseTheme]
-          : [customBaseTheme, syntaxHighlighting(lightHighlightStyle), syntaxHighlighting(defaultHighlightStyle, { fallback: true })]
-      ),
+      effects: themeCompartment.current.reconfigure(resolveHighlightExtensions(theme, customBaseTheme)),
     });
     if (typewriterMode) {
       triggerSmoothTypewriterScroll(view);
     }
-  }, [isDarkMode, fontScale, typewriterMode]);
+  }, [theme, isDarkMode, fontScale, typewriterMode]);
 
   // Update font scale dynamically
   useEffect(() => {

@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
-    tag = "v1.5.0"
-    title = "KnowSpace v1.5.0 - 全新品牌「个人知识工作台」、超立方空间图标与多文档分屏"
+    tag = "v1.5.1"
+    title = "KnowSpace v1.5.1 - 新增仿电子墨水屏纸质主题、三主题直选与界面极简体验优化"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -51,7 +51,7 @@ def main():
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "BookMD-Release-Script"
+        "User-Agent": "KnowSpace-Release-Script"
     }
 
     rel_data = None
@@ -75,72 +75,38 @@ def main():
             time.sleep(2)
 
     # 3. Create Release Body
-    body_md = """# 🚀 KnowSpace v1.5.0
+    body_md = """# 🚀 KnowSpace v1.5.1
 
-**KnowSpace** 现已全面完成品牌与架构升级！
-> **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
+**KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次版本迭代带来了 **「超立方空间」HyperSpace Cube 全新品牌应用图标**、**多文档左右分屏对比模式**、**标签页分离独立新窗口**、**84% 首屏包体积压缩与毫秒秒开**、**Windows 桌面贴靠分栏无遮挡适配** 以及 **暖橙黄浅色高亮体系**！
+本次 **v1.5.1** 版本迭代重磅带来了全新的 **「仿电子墨水屏纸质主题 (E-ink Paper Mode)」**，全链路重构了 **三主题直选分段控制组**，并进行了工具栏视觉降噪与界面极简纯粹化！
 
 ---
 
-### 🏛️ KnowSpace 核心能力体系
+### ✨ v1.5.1 核心更新亮点
 
-- **📖 Reader** — 现代化 Markdown 沉浸式阅读与排版引擎
-- **✍️ Editor** — CodeMirror 6 极客编辑、零延迟 AST 语法高精度映射
-- **📚 Library** — 文档与多级知识库树形管理、展开状态智能持久化
-- **🔍 Search** — 全文精准定位、大纲（TOC）实时追踪与高亮
-- **🎨 Visual & Lightbox** — Mermaid 架构图 3× 超清全幅导出、图片高质无损灯箱
+1. **📖 新增仿电子墨水屏纸质主题（E-ink Paper Mode）**：
+   - 专为长时间深度阅读与写作打造的温暖纸张质感底色（`#f8f6f0` 暖羊皮纸米白）与高对比沉稳墨色字体（`#1a1a1a`）。
+   - 彻底告别屏幕强光与荧光蓝光刺激，呈现如实体纸质书籍般的温润护眼质感。
 
----
+2. **🎨 墨水屏全链路统一浅灰色高亮系统**：
+   - 同步阅读定位指示（Sync Scroll / Selection）、搜索跳转高亮及关键词标记在墨水屏模式下统一采用优雅素净的浅灰色调（`#ded9cd` 底色与 `#9c9586` 灰框）。
+   - 彻底剔除刺眼荧光黄与亮橙色，左右分屏对比与单屏阅读视觉高度一致。
 
-### ✨ v1.5.0 核心更新亮点
+3. **🎛️ 主题直选分段控制组（拒绝轮播，一键直达）**：
+   - 废除单按钮循环轮播的低效交互，在左侧导航栏底部新增直选式三主题分段控制组：
+     - ☀️ **日光浅色 (Light)**：温暖明媚
+     - 📖 **仿电子墨水屏 (E-ink Paper)**：温润沉静
+     - ✨ **极客暗黑 (Geek Dark)**：深邃电光蓝
+   - 单击专属独立按钮直达目标主题，当前主题激活状态一目了然。
 
-1. **💎 全新「超立方空间」HyperSpace Cube 专属应用图标**：
-   - **构型**：一个半透明悬浮的等距等角投影（Isometric）多面体空间，内部悬浮着一颗发光的知识晶体核心（Knowledge Core）。
-   - **质感**：磨砂玻璃（Frosted Glassmorphism）质感，棱角分明，配合发光切面。
-   - **寓意**：收纳一切想法、文档、图表与知识的私密安全空间。
-   - **全链路换装**：全面覆盖 Windows `.exe` 原生可执行文件（含 `256×256` 至 `16×16` 完整 6 层 32-bit RGBA 帧）、窗口标题栏、任务栏以及内部关于界面与侧边活动栏。
+4. **📊 Mermaid 架构图 Neutral 风格深度适配**：
+   - 在墨水屏模式下，Mermaid 流程图与架构图自动切换至高雅的 Neutral 黑白低饱和度素雅风格，导出 3× 超清图片依然清新脱俗。
 
-2. **⚡ 独立新窗口毫秒秒开与性能极速优化（Instant Window Launch & Bundle Splitting）**：
-   - **84% 首屏 JS 体积大幅缩减**：对 Mermaid、CodeMirror 6、Highlight.js、KaTeX 等庞大模块进行细粒度 Rollup 代码分包，主入口体积从 2,001 kB 锐减至 332 kB，极大降低 Chromium V8 脚本解析执行耗时。
-   - **主进程异步预读与同步即时握手**：分离标签页拉起新窗口时，主进程在后台并行预读 Markdown，并通过预加载脚本同步注入文档数据，React 挂载首帧即刻完成正文渲染，彻底告别等待与白屏。
-
-3. **🪟 多文档左右分屏对比查看模式（Dual Document Split View）**：
-   - 在多标签页栏上右键任意未激活标签页，即可选择「🗗 开启左右分屏模式」，实现同一窗口内同时并排查看与对照两份不同的 Markdown 文档。
-   - 分屏模式下自动隐藏左侧 ActivityBar 导航栏，释放最大化水平可视面积；中间分割线支持鼠标自由拖拽调整双栏比例，支持右键一键「关闭分屏模式」。
-
-4. **🗗 标签页分离为独立新窗口（Detach Tab to Independent Window）**：
-   - 标签页右键菜单支持「🗗 分离到独立新窗口」，支持将任意标签页秒级脱离为主窗口之外的完全独立新窗口。
-   - 多窗口并行运作，每个窗口均具备独立的阅读、编辑、目录大纲与安全保存状态，多屏办公极度高效。
-
-5. **🪟 Windows 系统桌面贴靠/分栏（Snap Layouts）完美适配**：
-   - 针对 Windows 10/11 的桌面贴靠分栏（`Win + ← / →` 左右对半、3 栏并排、4 象限分栏及高 DPI 屏幕缩放）进行了深度优化。
-   - 优化系统级最小窗口尺寸限制（360×240），彻底杜绝在桌面多窗口分栏时发生窗口溢出或与相邻窗口互相遮挡的问题；在窄屏状态下自适应弹性排版，体验严丝合缝。
-
-6. **🎨 浅色主题暖橙黄高亮体系（Warm Amber-Orange Light Theme）**：
-   - 针对浅色模式全面定制了温暖雅致的暖橙黄色系（`#d97706` / `#f59e0b`），长时间阅读与写作柔和舒适、不刺眼。
-   - 编辑器光标、行号、选区、搜索命中、分屏高亮及正文高亮全链路自适应橙黄色调。
-
-7. **📑 多标签页协同编辑栏（Multi-Tabs Bar）**：
-   - 顶部原生文档标签栏，打开多个 Markdown 章节或独立文档随心并行切换。
-   - 支持未保存修改黄点呼吸灯状态（`isDirty`）、鼠标中键快速关闭。
-   - 快捷键支持：`Ctrl + W` 关闭标签、`Ctrl + Tab` / `Ctrl + Shift + Tab` 前后循环切换。
-
-8. **🔍 图片与 Mermaid 架构图无损灯箱 & 3× 超清 PNG 导出（Media Lightbox & Hi-DPI PNG Export）**：
-   - 点击正文中的任何图片或 Mermaid 渲染图，一键呼出高画质毛玻璃全屏灯箱。
-   - 支持 0.2× ~ 6× 鼠标滚轮平滑缩放、鼠标任意拖拽平移及 `Esc` 退出。
-   - Mermaid 架构图一键导出 3× Retina 超高清无裁切 PNG 图片。
-
-9. **📁 目录树多级子目录折叠与展开（Collapsible Directory Tree）**：
-   - 支持任意层级的 Markdown 目录树结构，子目录点击轻松折叠/展开，展开状态自动持久化。
-
-10. **📋 代码块一键复制与语言标签（Code Copy & Language Badges）**：
-    - 自动识别并呈现语法语言胶囊，一键复制代码至剪贴板，提供绿色 `✓ 已复制` 动效反馈。
-
-11. **🧘 专注极简模式（Zen Mode / `F10`）与打字机居中滚动（Alt+T）**：
-    - 一键隐藏侧边栏与状态栏，正文居中呈现；编辑时光标行始终保持在视口视线黄金区域。
+5. **🧹 界面纯粹化与视觉降噪**：
+   - 移除顶部工具栏右上角冗余的关于按钮、搜索按钮及专注模式遮罩逻辑。
+   - 保留左侧高效全文即时搜索面板及快捷键 `Ctrl+F`，主界面更加极简、聚焦与轻盈。
 
 ---
 
@@ -148,7 +114,7 @@ def main():
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`KnowSpace-1.5.0.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
+| **`KnowSpace-1.5.1.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
 | **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `KnowSpace.exe` 即可运行 |
 
 ---
@@ -197,28 +163,12 @@ def main():
     html_url = rel_data["html_url"]
     existing_assets = {a["name"]: a["id"] for a in rel_data.get("assets", [])}
 
-    # Clean legacy assets
-    for asset_name, asset_id in list(existing_assets.items()):
-        if "bookmd" in asset_name.lower():
-            print(f"Cleaning legacy asset {asset_name} (ID: {asset_id})...")
-            del_req = urllib.request.Request(
-                f"https://api.github.com/repos/{owner}/{repo}/releases/assets/{asset_id}",
-                headers=headers,
-                method="DELETE"
-            )
-            try:
-                with urllib.request.urlopen(del_req) as del_resp:
-                    print(f"Deleted legacy asset {asset_name}: HTTP {del_resp.status}")
-                existing_assets.pop(asset_name, None)
-            except Exception as e:
-                print(f"Notice deleting legacy asset: {e}")
-
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.5.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.5.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.5.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.5.1.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.5.1.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.5.1.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
@@ -230,7 +180,7 @@ def main():
     assets_to_upload = [
         (
             msi_path,
-            "KnowSpace-1.5.0.msi",
+            "KnowSpace-1.5.1.msi",
             "application/x-msi"
         ),
         (
@@ -290,7 +240,7 @@ def main():
                 else:
                     raise
 
-    print("\n[SUCCESS] Release v1.5.0 published successfully!")
+    print("\n[SUCCESS] Release v1.5.1 published successfully!")
     print(f"View Release: {html_url}")
 
 if __name__ == "__main__":

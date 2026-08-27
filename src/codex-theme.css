@@ -21,6 +21,27 @@
   font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", sans-serif;
 }
 
+:root[data-theme="eink"] {
+  --bg: #f4f1ea;
+  --surface: #fbf9f4;
+  --surface-2: #ede8df;
+  --text: #1a1a1a;
+  --muted: #57544e;
+  --border: #d5cebf;
+  --accent: #2b2925;
+  --accent-2: #111111;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --toolbar-surface: #eae5dc;
+  --sidebar-surface: #ede8df;
+  --panel-surface: #fbf9f4;
+  --reader-canvas: #f7f4ee;
+  --control-hover: #ded8cb;
+  --control-strong: #222222;
+  --control-strong-text: #ffffff;
+  --code-surface: #eee9df;
+  --selection: rgba(0, 0, 0, 0.12);
+}
+
 :root[data-theme="twitter"] {
   --bg: #000000;
   --surface: #0f1419;
@@ -806,5 +827,99 @@ button {
     color: #ffffff !important;
     box-shadow: 0 0 8px rgba(29, 155, 240, 0.6) !important;
   }
+}
+
+/* E-ink Mode: Consistent Light Gray Synchronized Selection Highlight */
+[data-theme="eink"] .markdown-body [data-source-line].sync-highlight-active,
+:root[data-theme="eink"] .markdown-body [data-source-line].sync-highlight-active,
+.app-shell.theme-eink .markdown-body [data-source-line].sync-highlight-active {
+  background: #ded9cd !important;
+  box-shadow: 0 0 0 1.5px #a8a090, 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 6px !important;
+}
+
+[data-theme="eink"] .markdown-body li[data-source-line].sync-highlight-active,
+:root[data-theme="eink"] .markdown-body li[data-source-line].sync-highlight-active,
+.app-shell.theme-eink .markdown-body li[data-source-line].sync-highlight-active {
+  background: #ded9cd !important;
+  box-shadow: 0 0 0 1.5px #a8a090 !important;
+  border-radius: 6px !important;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -4px;
+}
+
+/* E-ink Mode: Consistent Light Gray Search Result Jump Highlight */
+[data-theme="eink"] .markdown-body .search-highlight-active,
+:root[data-theme="eink"] .markdown-body .search-highlight-active,
+.app-shell.theme-eink .markdown-body .search-highlight-active {
+  background: #ded9cd !important;
+  box-shadow: 0 0 0 2px #9c9586, 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 8px !important;
+}
+
+/* E-ink Mode: Consistent Light Gray Search Keyword Match */
+[data-theme="eink"] .markdown-body mark.search-keyword-match,
+:root[data-theme="eink"] .markdown-body mark.search-keyword-match,
+.app-shell.theme-eink .markdown-body mark.search-keyword-match {
+  background: #d5cebf !important;
+  color: #1a1a1a !important;
+  border: 1px solid #a8a090 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ==========================================================================
+   E-ink Paper Mode Layout & Typography Refinements
+   ========================================================================== */
+.app-shell.theme-eink {
+  --reader-canvas: #f8f6f0;
+}
+
+.app-shell.theme-eink .markdown-body {
+  color: #1a1a1a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", SimSun, Georgia, serif;
+  line-height: 1.85;
+  letter-spacing: 0.015em;
+}
+
+.app-shell.theme-eink .markdown-body h1,
+.app-shell.theme-eink .markdown-body h2,
+.app-shell.theme-eink .markdown-body h3,
+.app-shell.theme-eink .markdown-body h4 {
+  color: #111111;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", SimSun, Georgia, serif;
+  font-weight: 700;
+  border-bottom-color: #d5cebf;
+}
+
+.app-shell.theme-eink .markdown-body blockquote {
+  border-left: 3.5px solid #2b2925;
+  background: rgba(0, 0, 0, 0.035);
+  color: #383530;
+}
+
+.app-shell.theme-eink .markdown-body table th {
+  background: #ede8df;
+  color: #111111;
+  border-color: #d5cebf;
+}
+
+.app-shell.theme-eink .markdown-body table td {
+  border-color: #d5cebf;
+}
+
+.app-shell.theme-eink .source-line-gutter {
+  color: #8a8376 !important;
+  border-right-color: #d5cebf !important;
+}
+
+.app-shell.theme-eink .source-line-gutter:hover {
+  color: #111111 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.app-shell.theme-eink .activity-btn.theme-eink-active {
+  background: #ded8cb;
+  color: #111111;
 }
 
