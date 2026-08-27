@@ -14,10 +14,19 @@ export function TocPanel({ headings, activeHeadingId, bookmarkedHeadingIds, onJu
 
   useEffect(() => {
     if (!activeHeadingId) return;
-    const activeButton = navRef.current?.querySelector<HTMLElement>(
+    const nav = navRef.current;
+    if (!nav) return;
+    const activeButton = nav.querySelector<HTMLElement>(
       `[data-heading-id="${CSS.escape(activeHeadingId)}"]`,
     );
-    activeButton?.scrollIntoView({ block: "nearest" });
+    if (activeButton) {
+      const navRect = nav.getBoundingClientRect();
+      const btnRect = activeButton.getBoundingClientRect();
+      if (btnRect.top < navRect.top || btnRect.bottom > navRect.bottom) {
+        const offset = activeButton.offsetTop - nav.clientHeight / 2 + activeButton.clientHeight / 2;
+        nav.scrollTo({ top: Math.max(0, offset), behavior: "smooth" });
+      }
+    }
   }, [activeHeadingId]);
 
   if (headings.length === 0) {

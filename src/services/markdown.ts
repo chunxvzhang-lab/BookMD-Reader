@@ -407,10 +407,14 @@ function addHeadingIds(fragment: DocumentFragment): Heading[] {
     const text = compactWhitespace(element.textContent ?? "");
     const id = uniqueSlug(text, seen);
     element.id = id;
+    element.setAttribute("data-heading-id", id);
+    const rawLine = element.getAttribute("data-source-line");
+    const lineNum = rawLine ? parseInt(rawLine, 10) : undefined;
     return {
       id,
       text,
       level: Number(element.tagName.slice(1)),
+      line: lineNum && !Number.isNaN(lineNum) && lineNum > 0 ? lineNum : undefined,
     };
   });
   fragment.querySelectorAll("a[href^='http']").forEach((node) => {
@@ -427,7 +431,8 @@ export function extractHeadingsFromSource(source: string): Heading[] {
   const lines = source.split("\n");
   let inCodeBlock = false;
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const trimmed = line.trim();
     if (trimmed.startsWith("```")) {
       inCodeBlock = !inCodeBlock;
@@ -439,9 +444,13 @@ export function extractHeadingsFromSource(source: string): Heading[] {
     if (match) {
       const level = match[1].length;
       if (level <= 3) {
-        const text = compactWhitespace(match[2]);
+        const cleanText = match[2]
+          .replace(/[*_~`]/g, "")
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+          .trim();
+        const text = compactWhitespace(cleanText || match[2]);
         const id = uniqueSlug(text, seen);
-        headings.push({ id, text, level });
+        headings.push({ id, text, level, line: i + 1 });
       }
     }
   }
@@ -449,6 +458,9 @@ export function extractHeadingsFromSource(source: string): Heading[] {
 }
 
 export function findHeadingLineInSource(source: string, targetHeading: Heading): number {
+  if (typeof targetHeading.line === "number" && targetHeading.line > 0) {
+    return targetHeading.line;
+  }
   const lines = source.split("\n");
   let inCodeBlock = false;
   const targetText = targetHeading.text.trim().toLowerCase();
@@ -464,13 +476,17 @@ export function findHeadingLineInSource(source: string, targetHeading: Heading):
     const match = line.match(/^(#{1,6})\s+(.*)$/);
     if (match) {
       const level = match[1].length;
-      const text = match[2].trim().toLowerCase();
-      if (level === targetHeading.level && (text === targetText || text.includes(targetText) || targetText.includes(text))) {
+      const rawText = match[2]
+        .replace(/[*_~`]/g, "")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .trim()
+        .toLowerCase();
+      if (level === targetHeading.level && (rawText === targetText || rawText.includes(targetText) || targetText.includes(rawText))) {
         return i + 1; // 1-indexed line number
       }
     }
   }
-  return 1;
+  return -1;
 }
 
 function parseFrontMatter(frontMatter: string): Record<string, unknown> | null {

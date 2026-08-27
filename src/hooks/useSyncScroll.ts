@@ -4,6 +4,7 @@ import type { EditorView } from "@codemirror/view";
 type SyncScrollOptions = {
   containerRef: React.RefObject<HTMLElement | null>;
   viewMode: string;
+  navLockUntilRef?: React.MutableRefObject<number>;
 };
 
 type ScrollKeyframe = {
@@ -114,11 +115,27 @@ function interpolateCoordinate(
   return k1[toKey] + progress * (k2[toKey] - k1[toKey]);
 }
 
-export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
+export function useSyncScroll({ containerRef, viewMode, navLockUntilRef }: SyncScrollOptions) {
   const [syncEnabled, setSyncEnabled] = useState(true);
   const editorViewRef = useRef<EditorView | null>(null);
   const scrollingSourceRef = useRef<"editor" | "reader" | null>(null);
   const lockTimerRef = useRef<number | null>(null);
+
+  const lockSync = useCallback(
+    (durationMs = 850) => {
+      if (navLockUntilRef) {
+        navLockUntilRef.current = Date.now() + durationMs;
+      }
+      if (lockTimerRef.current) {
+        window.clearTimeout(lockTimerRef.current);
+      }
+      scrollingSourceRef.current = null;
+      lockTimerRef.current = window.setTimeout(() => {
+        lockTimerRef.current = null;
+      }, durationMs);
+    },
+    [navLockUntilRef]
+  );
 
   const clearLock = useCallback(() => {
     if (lockTimerRef.current) {
@@ -143,6 +160,7 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
   const handleEditorScroll = useCallback(
     (view: EditorView) => {
       if (!syncEnabled || viewMode !== "split") return;
+      if (navLockUntilRef?.current && Date.now() < navLockUntilRef.current) return;
       if (scrollingSourceRef.current === "reader") return;
 
       const readerElem = containerRef.current;
@@ -156,12 +174,13 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
 
       readerElem.scrollTop = targetReaderY;
     },
-    [syncEnabled, viewMode, containerRef, setLock]
+    [syncEnabled, viewMode, navLockUntilRef, containerRef, setLock]
   );
 
   // Sync from Reader Preview -> Editor
   const handleReaderScroll = useCallback(() => {
     if (!syncEnabled || viewMode !== "split") return;
+    if (navLockUntilRef?.current && Date.now() < navLockUntilRef.current) return;
     if (scrollingSourceRef.current === "editor") return;
 
     const readerElem = containerRef.current;
@@ -175,7 +194,7 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
     const targetEditorY = interpolateCoordinate(readerScrollTop, keyframes, "readerY", "editorY");
 
     view.scrollDOM.scrollTop = targetEditorY;
-  }, [syncEnabled, viewMode, containerRef, setLock]);
+  }, [syncEnabled, viewMode, navLockUntilRef, containerRef, setLock]);
 
   // Bind scroll event to reader element
   useEffect(() => {
@@ -228,6 +247,7 @@ export function useSyncScroll({ containerRef, viewMode }: SyncScrollOptions) {
     syncEnabled,
     setSyncEnabled,
     toggleSync: () => setSyncEnabled((prev) => !prev),
+    lockSync,
     editorViewRef,
     handleEditorScroll,
   };

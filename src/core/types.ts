@@ -27,6 +27,7 @@ export type Heading = {
   id: string;
   text: string;
   level: number;
+  line?: number;
 };
 
 export type RenderedChapter = {

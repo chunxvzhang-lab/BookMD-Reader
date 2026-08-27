@@ -30,6 +30,7 @@ type DocumentWorkspaceProps = {
   typewriterMode?: boolean;
   onOpenLightbox?: (media: LightboxMedia) => void;
   onEditorViewReady?: (view: any) => void;
+  navLockUntilRef?: React.MutableRefObject<number>;
 };
 
 export function DocumentWorkspace({
@@ -51,6 +52,7 @@ export function DocumentWorkspace({
   typewriterMode = false,
   onOpenLightbox,
   onEditorViewReady,
+  navLockUntilRef,
 }: DocumentWorkspaceProps) {
   const [splitRatio, setSplitRatio] = useState(() => {
     try {
@@ -72,7 +74,7 @@ export function DocumentWorkspace({
     toggleSync,
     editorViewRef,
     handleEditorScroll,
-  } = useSyncScroll({ containerRef, viewMode });
+  } = useSyncScroll({ containerRef, viewMode, navLockUntilRef });
 
   const {
     handleEditorSelectionChange,

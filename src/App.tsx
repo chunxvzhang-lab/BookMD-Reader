@@ -60,6 +60,7 @@ export function App() {
   const pendingActionRef = useRef<PendingAction | null>(null);
   const activeLoadedChapterIdRef = useRef<string>("");
   const restoredChapterIdRef = useRef<string | null>(null);
+  const navLockUntilRef = useRef<number>(0);
 
   const [manifest, setManifest] = useState<BookManifest | null>(null);
   const manifestRef = useRef<BookManifest | null>(manifest);
@@ -282,24 +283,57 @@ export function App() {
     (headingId: string, behavior: ScrollBehavior = "smooth") => {
       setActiveHeadingId(headingId);
 
-      // 1. If Reader pane is present (read or split mode), scroll preview
+      // Lock sync-scroll and reading tracker during navigation animation to eliminate jitter and feedback loops
+      const lockDuration = behavior === "smooth" ? 850 : 100;
+      navLockUntilRef.current = Date.now() + lockDuration;
+
+      const allHeadings = renderedChapter?.headings?.length
+        ? renderedChapter.headings
+        : session?.source
+          ? extractHeadingsFromSource(session.source)
+          : [];
+      const heading = allHeadings.find((h) => h.id === headingId);
+
+      // 1. If Reader pane is present (read or split mode), scroll preview accurately and scoped
       const container = readerRef.current;
       if (container) {
-        const target = container.querySelector(`#${CSS.escape(headingId)}`);
+        let target =
+          container.querySelector<HTMLElement>(`[data-heading-id="${CSS.escape(headingId)}"]`) ||
+          container.querySelector<HTMLElement>(`#${CSS.escape(headingId)}`);
+
+        if (!target) {
+          const headingsInDom = Array.from(container.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6"));
+          target =
+            headingsInDom.find(
+              (el) => el.id === headingId || el.getAttribute("data-heading-id") === headingId
+            ) || null;
+        }
+
+        if (!target && heading?.line) {
+          target = container.querySelector<HTMLElement>(`[data-source-line="${heading.line}"]`);
+        }
+
+        if (!target && heading?.text) {
+          const headingsInDom = Array.from(container.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6"));
+          target = headingsInDom.find((el) => el.textContent?.trim() === heading.text.trim()) || null;
+        }
+
         if (target) {
-          target.scrollIntoView({ behavior, block: "start" });
+          const containerRect = container.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          const targetTop = container.scrollTop + (targetRect.top - containerRect.top);
+          container.scrollTo({
+            top: Math.max(0, targetTop - 24),
+            behavior,
+          });
         }
       }
 
-      // 2. If Editor pane is present (source or split mode), scroll editor directly to heading line only on explicit user navigation
+      // 2. If Editor pane is present (source or split mode), scroll editor directly to heading line
       const editor = editorViewRef.current;
-      if (editor && session?.source && behavior === "smooth") {
-        const allHeadings = renderedChapter?.headings?.length
-          ? renderedChapter.headings
-          : extractHeadingsFromSource(session.source);
-        const heading = allHeadings.find((h) => h.id === headingId);
-        if (heading) {
-          const lineNum = findHeadingLineInSource(session.source, heading);
+      if (editor && session?.source && heading) {
+        const lineNum = findHeadingLineInSource(session.source, heading);
+        if (lineNum > 0) {
           const totalLines = editor.state.doc.lines;
           const safeLineNum = Math.min(Math.max(1, lineNum), totalLines);
           const line = editor.state.doc.line(safeLineNum);
@@ -313,7 +347,7 @@ export function App() {
         }
       }
     },
-    [session?.source, renderedChapter?.headings, viewMode]
+    [renderedChapter?.headings, session?.source, viewMode]
   );
 
   const jumpToRatio = useCallback((ratio: number) => {
@@ -1173,6 +1207,7 @@ export function App() {
     scrollRatioRef,
     onActiveHeadingChange: setActiveHeadingId,
     onScrollIdle: saveCurrentReadingPosition,
+    navLockUntilRef,
   });
 
   const createNewFileRef = useRef(createNewFile);
@@ -1417,6 +1452,17 @@ export function App() {
           jumpToHeading(saved.headingId, "auto");
         } else {
           jumpToRatio(saved.scrollRatio);
+        }
+      });
+    } else {
+      // New chapter with no saved position: cleanly reset scroll to the very top
+      requestAnimationFrame(() => {
+        readerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+        if (editorViewRef.current) {
+          editorViewRef.current.dispatch({
+            selection: { anchor: 0, head: 0 },
+            effects: EditorView.scrollIntoView(0, { y: "start" }),
+          });
         }
       });
     }
@@ -1834,6 +1880,7 @@ export function App() {
               onEditorViewReady={(view) => {
                 editorViewRef.current = view;
               }}
+              navLockUntilRef={navLockUntilRef}
             />
           ) : (
             <main className="empty-reader" ref={readerRef}>

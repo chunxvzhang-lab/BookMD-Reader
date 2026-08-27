@@ -8,8 +8,9 @@ export function useReadingTracker(input: {
   scrollRatioRef: React.MutableRefObject<number>;
   onActiveHeadingChange: (headingId: string | undefined) => void;
   onScrollIdle?: () => void;
+  navLockUntilRef?: React.MutableRefObject<number>;
 }) {
-  const { activeHeadingRef, containerRef, headings, onActiveHeadingChange, onScrollIdle, scrollRatioRef } = input;
+  const { activeHeadingRef, containerRef, headings, onActiveHeadingChange, onScrollIdle, scrollRatioRef, navLockUntilRef } = input;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -23,7 +24,9 @@ export function useReadingTracker(input: {
         frame = 0;
         const max = container.scrollHeight - container.clientHeight;
         scrollRatioRef.current = max > 0 ? container.scrollTop / max : 0;
-        updateActiveHeading(container, headings, activeHeadingRef, onActiveHeadingChange);
+        if (!navLockUntilRef?.current || Date.now() >= navLockUntilRef.current) {
+          updateActiveHeading(container, headings, activeHeadingRef, onActiveHeadingChange);
+        }
         if (onScrollIdle) {
           window.clearTimeout(idleTimer);
           idleTimer = window.setTimeout(onScrollIdle, 900);
@@ -37,13 +40,15 @@ export function useReadingTracker(input: {
       window.clearTimeout(idleTimer);
       container.removeEventListener("scroll", handleScroll);
     };
-  }, [activeHeadingRef, containerRef, headings, onActiveHeadingChange, onScrollIdle, scrollRatioRef]);
+  }, [activeHeadingRef, containerRef, headings, navLockUntilRef, onActiveHeadingChange, onScrollIdle, scrollRatioRef]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    updateActiveHeading(container, headings, activeHeadingRef, onActiveHeadingChange);
-  }, [activeHeadingRef, containerRef, headings, onActiveHeadingChange]);
+    if (!navLockUntilRef?.current || Date.now() >= navLockUntilRef.current) {
+      updateActiveHeading(container, headings, activeHeadingRef, onActiveHeadingChange);
+    }
+  }, [activeHeadingRef, containerRef, headings, navLockUntilRef, onActiveHeadingChange]);
 }
 
 function updateActiveHeading(
@@ -60,13 +65,26 @@ function updateActiveHeading(
     return;
   }
 
+  // If scrolled to the bottom of the container, highlight the final heading
+  const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 20;
+  if (isAtBottom && headings.length > 0) {
+    const lastId = headings[headings.length - 1].id;
+    if (activeHeadingRef.current !== lastId) {
+      activeHeadingRef.current = lastId;
+      onActiveHeadingChange(lastId);
+    }
+    return;
+  }
+
   const containerTop = container.getBoundingClientRect().top;
   let selectedId = headings[0].id;
   for (const heading of headings) {
-    const element = container.querySelector<HTMLElement>(`#${CSS.escape(heading.id)}`);
+    const element =
+      container.querySelector<HTMLElement>(`[data-heading-id="${CSS.escape(heading.id)}"]`) ||
+      container.querySelector<HTMLElement>(`#${CSS.escape(heading.id)}`);
     if (!element) continue;
     const offsetTop = element.getBoundingClientRect().top - containerTop;
-    if (offsetTop <= 72) selectedId = heading.id;
+    if (offsetTop <= 100) selectedId = heading.id;
     else break;
   }
 
