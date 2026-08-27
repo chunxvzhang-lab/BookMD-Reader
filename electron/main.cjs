@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeTheme, shell, globalShortcut, screen } = require("electron");
+const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeTheme, shell, globalShortcut, screen, nativeImage } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { fileURLToPath, pathToFileURL } = require("node:url");
@@ -115,20 +115,57 @@ function broadcastSettings() {
   }
 }
 
+let hasNotifiedTray = false;
+function notifyTrayMinimized() {
+  if (!tray) return;
+  if (!hasNotifiedTray) {
+    hasNotifiedTray = true;
+    try {
+      tray.displayBalloon?.({
+        iconType: "info",
+        title: "KnowSpace 已最小化到托盘",
+        content: "应用在后台保持运行，双击托盘图标或使用快捷键可随时唤起。",
+      });
+    } catch {}
+  }
+}
+
 function getTrayIcon() {
-  const icoPath = path.join(__dirname, "..", "build", "icon.ico");
-  if (fs.existsSync(icoPath)) return icoPath;
-  const buildPng = path.join(__dirname, "..", "build", "icon.png");
-  if (fs.existsSync(buildPng)) return buildPng;
-  const rootPng = path.join(__dirname, "..", "icon.png");
-  if (fs.existsSync(rootPng)) return rootPng;
+  const candidates = [
+    path.join(__dirname, "icon.ico"),
+    path.join(__dirname, "icon.png"),
+    path.join(__dirname, "..", "build", "icon.ico"),
+    path.join(__dirname, "..", "build", "icon.png"),
+    path.join(__dirname, "..", "icon.png"),
+    path.join(process.resourcesPath, "build", "icon.ico"),
+    path.join(process.resourcesPath, "icon.png"),
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      try {
+        const img = nativeImage.createFromPath(p);
+        if (!img.isEmpty()) {
+          return process.platform === "win32" && p.endsWith(".ico")
+            ? img
+            : img.resize({ width: 16, height: 16 });
+        }
+      } catch {
+        return p;
+      }
+      return p;
+    }
+  }
   return undefined;
 }
 
 function createTray() {
   if (tray) return;
   const icon = getTrayIcon();
-  if (!icon) return;
+  if (!icon) {
+    console.error("[Tray] No valid tray icon found among candidates.");
+    return;
+  }
 
   try {
     tray = new Tray(icon);
@@ -142,8 +179,9 @@ function createTray() {
     tray.on("double-click", () => {
       showMainWindow();
     });
+    console.log("[Tray] System tray initialized successfully.");
   } catch (err) {
-    console.error("Failed to create tray:", err);
+    console.error("[Tray] Failed to create tray:", err);
   }
 }
 
@@ -504,11 +542,13 @@ async function createWindow(initialFilePath = null) {
           clearTimeout(timer);
           if (result === "proceed") {
             win.hide();
+            notifyTrayMinimized();
           }
         });
       } else {
         event.preventDefault();
         win.hide();
+        notifyTrayMinimized();
       }
       return;
     }
