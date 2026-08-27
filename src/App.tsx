@@ -1270,13 +1270,24 @@ export function App() {
       guardActionRef.current({ type: "close-window", requestId });
     });
 
+    const unsubscribeFlashNote = window.bookMDDesktop.onFlashNoteSaved?.(() => {
+      if (manifest?.rootPath && window.bookMDDesktop?.refreshDirectory) {
+        window.bookMDDesktop.refreshDirectory(manifest.rootPath).then((nextManifest) => {
+          if (nextManifest) {
+            setManifest(nextManifest);
+          }
+        }).catch(() => {});
+      }
+    });
+
     return () => {
       cancelled = true;
       unsubscribeOpen();
       unsubscribeMenu?.();
       unsubscribeClose?.();
+      unsubscribeFlashNote?.();
     };
-  }, []);
+  }, [manifest?.rootPath]);
 
   // Load chapter content when chapterId changes
   useEffect(() => {

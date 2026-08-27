@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme, shell } = require("electron");
+const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeTheme, shell, globalShortcut, screen } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { fileURLToPath, pathToFileURL } = require("node:url");
@@ -12,6 +12,7 @@ const {
 } = require("./markdown-files.cjs");
 
 const devServerUrl = process.env.BOOKMD_DEV_SERVER_URL;
+const isLaunchHidden = process.argv.includes("--hidden");
 
 const windows = new Set();
 let mainWindow = null;
@@ -23,6 +24,268 @@ let documentState = {
   activePath: null,
   isDirty: false,
 };
+
+let flashCapsuleWindow = null;
+let lastActiveWorkspaceDir = null;
+let tray = null;
+
+function getAppConfig() {
+  try {
+    const configPath = path.join(app.getPath("userData"), "knowspace-config.json");
+    if (fs.existsSync(configPath)) {
+      const parsed = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      return {
+        flashShortcut: parsed.flashShortcut || "Alt+Space",
+        runInBackground: parsed.runInBackground !== false,
+        autoLaunch: Boolean(parsed.autoLaunch),
+      };
+    }
+  } catch {}
+  return {
+    flashShortcut: "Alt+Space",
+    runInBackground: true,
+    autoLaunch: false,
+  };
+}
+
+function saveAppConfig(newConfig) {
+  try {
+    const configPath = path.join(app.getPath("userData"), "knowspace-config.json");
+    let current = {};
+    if (fs.existsSync(configPath)) {
+      try {
+        current = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      } catch {}
+    }
+    const merged = { ...current, ...newConfig };
+    fs.writeFileSync(configPath, JSON.stringify(merged, null, 2), "utf8");
+    return merged;
+  } catch {
+    return newConfig;
+  }
+}
+
+function getSavedFlashShortcut() {
+  return getAppConfig().flashShortcut;
+}
+
+function saveFlashShortcut(shortcut) {
+  return saveAppConfig({ flashShortcut: shortcut });
+}
+
+let currentFlashShortcut = getSavedFlashShortcut();
+
+function setAutoLaunch(enabled) {
+  saveAppConfig({ autoLaunch: enabled });
+  try {
+    app.setLoginItemSettings({
+      openAtLogin: enabled,
+      openAsHidden: true,
+      path: process.execPath,
+      args: ["--hidden"],
+    });
+  } catch (e) {
+    console.warn("Failed to set login item settings via Electron:", e);
+  }
+  updateTrayMenu();
+}
+
+function getAutoLaunch() {
+  const config = getAppConfig();
+  return Boolean(config.autoLaunch);
+}
+
+function broadcastSettings() {
+  const settings = {
+    autoLaunch: getAutoLaunch(),
+    runInBackground: getAppConfig().runInBackground !== false,
+    flashShortcut: getAppConfig().flashShortcut || "Alt+Space",
+  };
+  for (const w of windows) {
+    try {
+      if (!w.isDestroyed()) {
+        w.webContents.send("bookmd:app-settings-updated", settings);
+      }
+    } catch {}
+  }
+  if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
+    try {
+      flashCapsuleWindow.webContents.send("bookmd:app-settings-updated", settings);
+    } catch {}
+  }
+}
+
+function getTrayIcon() {
+  const icoPath = path.join(__dirname, "..", "build", "icon.ico");
+  if (fs.existsSync(icoPath)) return icoPath;
+  const buildPng = path.join(__dirname, "..", "build", "icon.png");
+  if (fs.existsSync(buildPng)) return buildPng;
+  const rootPng = path.join(__dirname, "..", "icon.png");
+  if (fs.existsSync(rootPng)) return rootPng;
+  return undefined;
+}
+
+function createTray() {
+  if (tray) return;
+  const icon = getTrayIcon();
+  if (!icon) return;
+
+  try {
+    tray = new Tray(icon);
+    tray.setToolTip("KnowSpace · 个人知识工作台");
+    updateTrayMenu();
+
+    tray.on("click", () => {
+      showMainWindow();
+    });
+
+    tray.on("double-click", () => {
+      showMainWindow();
+    });
+  } catch (err) {
+    console.error("Failed to create tray:", err);
+  }
+}
+
+function updateTrayMenu() {
+  if (!tray) return;
+  const config = getAppConfig();
+  const shortcut = config.flashShortcut || "Alt+Space";
+  const autoLaunch = getAutoLaunch();
+  const runInBackground = config.runInBackground !== false;
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: `⚡ 呼出闪念胶囊 (${shortcut})`,
+      click: () => toggleFlashCapsuleWindow(),
+    },
+    {
+      label: "📖 打开 KnowSpace 工作台",
+      click: () => showMainWindow(),
+    },
+    { type: "separator" },
+    {
+      label: "开机自启动 (后台静默启动)",
+      type: "checkbox",
+      checked: autoLaunch,
+      click: (item) => {
+        setAutoLaunch(item.checked);
+        broadcastSettings();
+      },
+    },
+    {
+      label: "关闭主窗口时保持后台运行",
+      type: "checkbox",
+      checked: runInBackground,
+      click: (item) => {
+        saveAppConfig({ runInBackground: item.checked });
+        broadcastSettings();
+      },
+    },
+    { type: "separator" },
+    {
+      label: "❌ 彻底退出 KnowSpace",
+      click: () => {
+        isAppQuitting = true;
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+}
+
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow();
+  } else {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+  }
+}
+
+async function createFlashCapsuleWindow() {
+  const win = new BrowserWindow({
+    width: 620,
+    height: 380,
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    hasShadow: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  win.on("blur", () => {
+    try {
+      if (!win.isDestroyed() && win.isVisible()) {
+        win.hide();
+      }
+    } catch {}
+  });
+
+  const query = { mode: "flash" };
+  if (!app.isPackaged && devServerUrl) {
+    await win.loadURL(`${devServerUrl}?mode=flash`);
+  } else {
+    await win.loadFile(path.join(__dirname, "..", "dist", "index.html"), { query });
+  }
+
+  return win;
+}
+
+async function toggleFlashCapsuleWindow() {
+  try {
+    if (!flashCapsuleWindow || flashCapsuleWindow.isDestroyed()) {
+      flashCapsuleWindow = await createFlashCapsuleWindow();
+    }
+    if (flashCapsuleWindow.isVisible()) {
+      flashCapsuleWindow.hide();
+    } else {
+      const cursorPoint = screen.getCursorScreenPoint();
+      const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
+      const bounds = currentDisplay.workArea;
+      const winWidth = 620;
+      const winHeight = 380;
+      const x = Math.round(bounds.x + (bounds.width - winWidth) / 2);
+      const y = Math.round(bounds.y + (bounds.height - winHeight) / 3);
+      flashCapsuleWindow.setBounds({ x, y, width: winWidth, height: winHeight });
+      flashCapsuleWindow.show();
+      flashCapsuleWindow.focus();
+      flashCapsuleWindow.webContents.send("bookmd:flash-focus");
+    }
+  } catch (err) {
+    console.error("Error toggling flash capsule:", err);
+  }
+}
+
+function initFlashCapsule() {
+  const shortcut = currentFlashShortcut || "Alt+Space";
+  try {
+    const success = globalShortcut.register(shortcut, () => {
+      toggleFlashCapsuleWindow();
+    });
+    if (!success && shortcut !== "Ctrl+Shift+Space") {
+      console.warn(`Shortcut ${shortcut} registration failed, trying fallback Ctrl+Shift+Space...`);
+      const fallbackSuccess = globalShortcut.register("Ctrl+Shift+Space", () => {
+        toggleFlashCapsuleWindow();
+      });
+      if (fallbackSuccess) {
+        currentFlashShortcut = "Ctrl+Shift+Space";
+      }
+    }
+  } catch (e) {
+    console.warn("Global shortcut register error:", e);
+  }
+}
 
 function getActiveWindow() {
   const focused = BrowserWindow.getFocusedWindow();
@@ -199,7 +462,7 @@ async function createWindow(initialFilePath = null) {
 
   win.once("ready-to-show", () => {
     try {
-      if (!win.isDestroyed() && !win.isVisible()) {
+      if (!isLaunchHidden && !win.isDestroyed() && !win.isVisible()) {
         win.show();
         win.focus();
       }
@@ -208,7 +471,7 @@ async function createWindow(initialFilePath = null) {
 
   const showFallbackTimer = setTimeout(() => {
     try {
-      if (!win.isDestroyed() && !win.isVisible()) {
+      if (!isLaunchHidden && !win.isDestroyed() && !win.isVisible()) {
         win.show();
         win.focus();
       }
@@ -217,6 +480,38 @@ async function createWindow(initialFilePath = null) {
 
   win.on("close", (event) => {
     if (isAppQuitting) return;
+
+    const config = getAppConfig();
+    const runInBackground = config.runInBackground !== false;
+
+    if (runInBackground && win === mainWindow && windows.size <= 1) {
+      if (documentState.isDirty) {
+        event.preventDefault();
+        closeRequestId += 1;
+        const reqId = closeRequestId;
+
+        try {
+          if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+            win.webContents.send("bookmd:before-close", { requestId: reqId });
+          }
+        } catch {}
+
+        const timer = setTimeout(() => {
+          pendingCloseResolvers.delete(reqId);
+        }, 10000);
+
+        pendingCloseResolvers.set(reqId, (result) => {
+          clearTimeout(timer);
+          if (result === "proceed") {
+            win.hide();
+          }
+        });
+      } else {
+        event.preventDefault();
+        win.hide();
+      }
+      return;
+    }
 
     if (documentState.isDirty) {
       event.preventDefault();
@@ -344,33 +639,65 @@ if (!gotSingleInstanceLock) {
     if (filePath) {
       sendOpenFilePath(filePath);
     } else {
-      const win = getActiveWindow();
-      if (win) {
-        if (win.isMinimized()) win.restore();
-        win.focus();
-      }
+      showMainWindow();
     }
   });
 
   app.whenReady().then(() => {
     buildApplicationMenu();
-    createWindow(launchFilePath);
-    launchFilePath = null;
+    initFlashCapsule();
+    createTray();
+
+    if (getAppConfig().autoLaunch) {
+      setAutoLaunch(true);
+    }
+
+    if (!isLaunchHidden) {
+      createWindow(launchFilePath);
+      launchFilePath = null;
+    } else {
+      createWindow(launchFilePath).then((w) => {
+        try {
+          if (w && !w.isDestroyed()) {
+            w.hide();
+          }
+        } catch {}
+      });
+      launchFilePath = null;
+    }
   });
 }
 
 app.on("activate", () => {
-  if (windows.size === 0) {
-    createWindow();
-  }
+  showMainWindow();
 });
 
 app.on("before-quit", () => {
   isAppQuitting = true;
+  try {
+    globalShortcut.unregisterAll();
+  } catch {}
+  if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
+    flashCapsuleWindow.destroy();
+  }
+  if (tray && !tray.isDestroyed()) {
+    tray.destroy();
+  }
+});
+
+app.on("will-quit", () => {
+  try {
+    globalShortcut.unregisterAll();
+  } catch {}
+  if (tray && !tray.isDestroyed()) {
+    tray.destroy();
+  }
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
+  const config = getAppConfig();
+  const runInBackground = config.runInBackground !== false;
+  if (!runInBackground && process.platform !== "darwin") {
     app.quit();
   }
 });
@@ -486,6 +813,7 @@ ipcMain.handle("bookmd:open-directory", async (event) => {
   }
 
   const rootPath = result.filePaths[0];
+  lastActiveWorkspaceDir = rootPath;
   const manifest = await buildDirectoryManifest(rootPath);
   return {
     canceled: false,
@@ -497,6 +825,7 @@ ipcMain.handle("bookmd:refresh-directory", async (_event, rootPath) => {
   if (typeof rootPath !== "string" || !rootPath) {
     throw new Error("无效的目录路径。");
   }
+  lastActiveWorkspaceDir = rootPath;
   return await buildDirectoryManifest(rootPath);
 });
 
@@ -517,6 +846,7 @@ ipcMain.handle("bookmd:get-directory-for-file", async (_event, absolutePath) => 
     throw new Error("只能读取 Markdown 文件。");
   }
   const rootPath = path.dirname(path.resolve(absolutePath));
+  lastActiveWorkspaceDir = rootPath;
   const directory = await buildDirectoryManifest(rootPath);
 
   const activeChapter = directory.chapters.find(
@@ -526,6 +856,167 @@ ipcMain.handle("bookmd:get-directory-for-file", async (_event, absolutePath) => 
   return {
     directory,
     activeChapterId: activeChapter ? activeChapter.id : null,
+  };
+});
+
+// Flash Capsule IPC handlers
+ipcMain.handle("bookmd:open-flash-capsule", async () => {
+  await toggleFlashCapsuleWindow();
+  return true;
+});
+
+ipcMain.handle("bookmd:hide-flash-capsule", () => {
+  if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
+    flashCapsuleWindow.hide();
+  }
+  return true;
+});
+
+ipcMain.handle("bookmd:get-flash-shortcut", () => {
+  return currentFlashShortcut || "Alt+Space";
+});
+
+ipcMain.handle("bookmd:set-flash-shortcut", (_event, newShortcut) => {
+  if (!newShortcut || typeof newShortcut !== "string") {
+    return { success: false, error: "快捷键格式不能为空" };
+  }
+  const cleanShortcut = newShortcut.trim();
+  try {
+    if (currentFlashShortcut) {
+      try {
+        globalShortcut.unregister(currentFlashShortcut);
+      } catch {}
+    }
+    const registered = globalShortcut.register(cleanShortcut, () => {
+      toggleFlashCapsuleWindow();
+    });
+    if (registered) {
+      currentFlashShortcut = cleanShortcut;
+      saveFlashShortcut(cleanShortcut);
+      for (const w of windows) {
+        try {
+          if (!w.isDestroyed()) {
+            w.webContents.send("bookmd:flash-shortcut-updated", cleanShortcut);
+          }
+        } catch {}
+      }
+      if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
+        try {
+          flashCapsuleWindow.webContents.send("bookmd:flash-shortcut-updated", cleanShortcut);
+        } catch {}
+      }
+      return { success: true, shortcut: cleanShortcut };
+    } else {
+      if (currentFlashShortcut) {
+        try {
+          globalShortcut.register(currentFlashShortcut, () => {
+            toggleFlashCapsuleWindow();
+          });
+        } catch {}
+      }
+      return { success: false, error: `快捷键 "${cleanShortcut}" 注册失败，可能已被系统或其它软件占用。` };
+    }
+  } catch (err) {
+    if (currentFlashShortcut) {
+      try {
+        globalShortcut.register(currentFlashShortcut, () => {
+          toggleFlashCapsuleWindow();
+        });
+      } catch {}
+    }
+    return { success: false, error: err.message || "快捷键格式无效" };
+  }
+});
+
+ipcMain.handle("bookmd:get-flash-target-path", () => {
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  const baseDir = lastActiveWorkspaceDir && fs.existsSync(lastActiveWorkspaceDir)
+    ? lastActiveWorkspaceDir
+    : path.join(app.getPath("userData"), "workspace");
+  const targetDir = path.join(baseDir, "Inbox");
+  const targetFile = path.join(targetDir, `${dateStr}.md`);
+  return {
+    workspaceDir: lastActiveWorkspaceDir,
+    targetFile,
+    relativeDisplay: `Inbox/${dateStr}.md`,
+  };
+});
+
+ipcMain.handle("bookmd:save-flash-note", async (_event, payload) => {
+  if (!payload || typeof payload.content !== "string" || !payload.content.trim()) {
+    return { success: false, error: "速记内容不能为空" };
+  }
+  try {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
+    const baseDir = lastActiveWorkspaceDir && fs.existsSync(lastActiveWorkspaceDir)
+      ? lastActiveWorkspaceDir
+      : path.join(app.getPath("userData"), "workspace");
+    const targetDir = path.join(baseDir, "Inbox");
+    const targetFile = path.join(targetDir, `${dateStr}.md`);
+
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    const isNewFile = !fs.existsSync(targetFile);
+    if (isNewFile) {
+      const header = `# 📥 闪念收集箱 (${dateStr})\n\n> 随时记录灵感火花与即刻待办。\n\n---\n\n`;
+      fs.writeFileSync(targetFile, header, "utf8");
+    }
+
+    const cleanContent = payload.content.trim();
+    const entry = `### 🕒 ${timeStr}\n\n${cleanContent}\n\n---\n\n`;
+    fs.appendFileSync(targetFile, entry, "utf8");
+
+    // Broadcast note added to open windows
+    for (const w of windows) {
+      try {
+        if (!w.isDestroyed()) {
+          w.webContents.send("bookmd:flash-note-saved", { filePath: targetFile, dateStr });
+        }
+      } catch {}
+    }
+
+    return { success: true, filePath: targetFile, dateStr };
+  } catch (err) {
+    console.error("Failed to save flash note:", err);
+    return { success: false, error: err.message || "写入文件失败" };
+  }
+});
+
+// App Settings (Background Running & Auto-Launch)
+ipcMain.handle("bookmd:get-app-settings", () => {
+  const config = getAppConfig();
+  return {
+    autoLaunch: getAutoLaunch(),
+    runInBackground: config.runInBackground !== false,
+    flashShortcut: config.flashShortcut || "Alt+Space",
+  };
+});
+
+ipcMain.handle("bookmd:set-app-settings", (_event, settings) => {
+  if (!settings || typeof settings !== "object") {
+    return { success: false, error: "设置参数无效" };
+  }
+  if (typeof settings.autoLaunch === "boolean") {
+    setAutoLaunch(settings.autoLaunch);
+  }
+  if (typeof settings.runInBackground === "boolean") {
+    saveAppConfig({ runInBackground: settings.runInBackground });
+  }
+  updateTrayMenu();
+  broadcastSettings();
+  return {
+    success: true,
+    settings: {
+      autoLaunch: getAutoLaunch(),
+      runInBackground: getAppConfig().runInBackground !== false,
+      flashShortcut: getAppConfig().flashShortcut || "Alt+Space",
+    },
   };
 });
 

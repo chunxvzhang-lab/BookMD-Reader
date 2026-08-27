@@ -10,6 +10,7 @@ export type Preferences = {
   theme: ThemeMode;
   fontScale: number;
   showLineNumbers?: boolean;
+  flashCapsuleShortcut?: string;
 };
 
 export function loadBookmarks(bookId: string, chapters?: ChapterManifest[]): Bookmark[] {
@@ -65,12 +66,20 @@ export function saveReadingPosition(position: ReadingPosition): void {
 }
 
 export function loadPreferences(): Preferences {
-  const fallback: Preferences = { theme: "system", fontScale: 1, showLineNumbers: true };
+  const fallback: Preferences = {
+    theme: "system",
+    fontScale: 1,
+    showLineNumbers: true,
+    flashCapsuleShortcut: "Alt+Space",
+  };
   try {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}");
     const theme: ThemeMode = raw.theme === "dark" ? "twitter" : (raw.theme ?? "system");
     const showLineNumbers = raw.showLineNumbers !== undefined ? Boolean(raw.showLineNumbers) : true;
-    return { ...fallback, ...raw, theme, showLineNumbers };
+    const flashCapsuleShortcut = typeof raw.flashCapsuleShortcut === "string" && raw.flashCapsuleShortcut.trim()
+      ? raw.flashCapsuleShortcut.trim()
+      : "Alt+Space";
+    return { ...fallback, ...raw, theme, showLineNumbers, flashCapsuleShortcut };
   } catch {
     return fallback;
   }

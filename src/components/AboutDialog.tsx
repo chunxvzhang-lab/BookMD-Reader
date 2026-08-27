@@ -27,9 +27,49 @@ type AboutDialogProps = {
 
 export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
   const [copied, setCopied] = useState(false);
+  const [autoLaunch, setAutoLaunch] = useState(false);
+  const [runInBackground, setRunInBackground] = useState(true);
 
   const repoUrl = "https://github.com/chunxvzhang-lab/KnowSpace";
   const authorUrl = "https://github.com/chunxvzhang";
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+    desktop?.getAppSettings?.().then((settings) => {
+      if (settings) {
+        setAutoLaunch(settings.autoLaunch);
+        setRunInBackground(settings.runInBackground);
+      }
+    });
+
+    const unsubscribe = desktop?.onAppSettingsUpdated?.((settings) => {
+      setAutoLaunch(settings.autoLaunch);
+      setRunInBackground(settings.runInBackground);
+    });
+
+    return () => unsubscribe?.();
+  }, [isOpen]);
+
+  const handleToggleAutoLaunch = async (val: boolean) => {
+    setAutoLaunch(val);
+    const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+    const res = await desktop?.setAppSettings?.({ autoLaunch: val });
+    if (res?.settings) {
+      setAutoLaunch(res.settings.autoLaunch);
+      setRunInBackground(res.settings.runInBackground);
+    }
+  };
+
+  const handleToggleRunInBackground = async (val: boolean) => {
+    setRunInBackground(val);
+    const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+    const res = await desktop?.setAppSettings?.({ runInBackground: val });
+    if (res?.settings) {
+      setAutoLaunch(res.settings.autoLaunch);
+      setRunInBackground(res.settings.runInBackground);
+    }
+  };
 
   const handleOpenExternal = useCallback((url: string) => {
     if (typeof window !== "undefined") {
@@ -77,7 +117,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div>
               <div className="about-header-title-row">
                 <span className="about-app-name">KnowSpace</span>
-                <span className="about-version-badge">v1.5.1</span>
+                <span className="about-version-badge">v1.6.0</span>
               </div>
               <p className="about-tagline">Personal Knowledge Workspace · 个人知识工作台</p>
             </div>
@@ -103,18 +143,30 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div className="about-card-title">
               <History size={16} className="about-icon text-blue" />
               <span>版本更新日志 · What&apos;s New</span>
-              <span className="about-changelog-version-badge">v1.5.1</span>
+              <span className="about-changelog-version-badge">v1.6.0</span>
             </div>
             <div className="about-changelog-list">
               <div className="about-changelog-group">
                 <div className="about-changelog-group-label">
                   <Zap size={12} className="text-amber" />
-                  <span>v1.5.1 新增仿电子墨水屏风格</span>
+                  <span>v1.6.0 闪念胶囊、全局热键、后台常驻与开机自启</span>
+                </div>
+                <ul className="about-changelog-items">
+                  <li>⚡ <strong>闪念胶囊 (Flash Notes) 独立微窗</strong>：随时秒级呼出毛玻璃微窗，无打扰捕获灵感与即时待办，<code>Ctrl+Enter</code> 原子归档至 <code>Inbox/</code></li>
+                  <li>⌨️ <strong>全局快捷键自由自定义</strong>：默认 <code>Alt+Space</code>，支持按键直接录制、预设切换与系统冲突防护</li>
+                  <li>🗔 <strong>系统托盘常驻与后台运行</strong>：右下角托盘图标就绪，关闭主窗口时自动最小化到托盘，服务持续常驻</li>
+                  <li>🚀 <strong>开机自启动与静默就绪</strong>：Windows 开机后台静默运行，不弹窗打扰，随时随地一键唤起</li>
+                </ul>
+              </div>
+              <div className="about-changelog-group">
+                <div className="about-changelog-group-label">
+                  <BookOpen size={12} className="text-orange" />
+                  <span>v1.5.1 仿电子墨水屏与视觉降噪</span>
                 </div>
                 <ul className="about-changelog-items">
                   <li>📖 <strong>仿电子墨水屏 (E-ink Paper)</strong> 护眼阅读与写作沉浸主题上线，模拟温润纸质质感</li>
                   <li>🖋️ <strong>CodeMirror 6 专属墨水语法</strong>：高对比黑白墨水排版、内敛行高亮与低噪字形</li>
-                  <li>⚖️ <strong>三主题无缝平滑轮播</strong>：日光浅色 (Light) ⇄ 仿电子墨水屏 (E-ink) ⇄ 极客暗黑 (Dark)</li>
+                  <li>⚖️ <strong>三主题直选控制组</strong>：日光浅色 (Light) / 仿电子墨水屏 (E-ink) / 极客暗黑 (Dark) 一键切换</li>
                   <li>📊 <strong>Monochrome 墨水架构图</strong>：Mermaid 图表自动适配 Neutral 纯净灰度墨水矢量渲染</li>
                 </ul>
               </div>
@@ -129,6 +181,69 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                   <li>🛡️ 物理事务原子落盘与外部链接安全防护体系</li>
                 </ul>
               </div>
+            </div>
+          </div>
+
+          {/* 闪念胶囊速记 */}
+          <div className="about-card">
+            <div className="about-card-title">
+              <Zap size={16} className="about-icon text-amber" />
+              <span>闪念胶囊速记 · Flash Notes</span>
+            </div>
+            <p className="about-description">
+              随时随地按下全局热键（默认 <code>Alt + Space</code>，可自定义）秒级呼出毛玻璃速记微窗，无打扰捕获灵感火花与即时待办，<code>Ctrl + Enter</code> 原子归档落盘至 <code>Inbox/</code> 收集箱。
+            </p>
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                type="button"
+                className="flash-btn flash-btn-primary"
+                style={{ fontSize: 12, padding: "4px 12px" }}
+                onClick={() => {
+                  const desktop = (window as unknown as { knowSpaceDesktop?: { openFlashCapsule?: () => void }; bookMDDesktop?: { openFlashCapsule?: () => void } }).knowSpaceDesktop || (window as unknown as { bookMDDesktop?: { openFlashCapsule?: () => void } }).bookMDDesktop;
+                  desktop?.openFlashCapsule?.();
+                }}
+              >
+                <Zap size={13} /> 立即呼出闪念胶囊 (设置热键)
+              </button>
+            </div>
+          </div>
+
+          {/* 后台运行与开机自启动设置 */}
+          <div className="about-card">
+            <div className="about-card-title">
+              <Cpu size={16} className="about-icon text-blue" />
+              <span>系统运行与开机偏好设置 · System Preferences</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 10 }}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={autoLaunch}
+                  onChange={(e) => handleToggleAutoLaunch(e.target.checked)}
+                  style={{ accentColor: "#f59e0b", width: 16, height: 16, marginTop: 2, cursor: "pointer" }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>开机自启动 (后台静默就绪)</div>
+                  <div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 2, lineHeight: 1.4 }}>
+                    Windows 开机后自动在后台托盘静默就绪，不弹出主窗口打扰，随时按热键呼出闪念胶囊
+                  </div>
+                </div>
+              </label>
+
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={runInBackground}
+                  onChange={(e) => handleToggleRunInBackground(e.target.checked)}
+                  style={{ accentColor: "#f59e0b", width: 16, height: 16, marginTop: 2, cursor: "pointer" }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>关闭主窗口时保持后台运行 (最小化至托盘)</div>
+                  <div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 2, lineHeight: 1.4 }}>
+                    点击窗口右上角 ✕ 时隐藏至右下角系统托盘，双击托盘图标或在托盘右键即可恢复打开工作台
+                  </div>
+                </div>
+              </label>
             </div>
           </div>
 

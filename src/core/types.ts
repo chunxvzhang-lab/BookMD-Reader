@@ -108,3 +108,16 @@ export type DocumentSession = {
   hasBom?: boolean;
   lineEnding?: string;
 };
+
+export type FlashNotePayload = {
+  content: string;
+  tags?: string[];
+  isTodo?: boolean;
+};
+
+export type FlashNoteSaveResult = {
+  success: boolean;
+  filePath?: string;
+  dateStr?: string;
+  error?: string;
+};

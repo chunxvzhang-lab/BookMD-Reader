@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.5.1-1D9BF0?style=flat-square&logo=github" alt="Version 1.5.1" />
+  <img src="https://img.shields.io/badge/Version-v1.6.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.6.0" />
+  <img src="https://img.shields.io/badge/Flash_Notes-Alt%2BSpace-F59E0B?style=flat-square" alt="Flash Notes" />
   <img src="https://img.shields.io/badge/Theme-E--ink%20Paper%20%7C%20Geek%20Dark-1D9BF0?style=flat-square" alt="Themes" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
@@ -24,6 +25,7 @@
 </p>
 
 <p align="center">
+  <a href="docs/USER_MANUAL.md">📖 操作手册 (User Manual)</a> •
   <a href="#-核心能力体系">核心体系</a> •
   <a href="#-核心功能特性">功能特性</a> •
   <a href="#-键盘快捷键">快捷键</a> •
@@ -39,18 +41,47 @@
 
 ## 🏛️ 核心能力体系
 
+- **⚡ Flash Capsule（闪念胶囊）**：全局热键秒级呼出毛玻璃微窗，随叫随到，原子归档落盘至 `Inbox/` 收集箱。
 - **📖 Reader（阅读）**：纯净沉浸的 Markdown 排版阅读引擎，支持正文源码行号自动映射与双侧联动高亮。
 - **✍️ Editor（编辑）**：基于 CodeMirror 6 的现代编辑体验，毫秒级实时防抖渲染与零延迟双向同步滚动。
 - **📚 Library（知识库）**：多级文档目录树折叠展开、展开状态持久化记忆、单文档与多层级知识库智能载入。
 - **🔍 Search（检索与大纲）**：全文段落卡片聚合即时检索、多级目录大纲（TOC）随动追踪与书签记忆。
-- **🎨 Visual & Lightbox（视觉与导出）**：Mermaid 架构图 3× Retina 超清 PNG 导出、图片/图表高质毛玻璃灯箱缩放平移。
-- **🛡️ Security（安全基石）**：本地优先物理事务原子落盘、UTF-8 BOM/换行符保真、外部修改冲突检测与丢稿拦截守卫。
+- **🎨 Visual & Lightbox（视觉与导出）**：仿电子墨水屏纸质主题、Mermaid 架构图 3× 超清导出、毛玻璃全屏灯箱。
+- **🛡️ Security（安全基石）**：系统托盘后台运行、Windows 开机自启动、本地事务原子落盘与外部修改冲突检测。
 
 ---
 
 ## 🌟 核心功能特性
 
-### 1. v1.5.0 全新生产力、性能与视觉升级
+### 1. v1.6.0 重磅更新：闪念胶囊速记、全局热键、后台常驻与开机自启动
+- **⚡ 闪念胶囊 (Flash Notes) 独立毛玻璃微窗**：
+  - 无论处于任何工作、游戏或编码窗口，按下全局快捷键（默认 `Alt + Space`）即刻在当前显示器黄金视线区域秒级唤起轻巧毛玻璃微窗（`620×380`）。
+  - **无打扰沉浸速记**：随时捕获灵感火花与即刻待办，失焦自动隐匿（Auto-Hide on Blur），按 `Esc` 键亦可快速退出。
+  - **快捷标记工具栏**：支持一键快速插入待办 (`- [ ] `)、标签 (`#`)、双链 (`[[`)、系统时间（`HH:MM`）及灵感卡片 (`> 💡 `)。
+  - **原子落盘与自动归档**：按下 `Ctrl + Enter` 瞬间触发保存并自动关闭微窗，按日期安全追加落盘到工作区 `Inbox/YYYY-MM-DD.md` 收集箱，主窗口知识库目录树无感实时刷新。
+- **⌨️ 软件内自由自定义全局热键 (Customizable Global Hotkeys)**：
+  - 闪念胶囊微窗内点击快捷键胶囊或 ⚙️ 设置按钮，即可滑出自定义热键抽屉。
+  - 支持常用快捷预设（`Alt+Space`、`Ctrl+Shift+Space`、`Alt+N`、`Ctrl+Alt+N`、`F9`）。
+  - **交互式键盘录制器**：点击录制输入框后直接在键盘上按下任意组合键，主进程即时校验并重注册全局热键，遇冲突给出友好警示并安全回滚，配置本地自动持久化。
+- **🗔 Windows 系统托盘后台运行 (System Tray & Background Running)**：
+  - 状态栏右下角常驻 KnowSpace 专属托盘图标，悬停提示「KnowSpace · 个人知识工作台」。
+  - **单击/双击托盘图标**：秒级显示并聚焦 KnowSpace 主窗口。
+  - **托盘右键菜单**：支持一键唤起闪念胶囊、打开工作台、切换开机自启动、切换关闭窗口时保持后台运行以及彻底退出。
+  - **关闭主窗口时最小化至托盘**：点击窗口右上角 ✕ 时隐藏至右下角系统托盘，全局热键与闪念胶囊持续就绪，未保存内容依然触发安全防丢稿弹窗。
+- **🚀 Windows 开机自启动与后台静默就绪 (Launch on Startup & Silent Launch)**：
+  - 支持随 Windows 开机自动启动并在后台静默就绪（`--hidden`），开机不弹出大窗口打扰用户，全局快捷键随叫随到。
+  - 在闪念胶囊设置抽屉与主窗口关于界面均提供一键开关，状态多端双向实时联动。
+
+### 2. v1.5.1 仿电子墨水屏纸质主题与视觉纯粹化
+- **📖 仿电子墨水屏护眼主题 (E-ink Paper Mode)**：
+  - 采用温暖纸质底色（`#f8f6f0` 暖羊皮纸米白）与高对比沉稳墨色字体（`#1a1a1a`），长时间深度阅读与写作柔和舒适、不刺眼。
+  - 墨水屏全链路统一浅灰色高亮系统（`#ded9cd` 底色与 `#9c9586` 灰框），Mermaid 架构图自动适配 Neutral 素雅黑白矢量风格。
+- **🎛️ 三主题直选分段控制组**：
+  - 左侧活动栏底部直选式三主题按钮：☀️ 日光浅色 (Light) / 📖 仿电子墨水屏 (E-ink) / ✨ 极客暗黑 (Dark) 一键直达。
+- **🧹 界面纯粹化与视觉降噪**：
+  - 移除顶部右上角冗余的搜索及关于按钮，保留全局全文检索（`Ctrl+F`）与段落卡片聚合，界面更聚焦、更纯粹。
+
+### 3. v1.5.0 经典生产力与视觉基石
 - **💎 全新「超立方空间」HyperSpace Cube 专属应用图标**：
   - **构型**：一个半透明悬浮的等距等角投影（Isometric）多面体空间，内部悬浮着一颗发光的知识晶体核心（Knowledge Core）。
   - **质感**：磨砂玻璃（Frosted Glassmorphism）质感，棱角分明，配合发光切面。
@@ -160,6 +191,9 @@
 
 | 快捷键 | 功能 | 说明 |
 | :--- | :--- | :--- |
+| `Alt + Space` | **呼出/隐藏闪念胶囊** | 全局秒级唤起毛玻璃速记微窗（可在软件内自由自定义） |
+| `Ctrl + Enter` | **保存归档闪念** | 在闪念微窗内一键原子追加写入 `Inbox/YYYY-MM-DD.md` 收集箱 |
+| `Esc` | **隐匿微窗 / 退出全屏** | 随时隐藏闪念胶囊或退出全屏阅读模式 |
 | `Ctrl + N` | **新建文件** | 打开保存对话框创建新 Markdown 文件并进入编辑 |
 | `Ctrl + S` | **保存文件** | 保存当前文档修改（未保存时顶部与底部指示灯高亮） |
 | `Ctrl + Shift + S` | **另存为** | 将当前编辑内容另存为新路径 |
@@ -184,7 +218,7 @@
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`KnowSpace-1.5.0.msi`
+- **文件**：`KnowSpace-1.6.0.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版

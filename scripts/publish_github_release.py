@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
-    tag = "v1.5.1"
-    title = "KnowSpace v1.5.1 - 新增仿电子墨水屏纸质主题、三主题直选与界面极简体验优化"
+    tag = "v1.6.0"
+    title = "KnowSpace v1.6.0 - 闪念胶囊速记微窗、全局自定义热键、系统托盘后台常驻与开机自启动"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -75,38 +75,42 @@ def main():
             time.sleep(2)
 
     # 3. Create Release Body
-    body_md = """# 🚀 KnowSpace v1.5.1
+    body_md = """# 🚀 KnowSpace v1.6.0
 
 **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次 **v1.5.1** 版本迭代重磅带来了全新的 **「仿电子墨水屏纸质主题 (E-ink Paper Mode)」**，全链路重构了 **三主题直选分段控制组**，并进行了工具栏视觉降噪与界面极简纯粹化！
+本次 **v1.6.0** 重磅上线了核心生产力特性 **「闪念胶囊 (Flash Notes) 独立微窗」** 与 **「全局热键自定义系统」**，并全面支持 **「Windows 系统托盘常驻后台运行」** 与 **「开机自启动（静默就绪）」**！
 
 ---
 
-### ✨ v1.5.1 核心更新亮点
+### ✨ v1.6.0 核心更新亮点
 
-1. **📖 新增仿电子墨水屏纸质主题（E-ink Paper Mode）**：
-   - 专为长时间深度阅读与写作打造的温暖纸张质感底色（`#f8f6f0` 暖羊皮纸米白）与高对比沉稳墨色字体（`#1a1a1a`）。
-   - 彻底告别屏幕强光与荧光蓝光刺激，呈现如实体纸质书籍般的温润护眼质感。
+1. **⚡ 闪念胶囊 (Flash Notes) 独立毛玻璃微窗**：
+   - 无论在任何工作、游戏或编码窗口，按下全局快捷键（默认 `Alt + Space`）即刻在当前显示器黄金视线区域秒级唤起轻巧毛玻璃微窗（`620×380`）。
+   - **无打扰沉浸速记**：随时捕获灵感火花与即刻待办，失焦自动隐匿（Auto-Hide on Blur），按 `Esc` 键亦可快速退出。
+   - **快捷标记工具栏**：支持一键快速插入待办 (`- [ ] `)、标签 (`#`)、双链 (`[[`)、系统时间（`HH:MM`）及灵感卡片 (`> 💡 `)。
+   - **原子落盘与自动归档**：按下 `Ctrl + Enter` 瞬间触发保存并自动关闭微窗，按日期安全追加落盘到工作区 `Inbox/YYYY-MM-DD.md` 收集箱，主窗口知识库目录树无感实时刷新。
 
-2. **🎨 墨水屏全链路统一浅灰色高亮系统**：
-   - 同步阅读定位指示（Sync Scroll / Selection）、搜索跳转高亮及关键词标记在墨水屏模式下统一采用优雅素净的浅灰色调（`#ded9cd` 底色与 `#9c9586` 灰框）。
-   - 彻底剔除刺眼荧光黄与亮橙色，左右分屏对比与单屏阅读视觉高度一致。
+2. **⌨️ 软件内自由自定义全局热键 (Customizable Global Hotkeys)**：
+   - 闪念胶囊微窗内点击快捷键胶囊或 ⚙️ 设置按钮，即可滑出自定义热键抽屉。
+   - 支持常用快捷预设（`Alt+Space`、`Ctrl+Shift+Space`、`Alt+N`、`Ctrl+Alt+N`、`F9`）。
+   - **交互式键盘录制器**：点击录制输入框后直接在键盘上按下任意组合键，主进程即时校验并重注册全局热键，遇冲突给出友好警示并安全回滚，配置本地自动持久化。
 
-3. **🎛️ 主题直选分段控制组（拒绝轮播，一键直达）**：
-   - 废除单按钮循环轮播的低效交互，在左侧导航栏底部新增直选式三主题分段控制组：
-     - ☀️ **日光浅色 (Light)**：温暖明媚
-     - 📖 **仿电子墨水屏 (E-ink Paper)**：温润沉静
-     - ✨ **极客暗黑 (Geek Dark)**：深邃电光蓝
-   - 单击专属独立按钮直达目标主题，当前主题激活状态一目了然。
+3. **🗔 Windows 系统托盘后台常驻 (System Tray & Background Running)**：
+   - 状态栏右下角常驻 KnowSpace 专属托盘图标，悬停提示「KnowSpace · 个人知识工作台」。
+   - **单击/双击托盘图标**：秒级显示并聚焦 KnowSpace 主窗口。
+   - **托盘右键菜单**：支持一键唤起闪念胶囊、打开工作台、切换开机自启动、切换关闭窗口时保持后台运行以及彻底退出。
+   - **关闭主窗口时最小化至托盘**：点击窗口右上角 ✕ 时隐藏至右下角系统托盘，全局热键与闪念胶囊持续就绪，未保存内容依然触发安全防丢稿弹窗。
 
-4. **📊 Mermaid 架构图 Neutral 风格深度适配**：
-   - 在墨水屏模式下，Mermaid 流程图与架构图自动切换至高雅的 Neutral 黑白低饱和度素雅风格，导出 3× 超清图片依然清新脱俗。
+4. **🚀 Windows 开机自启动与后台静默就绪 (Launch on Startup & Silent Launch)**：
+   - 支持随 Windows 开机自动启动并在后台静默就绪（`--hidden`），开机不弹出大窗口打扰用户，全局快捷键随叫随到。
+   - 在闪念胶囊设置抽屉与主窗口关于界面均提供一键开关，状态多端双向实时联动。
 
-5. **🧹 界面纯粹化与视觉降噪**：
-   - 移除顶部工具栏右上角冗余的关于按钮、搜索按钮及专注模式遮罩逻辑。
-   - 保留左侧高效全文即时搜索面板及快捷键 `Ctrl+F`，主界面更加极简、聚焦与轻盈。
+5. **📖 仿电子墨水屏纸质主题与视觉纯粹化 (v1.5.1 特性)**：
+   - 温暖羊皮纸米白纸质底色（`#f8f6f0`）与高对比沉稳墨色字体（`#1a1a1a`），长时间深度阅读写作护眼无疲劳。
+   - 统一浅灰色高亮系统与 Mermaid 纯净 Neutral 黑白灰度图表。
+   - 底部直选式三主题按钮（☀️ 日光浅色 / 📖 仿电子墨水屏 / ✨ 极客暗黑）。
 
 ---
 
@@ -114,7 +118,7 @@ def main():
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`KnowSpace-1.5.1.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
+| **`KnowSpace-1.6.0.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
 | **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `KnowSpace.exe` 即可运行 |
 
 ---
@@ -166,9 +170,9 @@ def main():
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.5.1.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.5.1.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.5.1.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.6.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.6.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.6.0.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
@@ -180,7 +184,7 @@ def main():
     assets_to_upload = [
         (
             msi_path,
-            "KnowSpace-1.5.1.msi",
+            "KnowSpace-1.6.0.msi",
             "application/x-msi"
         ),
         (

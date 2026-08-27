@@ -112,10 +112,22 @@ export type KnowSpaceDesktopAPI = {
     filename?: string;
   }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
   openInNewWindow?: (absolutePath: string) => Promise<boolean>;
+  openFlashCapsule?: () => Promise<boolean>;
+  hideFlashCapsule?: () => Promise<boolean>;
+  getFlashShortcut?: () => Promise<string>;
+  setFlashShortcut?: (shortcut: string) => Promise<{ success: boolean; shortcut?: string; error?: string }>;
+  getFlashTargetPath?: () => Promise<{ workspaceDir: string | null; targetFile: string; relativeDisplay: string }>;
+  saveFlashNote?: (payload: { content: string; tags?: string[]; isTodo?: boolean }) => Promise<{ success: boolean; filePath?: string; dateStr?: string; error?: string }>;
+  getAppSettings?: () => Promise<{ autoLaunch: boolean; runInBackground: boolean; flashShortcut: string }>;
+  setAppSettings?: (settings: { autoLaunch?: boolean; runInBackground?: boolean }) => Promise<{ success: boolean; settings?: { autoLaunch: boolean; runInBackground: boolean; flashShortcut: string } }>;
   onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
   onMenuCommand: (callback: (command: string) => void) => () => void;
   onBeforeClose: (callback: (data: BeforeCloseData) => void) => () => void;
   onFullScreenChanged?: (callback: (isFullscreen: boolean) => void) => () => void;
+  onFlashFocus?: (callback: () => void) => () => void;
+  onFlashShortcutUpdated?: (callback: (shortcut: string) => void) => () => void;
+  onFlashNoteSaved?: (callback: (data: { filePath: string; dateStr: string }) => void) => () => void;
+  onAppSettingsUpdated?: (callback: (data: { autoLaunch: boolean; runInBackground: boolean; flashShortcut: string }) => void) => () => void;
 };
 
 declare global {

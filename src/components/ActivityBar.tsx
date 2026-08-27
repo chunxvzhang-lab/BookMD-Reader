@@ -14,6 +14,7 @@ import {
   Info,
   Maximize2,
   Minimize2,
+  Zap,
 } from "lucide-react";
 import appLogo from "../assets/icon.png";
 import type { EditorViewMode, ThemeMode } from "../core/types";
@@ -134,6 +135,21 @@ export function ActivityBar({
             <FileText size={18} />
           </button>
         )}
+
+        <button
+          type="button"
+          className="activity-btn flash-notes-activity-btn"
+          onClick={() => {
+            const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+            if (desktop?.openFlashCapsule) {
+              desktop.openFlashCapsule();
+            }
+          }}
+          data-tooltip="闪念胶囊 (全局热键唤起)"
+          aria-label="闪念胶囊速记"
+        >
+          <Zap size={18} style={{ color: "#f59e0b" }} />
+        </button>
       </div>
 
       {/* Bottom Controls: View Mode & Fullscreen & Theme Switch & About */}
