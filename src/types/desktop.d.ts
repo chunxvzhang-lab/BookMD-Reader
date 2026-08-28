@@ -94,6 +94,13 @@ export type KnowSpaceDesktopAPI = {
   }>;
   saveMarkdownFile: (request: SaveMarkdownRequest) => Promise<SaveMarkdownResult>;
   createMarkdownFile: (options?: CreateMarkdownOptions) => Promise<CreateMarkdownResult>;
+  renameMarkdownFile?: (params: { oldPath: string; newTitle: string }) => Promise<{
+    success: boolean;
+    newPath?: string;
+    newTitle?: string;
+    fileName?: string;
+    error?: string;
+  }>;
   saveMarkdownFileAs: (request?: SaveMarkdownAsRequest) => Promise<SaveMarkdownAsResult>;
   setDocumentState: (state: { activePath: string | null; isDirty: boolean }) => Promise<void>;
   resolveBeforeClose: (result: { requestId: number; action: "proceed" | "cancel" }) => Promise<void>;

@@ -48,6 +48,20 @@ export const FlashCapsule: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [statusMessage, setStatusMessage] = useState("");
   const [persistentFeedback, setPersistentFeedback] = useState("");
+  const [availableTargets, setAvailableTargets] = useState<string[]>([]);
+  const [wikiSuggestState, setWikiSuggestState] = useState<{
+    isOpen: boolean;
+    query: string;
+    startIndex: number;
+    selectedIndex: number;
+    filtered: string[];
+  }>({
+    isOpen: false,
+    query: "",
+    startIndex: -1,
+    selectedIndex: 0,
+    filtered: [],
+  });
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const persistentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -131,6 +145,20 @@ export const FlashCapsule: React.FC = () => {
       } catch {}
     }
 
+    // Load historical flash notes and available targets for [[ suggestion
+    const loadTargets = async () => {
+      try {
+        if (desktop?.getFlashNotesSummary) {
+          const res = await desktop.getFlashNotesSummary();
+          if (res?.success && res.notes) {
+            const titles = res.notes.map((n) => n.fileName.replace(/\.md$/i, ""));
+            setAvailableTargets((prev) => Array.from(new Set([...prev, ...titles])));
+          }
+        }
+      } catch {}
+    };
+    loadTargets();
+
     // Auto-focus textarea on mount
     setTimeout(() => {
       textareaRef.current?.focus();
@@ -140,6 +168,7 @@ export const FlashCapsule: React.FC = () => {
     let cleanupFocus: (() => void) | undefined;
     if (desktop?.onFlashFocus) {
       cleanupFocus = desktop.onFlashFocus(() => {
+        loadTargets();
         applyTheme();
         refreshSpaceConfig();
         setTimeout(() => {
@@ -399,7 +428,87 @@ export const FlashCapsule: React.FC = () => {
     { label: "🔬 闪念知识卡片", text: "### 闪念知识卡片\n- **核心概念**：\n- **知识洞察**：\n- **双链关联**：[[]]\n" },
   ];
 
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setContent(val);
+
+    const cursorPos = e.target.selectionStart ?? val.length;
+    const textBefore = val.slice(0, cursorPos);
+    const match = textBefore.match(/\[\[([^\]\n]*)$/);
+
+    if (match) {
+      const query = match[1].toLowerCase().trim();
+      const startIndex = cursorPos - match[0].length;
+      const filtered = availableTargets
+        .filter((t) => !query || t.toLowerCase().includes(query))
+        .slice(0, 8);
+
+      setWikiSuggestState({
+        isOpen: filtered.length > 0,
+        query,
+        startIndex,
+        selectedIndex: 0,
+        filtered,
+      });
+    } else {
+      if (wikiSuggestState.isOpen) {
+        setWikiSuggestState((prev) => ({ ...prev, isOpen: false }));
+      }
+    }
+  };
+
+  const insertWikiSuggestion = (title: string) => {
+    if (wikiSuggestState.startIndex < 0 || !textareaRef.current) return;
+    const cursorPos = textareaRef.current.selectionStart ?? content.length;
+    const before = content.slice(0, wikiSuggestState.startIndex);
+    const after = content.slice(cursorPos);
+    const inserted = `[[${title}]]`;
+    const newContent = `${before}${inserted}${after}`;
+    setContent(newContent);
+    setWikiSuggestState((prev) => ({ ...prev, isOpen: false }));
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newPos = before.length + inserted.length;
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 20);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (wikiSuggestState.isOpen) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setWikiSuggestState((prev) => ({
+          ...prev,
+          selectedIndex: (prev.selectedIndex + 1) % prev.filtered.length,
+        }));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setWikiSuggestState((prev) => ({
+          ...prev,
+          selectedIndex: (prev.selectedIndex - 1 + prev.filtered.length) % prev.filtered.length,
+        }));
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        const selected = wikiSuggestState.filtered[wikiSuggestState.selectedIndex];
+        if (selected) {
+          e.preventDefault();
+          insertWikiSuggestion(selected);
+          return;
+        }
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setWikiSuggestState((prev) => ({ ...prev, isOpen: false }));
+        return;
+      }
+    }
+
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
       handleSave();
@@ -805,16 +914,42 @@ export const FlashCapsule: React.FC = () => {
             </div>
 
             {/* Text Input Area */}
-            <div className="flash-input-wrapper">
+            <div className="flash-input-wrapper" style={{ position: "relative" }}>
               <textarea
                 ref={textareaRef}
                 className="flash-textarea"
-                placeholder="捕捉此刻灵感火花、临时待办或知识线索... (Ctrl + Enter 瞬时归档，Esc 退出)"
+                placeholder="捕捉此刻灵感火花、临时待办或知识线索... (键入 [[ 关联双链，Ctrl + Enter 瞬时归档)"
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={handleContentChange}
                 onKeyDown={handleKeyDown}
                 rows={5}
               />
+
+              {/* WikiLink Autocomplete Dropdown */}
+              {wikiSuggestState.isOpen && (
+                <div className="flash-wikilink-dropdown">
+                  <div className="flash-wikilink-header">
+                    <span>关联双向链接</span>
+                    <span className="hint">↑↓ 选词 · Enter 插入 · Esc 取消</span>
+                  </div>
+                  <div className="flash-wikilink-list">
+                    {wikiSuggestState.filtered.map((item, idx) => (
+                      <button
+                        key={item}
+                        type="button"
+                        className={`flash-wikilink-item ${idx === wikiSuggestState.selectedIndex ? "active" : ""}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          insertWikiSuggestion(item);
+                        }}
+                      >
+                        <Link size={12} className="text-cyan" />
+                        <span>{item}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer Bar */}

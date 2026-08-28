@@ -154,6 +154,54 @@ export function convertUnlinkedMentionInText(
 }
 
 /**
+ * Refactors occurrences of [[oldTitle...]] in markdown content to [[newTitle...]],
+ * preserving any #heading anchor and |alias, while skipping code blocks (```...```).
+ */
+export function refactorWikiLinksInContent(
+  content: string,
+  oldTitle: string,
+  newTitle: string,
+): { newContent: string; changedCount: number } {
+  if (!content || !oldTitle || !newTitle) {
+    return { newContent: content, changedCount: 0 };
+  }
+
+  const cleanOld = oldTitle.split("#")[0].trim().replace(/\.md$/i, "");
+  const cleanNew = newTitle.split("#")[0].trim().replace(/\.md$/i, "");
+  if (!cleanOld || !cleanNew || cleanOld.toLowerCase() === cleanNew.toLowerCase()) {
+    return { newContent: content, changedCount: 0 };
+  }
+
+  const lines = content.split(/\r?\n/);
+  let inCodeBlock = false;
+  let changedCount = 0;
+  const escapedOld = cleanOld.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Regex to match [[oldTitle(#anchor)?(|alias)?]]
+  const regex = new RegExp(`\\[\\[(${escapedOld}(?:\\.md)?)(#[^\\]\n|]+)?(\\|[^\\]\n]+)?\\]\\]`, "gi");
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) continue;
+
+    if (regex.test(line)) {
+      lines[i] = line.replace(regex, (_match, _p1, p2, p3) => {
+        changedCount++;
+        const anchorPart = p2 || "";
+        const aliasPart = p3 || "";
+        return `[[${cleanNew}${anchorPart}${aliasPart}]]`;
+      });
+    }
+  }
+
+  return { newContent: lines.join("\n"), changedCount };
+}
+
+/**
  * Builds a complete backlink index from an array of documents.
  */
 export function createBacklinkIndex(documents: IndexedDocument[]): BacklinkIndexData {

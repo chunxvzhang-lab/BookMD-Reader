@@ -15,6 +15,7 @@ const desktopApi = {
   getDirectoryForFile: (absolutePath) => ipcRenderer.invoke("bookmd:get-directory-for-file", absolutePath),
   saveMarkdownFile: (request) => ipcRenderer.invoke("bookmd:save-markdown-file", request),
   createMarkdownFile: (options) => ipcRenderer.invoke("bookmd:create-markdown-file", options),
+  renameMarkdownFile: (params) => ipcRenderer.invoke("bookmd:rename-markdown-file", params),
   saveMarkdownFileAs: (request) => ipcRenderer.invoke("bookmd:save-markdown-file-as", request),
   setDocumentState: (state) => ipcRenderer.invoke("bookmd:set-document-state", state),
   resolveBeforeClose: (result) => ipcRenderer.invoke("bookmd:resolve-before-close", result),

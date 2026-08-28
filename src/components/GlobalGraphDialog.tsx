@@ -51,6 +51,9 @@ export function GlobalGraphDialog({
     isCurrent: boolean;
   } | null>(null);
 
+  const [isSpacePanning, setIsSpacePanning] = useState(false);
+  const [zoomPercent, setZoomPercent] = useState(100);
+
   // Filtered graph elements
   const filteredData = useMemo(() => {
     return filterGraphData(graphData, {
@@ -60,16 +63,36 @@ export function GlobalGraphDialog({
     });
   }, [graphData, hideIsolates, searchQuery, typeFilter]);
 
-  // Handle ESC key to close
+  // Handle ESC key and Spacebar panning mode
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
+        return;
+      }
+      if (e.code === "Space" && !e.repeat) {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+          return;
+        }
+        e.preventDefault();
+        setIsSpacePanning(true);
       }
     };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        setIsSpacePanning(false);
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [isOpen, onClose]);
 
   // Cytoscape initialization & re-render
@@ -92,6 +115,7 @@ export function GlobalGraphDialog({
     const cy = cytoscape({
       container: containerRef.current,
       elements,
+      wheelSensitivity: 0.22,  // Smooth damping for mouse wheel and trackpad zoom
       textureOnViewport: true, // Hardware-accelerated tile caching to save iGPU
       motionBlur: false,       // Zero extra GPU passes
       pixelRatio: "auto",
@@ -221,7 +245,12 @@ export function GlobalGraphDialog({
       }
     });
 
+    cy.on("zoom", () => {
+      setZoomPercent(Math.round(cy.zoom() * 100));
+    });
+
     cy.fit(undefined, 40);
+    setZoomPercent(Math.round(cy.zoom() * 100));
 
     // Initial resize after modal animation settles
     const initialResizeTimer = setTimeout(() => {
@@ -388,6 +417,7 @@ export function GlobalGraphDialog({
             >
               <ZoomIn size={14} />
             </button>
+            <span className="graph-zoom-badge" title="当前缩放级别">{zoomPercent}%</span>
             <button
               type="button"
               className="graph-action-btn"
@@ -408,7 +438,7 @@ export function GlobalGraphDialog({
         </div>
 
         {/* Canvas Body */}
-        <div className="global-graph-canvas-wrapper">
+        <div className={`global-graph-canvas-wrapper ${isSpacePanning ? "space-panning" : ""}`}>
           <div className="global-graph-canvas" ref={containerRef} />
 
           {/* Selected Node Details Card (Bottom-Left) */}

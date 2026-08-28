@@ -55,6 +55,7 @@ export function LocalGraphView({
     const cy = cytoscape({
       container: containerRef.current,
       elements,
+      wheelSensitivity: 0.25,  // Smooth damping for mouse wheel and trackpad zoom
       textureOnViewport: true, // Reuses tile textures during pan/zoom to protect iGPU
       motionBlur: false,       // Disables expensive multi-pass frame blending
       pixelRatio: "auto",

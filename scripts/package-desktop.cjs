@@ -15,14 +15,8 @@ async function main() {
   console.log("1. Ensuring dist is built...");
   await assertExists(path.join(root, "dist", "index.html"), "dist is missing. Run npm run build first.");
 
-  console.log("2. Checking unpacked application binary...");
-  try {
-    await fs.access(path.join(winUnpacked, "KnowSpace.exe"));
-    console.log("Found existing release/win-unpacked, skipping electron-builder dir build.");
-  } catch {
-    console.log("Generating unpacked application via electron-builder...");
-    await execPromise("npx electron-builder --win dir", { cwd: root });
-  }
+  console.log("2. Building unpacked application via electron-builder...");
+  await execPromise("npx electron-builder --win dir", { cwd: root });
 
   console.log("3. Copying unpacked binaries into release/KnowSpace-win-x64...");
   await fs.mkdir(releaseRoot, { recursive: true });

@@ -1497,6 +1497,45 @@ ipcMain.handle("bookmd:create-markdown-file", async (event, options = {}) => {
   };
 });
 
+ipcMain.handle("bookmd:rename-markdown-file", async (event, params = {}) => {
+  const { oldPath, newTitle } = params;
+  if (!oldPath || !newTitle) {
+    return { success: false, error: "缺少原路径或新文件名" };
+  }
+
+  try {
+    const cleanTitle = newTitle.trim().replace(/\.(md|markdown)$/i, "");
+    if (!cleanTitle) {
+      return { success: false, error: "新文件名不能为空" };
+    }
+    const dir = path.dirname(oldPath);
+    const newFileName = `${cleanTitle}.md`;
+    const newPath = path.join(dir, newFileName);
+
+    if (newPath.toLowerCase() !== oldPath.toLowerCase()) {
+      try {
+        await fs.promises.access(newPath);
+        return { success: false, error: `同名文件「${newFileName}」已存在` };
+      } catch {
+        // Safe to rename
+      }
+    }
+
+    await fs.promises.rename(oldPath, newPath);
+    registerPath(newPath);
+
+    return {
+      success: true,
+      newPath,
+      newTitle: cleanTitle,
+      fileName: newFileName,
+    };
+  } catch (err) {
+    console.error("Failed to rename markdown file:", err);
+    return { success: false, error: err.message || "重命名文件失败" };
+  }
+});
+
 ipcMain.handle("bookmd:save-markdown-file-as", async (event, request = {}) => {
   const defaultPath = request.currentPath || path.join(app.getPath("documents"), "未命名.md");
   const targetWin = getWindowFromEvent(event);

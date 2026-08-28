@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, Folder, FolderOpen, FolderMinus } from "lucide-react";
+import { ChevronRight, FileText, Folder, FolderOpen, FolderMinus, Edit3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { BookManifest, ChapterManifest } from "../core/types";
 
@@ -7,6 +7,7 @@ type ChapterListProps = {
   activeChapterId: string;
   isDirty?: boolean;
   onSelectChapter: (chapterId: string) => void;
+  onRenameChapter?: (chapter: ChapterManifest) => void;
 };
 
 type TreeNode = {
@@ -21,6 +22,7 @@ export function ChapterList({
   activeChapterId,
   isDirty = false,
   onSelectChapter,
+  onRenameChapter,
 }: ChapterListProps) {
   const tree = useMemo(() => buildTree(manifest.chapters), [manifest.chapters]);
   const activeChapter = useMemo(
@@ -70,6 +72,7 @@ export function ChapterList({
               openFolders={openFolders}
               onToggleFolder={toggleFolder}
               onSelectChapter={onSelectChapter}
+              onRenameChapter={onRenameChapter}
             />
           ))
         ) : (
@@ -88,6 +91,7 @@ function TreeRow({
   openFolders,
   onToggleFolder,
   onSelectChapter,
+  onRenameChapter,
 }: {
   node: TreeNode;
   depth: number;
@@ -96,6 +100,7 @@ function TreeRow({
   openFolders: Set<string>;
   onToggleFolder: (path: string) => void;
   onSelectChapter: (chapterId: string) => void;
+  onRenameChapter?: (chapter: ChapterManifest) => void;
 }) {
   const isFolder = node.children.length > 0 && !node.chapter;
   const isOpen = openFolders.has(node.path);
@@ -123,6 +128,7 @@ function TreeRow({
                 openFolders={openFolders}
                 onToggleFolder={onToggleFolder}
                 onSelectChapter={onSelectChapter}
+                onRenameChapter={onRenameChapter}
               />
             ))
           : null}
@@ -134,16 +140,35 @@ function TreeRow({
   const isActive = node.chapter.id === activeChapterId;
 
   return (
-    <button
-      className={isActive ? "tree-row file-row active" : "tree-row file-row"}
+    <div
+      className={`tree-row-wrapper ${isActive ? "is-active" : ""}`}
       style={{ "--tree-depth": depth } as React.CSSProperties}
-      onClick={() => onSelectChapter(node.chapter!.id)}
-      title={node.chapter.src}
     >
-      <FileText size={13} />
-      <span>{fileLabel(node.name)}</span>
-      {isActive && isDirty && <span className="tree-dirty-dot" title="未保存" />}
-    </button>
+      <button
+        type="button"
+        className={isActive ? "tree-row file-row active" : "tree-row file-row"}
+        onClick={() => onSelectChapter(node.chapter!.id)}
+        title={node.chapter.src}
+      >
+        <FileText size={13} />
+        <span className="tree-file-title">{fileLabel(node.name)}</span>
+        {isActive && isDirty && <span className="tree-dirty-dot" title="未保存" />}
+      </button>
+      {onRenameChapter && (
+        <button
+          type="button"
+          className="tree-rename-btn"
+          title="重命名文档"
+          aria-label={`重命名 ${node.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRenameChapter(node.chapter!);
+          }}
+        >
+          <Edit3 size={11} />
+        </button>
+      )}
+    </div>
   );
 }
 
