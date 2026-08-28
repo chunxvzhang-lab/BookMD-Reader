@@ -89,8 +89,12 @@ export function LocalGraphView({
             },
             "border-width": 0,
             "border-opacity": 0,
-            "active-bg-opacity": 0,
+            "border-style": "solid",
+            shape: "ellipse",
             "overlay-opacity": 0,
+            "overlay-padding": 0,
+            "active-bg-opacity": 0,
+            "active-bg-size": 0,
           },
         },
         {

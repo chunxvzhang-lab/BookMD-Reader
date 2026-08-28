@@ -6663,12 +6663,12 @@ body:has(.flash-capsule-overlay) {
 
 .graph-stat-badge {
   font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-weight: 500;
+  color: var(--text-muted, #94a3b8);
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
 }
 
 .global-graph-close-btn {
@@ -7154,9 +7154,9 @@ body:has(.flash-capsule-overlay) {
 }
 
 [data-theme="eink"] .graph-stat-badge {
-  background: #ffffff;
-  color: #000000;
-  border: 1px solid #000000;
+  color: #555555;
+  background: none;
+  border: none;
 }
 
 [data-theme="eink"] .global-graph-toolbar {

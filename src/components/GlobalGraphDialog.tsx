@@ -206,13 +206,14 @@ export function GlobalGraphDialog({
             "text-outline-color": textOutlineColor,
             "text-outline-width": 2.5,
             "text-outline-opacity": 1,
+            shape: "ellipse",
             width: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 28 : Math.min(32, Math.max(16, 16 + inDeg * 3));
+              return ele.data("isCurrent") ? 22 : Math.min(22, Math.max(10, 10 + inDeg * 2.5));
             },
             height: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 28 : Math.min(32, Math.max(16, 16 + inDeg * 3));
+              return ele.data("isCurrent") ? 22 : Math.min(22, Math.max(10, 10 + inDeg * 2.5));
             },
             "background-color": (ele: any) => {
               if (ele.data("isCurrent")) return currentBg;
@@ -221,8 +222,11 @@ export function GlobalGraphDialog({
             },
             "border-width": 0,
             "border-opacity": 0,
-            "active-bg-opacity": 0,
+            "border-style": "solid",
             "overlay-opacity": 0,
+            "overlay-padding": 0,
+            "active-bg-opacity": 0,
+            "active-bg-size": 0,
           },
         },
         {

@@ -201,13 +201,14 @@ export function GraphViewPane({
             "text-outline-color": textOutlineColor,
             "text-outline-width": 2,
             "text-outline-opacity": 0.9,
+            shape: "ellipse",
             width: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 26 : Math.min(30, Math.max(14, 14 + inDeg * 2.8));
+              return ele.data("isCurrent") ? 22 : Math.min(22, Math.max(10, 10 + inDeg * 2.5));
             },
             height: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 26 : Math.min(30, Math.max(14, 14 + inDeg * 2.8));
+              return ele.data("isCurrent") ? 22 : Math.min(22, Math.max(10, 10 + inDeg * 2.5));
             },
             "background-color": (ele: any) => {
               if (ele.data("isCurrent")) return currentBg;
@@ -217,8 +218,12 @@ export function GraphViewPane({
             // Obsidian clean aesthetic: NO circle borders, NO circle selection ring!
             "border-width": 0,
             "border-opacity": 0,
-            "active-bg-opacity": 0, // Eliminate Cytoscape tap gray circle
-            "overlay-opacity": 0,   // Eliminate Cytoscape tap overlay
+            "border-style": "solid",
+            // Disable ALL overlay/active effects on the node
+            "overlay-opacity": 0,
+            "overlay-padding": 0,
+            "active-bg-opacity": 0,
+            "active-bg-size": 0,
           },
         },
         {
