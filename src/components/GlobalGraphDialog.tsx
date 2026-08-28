@@ -99,8 +99,11 @@ export function GlobalGraphDialog({
     if (Number.isFinite(val) && val >= 10 && val <= 500) {
       const clamped = Math.round(val);
       if (cyRef.current) {
-        cyRef.current.zoom(clamped / 100);
-        cyRef.current.center();
+        const cy = cyRef.current;
+        cy.zoom({
+          level: clamped / 100,
+          renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+        });
       }
       setZoomPercent(clamped);
       setZoomInputValue(`${clamped}%`);
@@ -179,7 +182,9 @@ export function GlobalGraphDialog({
     const cy = cytoscape({
       container: containerRef.current,
       elements,
-      wheelSensitivity: 0.22,
+      wheelSensitivity: 4.8, // Snappy & natural zoom (previously 0.22 was ~22x too slow on mouse/trackpad)
+      minZoom: 0.1,
+      maxZoom: 5.0,
       textureOnViewport: false, // Direct 2D canvas draw: 60fps buttery smooth for knowledge graphs
       motionBlur: false,
       pixelRatio: "auto",
@@ -510,13 +515,23 @@ export function GlobalGraphDialog({
 
   const handleZoomIn = () => {
     if (cyRef.current) {
-      cyRef.current.zoom(cyRef.current.zoom() * 1.3);
+      const cy = cyRef.current;
+      const targetZoom = Math.min(5.0, cy.zoom() * 1.3);
+      cy.zoom({
+        level: targetZoom,
+        renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+      });
     }
   };
 
   const handleZoomOut = () => {
     if (cyRef.current) {
-      cyRef.current.zoom(cyRef.current.zoom() * 0.75);
+      const cy = cyRef.current;
+      const targetZoom = Math.max(0.1, cy.zoom() * 0.77);
+      cy.zoom({
+        level: targetZoom,
+        renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+      });
     }
   };
 

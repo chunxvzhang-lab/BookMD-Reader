@@ -55,7 +55,9 @@ export function LocalGraphView({
     const cy = cytoscape({
       container: containerRef.current,
       elements,
-      wheelSensitivity: 0.25,
+      wheelSensitivity: 4.5,
+      minZoom: 0.1,
+      maxZoom: 5.0,
       textureOnViewport: false,
       motionBlur: false,
       pixelRatio: "auto",
