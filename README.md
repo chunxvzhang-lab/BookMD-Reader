@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.7.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.7.0" />
+  <img src="https://img.shields.io/badge/Version-v1.8.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.8.0" />
+  <img src="https://img.shields.io/badge/Knowledge_Graph-60FPS-00BA7C?style=flat-square" alt="Knowledge Graph" />
   <img src="https://img.shields.io/badge/Flash_Notes-Alt%2BSpace-F59E0B?style=flat-square" alt="Flash Notes" />
   <img src="https://img.shields.io/badge/Theme-E--ink%20Paper%20%7C%20Geek%20Dark-1D9BF0?style=flat-square" alt="Themes" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -41,6 +42,7 @@
 
 ## 🏛️ 核心能力体系
 
+- **🌐 Graph & Backlinks（知识图谱与双链）**：60FPS 极速全景拓扑图谱、2.2ms 黄金螺旋 2D 有机力导向布局、[[Wikilink]] 实时补全与全局级联重构。
 - **⚡ Flash Capsule（闪念胶囊）**：全局热键秒级呼出毛玻璃微窗，随叫随到，原子归档落盘至 `Inbox/` 收集箱。
 - **📖 Reader（阅读）**：纯净沉浸的 Markdown 排版阅读引擎，支持正文源码行号自动映射与双侧联动高亮。
 - **✍️ Editor（编辑）**：基于 CodeMirror 6 的现代编辑体验，毫秒级实时防抖渲染与零延迟双向同步滚动。
@@ -151,11 +153,25 @@
 
 ---
 
+### 8. 🌐 知识网络全景拓扑图谱与双链漫游 (Knowledge Graph & Bi-directional Links)
+*打造网状立体认知，从零散碎片笔记升维为互联互通的个人数字脑神经网络。*
+
+- **⚡ 60FPS 极速原生渲染管线**：移除了沉重的 GPU 离屏纹理快照，采用直接 2D Canvas 高性能绘制管线与 RAF 动画帧级事件节流，百量级节点缩放拖拽如丝般顺滑，告别卡顿。
+- **🌌 自研 2.2ms 黄金螺旋 2D 有机力导向算法**：彻底根治孤岛节点垂直堆叠成列的缺陷，结合黄金角发散、库仑斥力、胡克弹簧拉力与 95px 防穿透安全边界，关联紧密笔记自动聚合成星系簇，孤岛笔记疏密有致环绕发散。
+- **🎯 智能聚焦当前文档与发光波纹 (`Crosshair`)**：多层级容错定位与 URL 解码匹配，平滑运镜并激发出 1.5s 柔和天蓝脉冲发光光晕；若遇孤岛过滤自动解禁召回。
+- **🔍 100% 默认缩放与交互式手动输入**：初始视口标准 100% 聚焦居中，支持在工具栏手动输入 `10%` ~ `500%` 精准微调。
+- **🔗 双向链接语法与实时联想补全**：在编辑器中输入 `[[` 即刻唤起浮动补全建议卡片，回车一键插入；按住 `Ctrl` 点击直接秒级跨文档跳转。
+- **🔄 全局智能重构 (Refactor Links)**：重命名任意文档时，全工作区所有引用该文档的双链自动级联更新，永不断链。
+- **🗂️ 侧边栏反向链接与未链接提及面板**：实时统计当前文档被谁引用（Linked References），智能挖掘正文中出现该标题但尚未建立链接的潜在线索（Unlinked Mentions），支持一键无损转化为规范双链。
+
+---
+
 ## ⌨️ 键盘快捷键
 
 | 快捷键 | 功能 | 说明 |
 | :--- | :--- | :--- |
 | `Alt + Space` | **呼出/隐藏闪念胶囊** | 全局秒级唤起毛玻璃速记微窗（可在软件内自由自定义） |
+| `Ctrl + G` | **打开知识网络全景图谱** | 全屏查看知识节点关联拓扑与漫游定位 |
 | `Ctrl + Enter` | **保存归档闪念** | 在闪念微窗内一键原子追加写入 `Inbox/YYYY-MM-DD.md` 收集箱 |
 | `Esc` | **隐匿微窗 / 退出全屏** | 随时隐藏闪念胶囊或退出全屏阅读模式 |
 | `Ctrl + N` | **新建文件** | 打开保存对话框创建新 Markdown 文件并进入编辑 |
@@ -182,7 +198,7 @@
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`KnowSpace-1.6.0.msi`
+- **文件**：`KnowSpace-1.8.0.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版

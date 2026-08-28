@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
-    tag = "v1.6.0"
-    title = "KnowSpace v1.6.0 - 闪念胶囊速记微窗、全局自定义热键、系统托盘后台常驻与开机自启动"
+    tag = "v1.8.0"
+    title = "KnowSpace v1.8.0 - 知识网络全景拓扑图谱、双向链接网络、全局双链重构与 60FPS 极速渲染"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -75,42 +75,48 @@ def main():
             time.sleep(2)
 
     # 3. Create Release Body
-    body_md = """# 🚀 KnowSpace v1.6.0
+    body_md = """# 🚀 KnowSpace v1.8.0
 
 **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次 **v1.6.0** 重磅上线了核心生产力特性 **「闪念胶囊 (Flash Notes) 独立微窗」** 与 **「全局热键自定义系统」**，并全面支持 **「Windows 系统托盘常驻后台运行」** 与 **「开机自启动（静默就绪）」**！
+本次 **v1.8.0** 迎来重磅里程碑更新——**「知识网络全景拓扑图谱与双向链接系统 (Knowledge Graph & Bi-directional Links)」** 正式上线！彻底打破孤岛式文档记录模式，将碎片速记与知识文档升维为互联互通的个人立体数字大脑！
 
 ---
 
-### ✨ v1.6.0 核心更新亮点
+### ✨ v1.8.0 核心更新亮点
 
-1. **⚡ 闪念胶囊 (Flash Notes) 独立毛玻璃微窗**：
-   - 无论在任何工作、游戏或编码窗口，按下全局快捷键（默认 `Alt + Space`）即刻在当前显示器黄金视线区域秒级唤起轻巧毛玻璃微窗（`620×380`）。
-   - **无打扰沉浸速记**：随时捕获灵感火花与即刻待办，失焦自动隐匿（Auto-Hide on Blur），按 `Esc` 键亦可快速退出。
-   - **快捷标记工具栏**：支持一键快速插入待办 (`- [ ] `)、标签 (`#`)、双链 (`[[`)、系统时间（`HH:MM`）及灵感卡片 (`> 💡 `)。
-   - **原子落盘与自动归档**：按下 `Ctrl + Enter` 瞬间触发保存并自动关闭微窗，按日期安全追加落盘到工作区 `Inbox/YYYY-MM-DD.md` 收集箱，主窗口知识库目录树无感实时刷新。
+1. **🌐 60FPS 极速全景拓扑图谱 (Global Knowledge Graph)**：
+   - 全面移除沉重的 GPU 离屏纹理快照机制（`textureOnViewport: false`），采用**原生 2D Canvas 直接绘制管线**；
+   - 鼠标滚轮缩放与双指平移漫游全面接入 **RAF 动画帧级事件节流**，杜绝每秒数十次 React 重渲染，大中小图谱均达到 60FPS+ 的丝滑操作质感；
+   - **默认 100% 缩放与居中**：打开图谱时初始视口固定为标准 100% 并聚焦当前文档，工具栏支持手动输入 `10%` ~ `500%` 精确数值微调。
 
-2. **⌨️ 软件内自由自定义全局热键 (Customizable Global Hotkeys)**：
-   - 闪念胶囊微窗内点击快捷键胶囊或 ⚙️ 设置按钮，即可滑出自定义热键抽屉。
-   - 支持常用快捷预设（`Alt+Space`、`Ctrl+Shift+Space`、`Alt+N`、`Ctrl+Alt+N`、`F9`）。
-   - **交互式键盘录制器**：点击录制输入框后直接在键盘上按下任意组合键，主进程即时校验并重注册全局热键，遇冲突给出友好警示并安全回滚，配置本地自动持久化。
+2. **🌌 自研 2.2ms 黄金螺旋 2D 有机力导向分布算法 (`computeOrganicGraphPositions`)**：
+   - 彻底告别原 CoSE 遇到孤岛节点排成单列垂直“摩天大楼”或文字重叠遮挡的缺陷；
+   - 采用 **黄金角自然发散 + 库仑电荷排斥 + 虎克弹簧引力 + 95px 防穿透最小安全间距**；
+   - 耗时仅 **2.2 毫秒** 瞬间计算就绪，关联紧密的文档自然聚集成星系簇，孤岛与闪念笔记疏密得当、四面环绕发散，节点文字绝对防重叠碰撞。
 
-3. **🗔 Windows 系统托盘后台常驻 (System Tray & Background Running)**：
-   - 状态栏右下角常驻 KnowSpace 专属托盘图标，悬停提示「KnowSpace · 个人知识工作台」。
-   - **单击/双击托盘图标**：秒级显示并聚焦 KnowSpace 主窗口。
-   - **托盘右键菜单**：支持一键唤起闪念胶囊、打开工作台、切换开机自启动、切换关闭窗口时保持后台运行以及彻底退出。
-   - **关闭主窗口时最小化至托盘**：点击窗口右上角 ✕ 时隐藏至右下角系统托盘，全局热键与闪念胶囊持续就绪，未保存内容依然触发安全防丢稿弹窗。
+3. **🎯 镜头平滑聚焦当前文档与发光波纹动效 (`Crosshair Focus`)**：
+   - 深度重构多层级智能解析器（`findCurrentNode`），无论文件来自本地绝对路径、URL 编码路径还是未编目闪念，实现 100% 精准定位；
+   - 采用 **三次贝塞尔缓动（`ease-in-out-cubic`, 350ms）** 镜头平滑推近，并激发 **1.5 秒专属天蓝脉冲波纹（Pulse Glow）**；
+   - 遇孤岛节点过滤或关键字搜索时自动解禁召回，确保视线随时精准锁定当前编辑文档。
 
-4. **🚀 Windows 开机自启动与后台静默就绪 (Launch on Startup & Silent Launch)**：
-   - 支持随 Windows 开机自动启动并在后台静默就绪（`--hidden`），开机不弹出大窗口打扰用户，全局快捷键随叫随到。
-   - 在闪念胶囊设置抽屉与主窗口关于界面均提供一键开关，状态多端双向实时联动。
+4. **🔗 双向链接语法与实时联想补全 (`[[Wikilink]]`)**：
+   - 在编辑器中键入 `[[` 即可毫秒级弹出工作区文档智能补全建议卡片；
+   - 按住 `Ctrl` 键点击正文中任意双链，秒级跨文档平滑跳转并定位至对应目标章节；
+   - 在闪念胶囊速记微窗中同样支持 `[[` 实时补全与链接插入。
 
-5. **📖 仿电子墨水屏纸质主题与视觉纯粹化 (v1.5.1 特性)**：
-   - 温暖羊皮纸米白纸质底色（`#f8f6f0`）与高对比沉稳墨色字体（`#1a1a1a`），长时间深度阅读写作护眼无疲劳。
-   - 统一浅灰色高亮系统与 Mermaid 纯净 Neutral 黑白灰度图表。
-   - 底部直选式三主题按钮（☀️ 日光浅色 / 📖 仿电子墨水屏 / ✨ 极客暗黑）。
+5. **🔄 全局智能无损重构 (Link Rename Propagation)**：
+   - 在目录树中重命名任何文档或修改标题时，系统自动扫描并更新全局所有引用该文档的 `[[旧标题]]` 为 `[[新标题]]`；
+   - 配备冲突防回滚机制，保障知识网络永久连通不失效。
+
+6. **🗂️ 侧边栏反向链接与未链接提及面板 (Backlinks & Mentions)**：
+   - **已链接引用 (Linked References)**：清晰列出当前文档被哪些笔记引用，附带行号与上下文摘要；
+   - **未链接提及 (Unlinked Mentions)**：智能挖掘正文中提到当前文档标题但尚未建立链接的段落，支持一键无损转化为标准双链。
+
+7. **⚡ 闪念 Space 纯净看板与独立展示**：
+   - 界面文案统一去冗余，净化为沉稳克制的「**闪念 Space**」；
+   - 大纲侧栏平时隐藏碎片化的分钟级闪念文件，通过快捷栏打开时以专属看板模式独立呈现，保持知识库目录树整洁清晰。
 
 ---
 
@@ -118,8 +124,8 @@ def main():
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`KnowSpace-1.6.0.msi`** | Windows 安装包 | 支持自动创建桌面快捷方式与程序菜单（推荐） |
-| **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 解压后直接双击 `KnowSpace.exe` 即可运行 |
+| **`KnowSpace-1.8.0.msi`** | Windows 企业级标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
+| **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 免安装解压即用，解压后双击 `KnowSpace.exe` 即可运行 |
 
 ---
 
@@ -170,9 +176,9 @@ def main():
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.6.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.6.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.6.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.8.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.8.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.8.0.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
@@ -184,7 +190,7 @@ def main():
     assets_to_upload = [
         (
             msi_path,
-            "KnowSpace-1.6.0.msi",
+            "KnowSpace-1.8.0.msi",
             "application/x-msi"
         ),
         (
