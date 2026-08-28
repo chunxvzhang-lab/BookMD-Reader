@@ -1848,9 +1848,10 @@ export function App() {
     return getUnlinkedMentions(backlinkIndex, session.chapterId, currentDocTitle);
   }, [backlinkIndex, currentDocTitle, session?.chapterId]);
 
+  const currentActiveId = chapterId || session?.chapterId || session?.absolutePath || session?.fileName;
   const graphData = useMemo(() => {
-    return buildGraphDataFromIndex(manifest, backlinkIndex, session?.chapterId);
-  }, [manifest, backlinkIndex, session?.chapterId]);
+    return buildGraphDataFromIndex(manifest, backlinkIndex, currentActiveId);
+  }, [manifest, backlinkIndex, currentActiveId]);
 
   const handleCloseGlobalGraph = useCallback(() => {
     setGlobalGraphOpen(false);
@@ -2439,7 +2440,7 @@ export function App() {
         isOpen={globalGraphOpen}
         onClose={handleCloseGlobalGraph}
         graphData={graphData}
-        currentDocId={session?.chapterId}
+        currentDocId={currentActiveId}
         theme={preferences.theme}
         onSelectNode={handleJumpToBacklink}
       />

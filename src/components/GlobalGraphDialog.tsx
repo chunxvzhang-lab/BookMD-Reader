@@ -28,6 +28,43 @@ type GlobalGraphDialogProps = {
   onSelectNode: (docId: string) => void;
 };
 
+/**
+ * Resiliently resolves the active document node in Cytoscape using multiple fallbacks:
+ * 1. Explicit `isCurrent` property marked on node
+ * 2. Exact target ID match
+ * 3. Normalized path / filename / title match
+ */
+function findCurrentNode(cy: Core | null, targetId?: string | null) {
+  if (!cy) return null;
+  const curNodes = cy.nodes().filter((n) => Boolean(n.data("isCurrent")));
+  if (curNodes.length > 0) return curNodes.first();
+
+  if (targetId) {
+    const byId = cy.getElementById(targetId);
+    if (byId.length > 0) return byId.first();
+
+    const norm = targetId.trim().toLowerCase();
+    const matched = cy.nodes().filter((n) => {
+      const nid = (n.data("id") || "").toLowerCase();
+      const path = (n.data("path") || "").toLowerCase();
+      const label = (n.data("label") || "").toLowerCase();
+      const normTitle = (n.data("normTitle") || "").toLowerCase();
+      return (
+        nid === norm ||
+        path === norm ||
+        norm.endsWith(path) ||
+        path.endsWith(norm) ||
+        label === norm ||
+        normTitle === norm ||
+        norm.includes(label)
+      );
+    });
+    if (matched.length > 0) return matched.first();
+  }
+
+  return null;
+}
+
 export function GlobalGraphDialog({
   isOpen,
   onClose,
@@ -210,6 +247,15 @@ export function GlobalGraphDialog({
             opacity: 0.18,
           },
         },
+        {
+          selector: ".active-focus-pulse",
+          style: {
+            "border-width": 5,
+            "border-color": isEink ? "#000000" : "#38bdf8",
+            "border-opacity": 1,
+            "z-index": 1000,
+          },
+        },
       ] as any,
       layout: {
         name: "preset",
@@ -320,13 +366,24 @@ export function GlobalGraphDialog({
 
     // Default to 100% zoom and center on active document or canvas center
     cy.zoom(1.0);
-    if (currentDocId) {
-      const cur = cy.getElementById(currentDocId);
-      if (cur && cur.length > 0) {
-        cy.center(cur);
-      } else {
-        cy.center();
-      }
+    const initialTarget = findCurrentNode(cy, currentDocId);
+    if (initialTarget && initialTarget.length > 0) {
+      cy.center(initialTarget);
+      setSelectedNode({
+        id: initialTarget.data("id"),
+        label: initialTarget.data("label"),
+        path: initialTarget.data("path"),
+        type: initialTarget.data("type"),
+        inDegree: initialTarget.data("inDegree") || 0,
+        outDegree: initialTarget.data("outDegree") || 0,
+        isCurrent: Boolean(initialTarget.data("isCurrent")),
+      });
+      cy.batch(() => {
+        cy.elements().removeClass("highlighted dimmed");
+        const neighborhood = initialTarget.neighborhood().add(initialTarget);
+        neighborhood.addClass("highlighted");
+        cy.elements().difference(neighborhood).addClass("dimmed");
+      });
     } else {
       cy.center();
     }
@@ -338,13 +395,9 @@ export function GlobalGraphDialog({
       if (cyRef.current) {
         cyRef.current.resize();
         cyRef.current.zoom(1.0);
-        if (currentDocId) {
-          const cur = cyRef.current.getElementById(currentDocId);
-          if (cur && cur.length > 0) {
-            cyRef.current.center(cur);
-          } else {
-            cyRef.current.center();
-          }
+        const cur = findCurrentNode(cyRef.current, currentDocId);
+        if (cur && cur.length > 0) {
+          cyRef.current.center(cur);
         } else {
           cyRef.current.center();
         }
@@ -386,17 +439,73 @@ export function GlobalGraphDialog({
     }
   };
 
+  const executeFocus = (targetNode: any) => {
+    if (!cyRef.current || !targetNode || targetNode.length === 0) return;
+    const cy = cyRef.current;
+    cy.stop();
+
+    const currentZ = cy.zoom();
+    const targetZ = Math.min(2.5, Math.max(currentZ, 1.05));
+
+    cy.animate({
+      center: { eles: targetNode },
+      zoom: targetZ,
+      duration: 350,
+      easing: "ease-in-out-cubic",
+      complete: () => {
+        const z = Math.round(cy.zoom() * 100);
+        setZoomPercent(z);
+        setZoomInputValue(`${z}%`);
+      },
+    });
+
+    targetNode.addClass("active-focus-pulse");
+    setTimeout(() => {
+      if (targetNode && !targetNode.removed()) {
+        targetNode.removeClass("active-focus-pulse");
+      }
+    }, 1500);
+
+    setSelectedNode({
+      id: targetNode.data("id"),
+      label: targetNode.data("label"),
+      path: targetNode.data("path"),
+      type: targetNode.data("type"),
+      inDegree: targetNode.data("inDegree") || 0,
+      outDegree: targetNode.data("outDegree") || 0,
+      isCurrent: Boolean(targetNode.data("isCurrent")),
+    });
+
+    cy.batch(() => {
+      cy.elements().removeClass("highlighted dimmed");
+      const neighborhood = targetNode.neighborhood().add(targetNode);
+      neighborhood.addClass("highlighted");
+      cy.elements().difference(neighborhood).addClass("dimmed");
+    });
+  };
+
   const handleFocusActive = () => {
-    if (!cyRef.current || !currentDocId) return;
-    const targetNode = cyRef.current.getElementById(currentDocId);
-    if (targetNode && targetNode.length > 0) {
-      cyRef.current.animate({
-        center: { eles: targetNode },
-        zoom: 1.5,
-        duration: 350,
-      });
-      targetNode.emit("tap");
+    if (!cyRef.current) return;
+    const cy = cyRef.current;
+    let targetNode = findCurrentNode(cy, currentDocId);
+
+    // If node is currently filtered out (e.g. by hideIsolates or search), reset filter first
+    if (!targetNode || targetNode.length === 0) {
+      if (hideIsolates) setHideIsolates(false);
+      if (searchQuery) setSearchQuery("");
+      if (typeFilter !== "all") setTypeFilter("all");
+
+      setTimeout(() => {
+        if (!cyRef.current) return;
+        const restored = findCurrentNode(cyRef.current, currentDocId);
+        if (restored && restored.length > 0) {
+          executeFocus(restored);
+        }
+      }, 60);
+      return;
     }
+
+    executeFocus(targetNode);
   };
 
   const handleZoomIn = () => {
@@ -494,7 +603,7 @@ export function GlobalGraphDialog({
           </div>
 
           <div className="graph-toolbar-actions">
-            {currentDocId && (
+            {(Boolean(currentDocId) || graphData.nodes.some((n) => n.isCurrent)) && (
               <button
                 type="button"
                 className="graph-action-btn focus-btn"

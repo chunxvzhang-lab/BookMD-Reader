@@ -44,6 +44,28 @@ export function buildGraphDataFromIndex(
   const nodesMap = new Map<string, GraphNodeData>();
   const normTitleToId = new Map<string, string>();
 
+  const isMatchCurrent = (id: string, path?: string, title?: string): boolean => {
+    if (!currentDocId) return false;
+    let cur = currentDocId.trim().toLowerCase();
+    try {
+      if (cur.includes("%")) {
+        cur = decodeURIComponent(cur).toLowerCase();
+      }
+    } catch {}
+
+    if (id.toLowerCase() === cur) return true;
+    if (path) {
+      const p = path.trim().toLowerCase();
+      if (p === cur || cur.endsWith(p) || p.endsWith(cur) || cur.includes(p)) return true;
+    }
+    if (title) {
+      const t = title.trim().toLowerCase().replace(/\.md$/i, "");
+      const curTitle = cur.split(/[\\/]/).pop()?.replace(/\.md$/i, "") || cur;
+      if (t === curTitle || cur.includes(t)) return true;
+    }
+    return false;
+  };
+
   if (manifest?.chapters) {
     for (const ch of manifest.chapters) {
       const norm = ch.title.trim().toLowerCase().replace(/\.md$/i, "");
@@ -58,7 +80,7 @@ export function buildGraphDataFromIndex(
         type: isSpace ? "space" : "chapter",
         inDegree: 0,
         outDegree: 0,
-        isCurrent: ch.id === currentDocId,
+        isCurrent: isMatchCurrent(ch.id, ch.src, ch.title),
         normTitle: norm,
       };
       nodesMap.set(ch.id, node);
@@ -85,7 +107,7 @@ export function buildGraphDataFromIndex(
         type: isSpace ? "space" : "chapter",
         inDegree: 0,
         outDegree: 0,
-        isCurrent: docId === currentDocId,
+        isCurrent: isMatchCurrent(docId, doc.path, doc.title),
         normTitle: norm,
       };
       nodesMap.set(docId, node);
@@ -133,10 +155,31 @@ export function extractLocalSubgraph(
   centerDocId: string,
   depth = 1
 ): GraphData {
-  const visitedNodeIds = new Set<string>();
-  visitedNodeIds.add(centerDocId);
+  // Resiliently resolve the exact node ID in graphData
+  let resolvedCenterId = centerDocId;
+  const direct = graphData.nodes.find((n) => n.id === centerDocId);
+  if (!direct) {
+    const byCurrent = graphData.nodes.find((n) => n.isCurrent);
+    if (byCurrent) {
+      resolvedCenterId = byCurrent.id;
+    } else {
+      const norm = centerDocId.trim().toLowerCase();
+      const byMatch = graphData.nodes.find((n) => {
+        const nid = n.id.toLowerCase();
+        const p = (n.path || "").toLowerCase();
+        const l = n.label.toLowerCase();
+        return nid === norm || p === norm || norm.endsWith(p) || p.endsWith(norm) || l === norm;
+      });
+      if (byMatch) {
+        resolvedCenterId = byMatch.id;
+      }
+    }
+  }
 
-  let currentLevel = new Set<string>([centerDocId]);
+  const visitedNodeIds = new Set<string>();
+  visitedNodeIds.add(resolvedCenterId);
+
+  let currentLevel = new Set<string>([resolvedCenterId]);
 
   for (let d = 0; d < depth; d++) {
     const nextLevel = new Set<string>();

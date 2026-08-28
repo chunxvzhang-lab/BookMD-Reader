@@ -204,7 +204,7 @@ export function refactorWikiLinksInContent(
 /**
  * Builds a complete backlink index from an array of documents.
  */
-export function createBacklinkIndex(documents: IndexedDocument[]): BacklinkIndexData {
+export function createBacklinkIndex(documents: IndexedDocument[] = []): BacklinkIndexData {
   const docMap = new Map<string, IndexedDocument>();
   const backlinks = new Map<string, BacklinkRef[]>();
   const forwardLinks = new Map<string, Set<string>>();

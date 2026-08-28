@@ -179,4 +179,29 @@ describe("graphService", () => {
       }
     }
   });
+
+  it("identifies isCurrent and resolves local subgraph resiliently across paths and IDs", () => {
+    const manifest: BookManifest = {
+      id: "book-1",
+      title: "Test",
+      chapters: [
+        { id: "chap-intro", title: "Introduction", src: "docs/intro.md" },
+        { id: "chap-guide", title: "User Guide", src: "docs/guide.md" },
+      ],
+    };
+    const index = createBacklinkIndex();
+
+    // 1. Match by absolute or relative path
+    const graphByPath = buildGraphDataFromIndex(manifest, index, "docs/intro.md");
+    expect(graphByPath.nodes.find((n) => n.id === "chap-intro")?.isCurrent).toBe(true);
+    expect(graphByPath.nodes.find((n) => n.id === "chap-guide")?.isCurrent).toBe(false);
+
+    // 2. Extract local subgraph using path instead of chapter ID
+    const localByPath = extractLocalSubgraph(graphByPath, "docs/intro.md");
+    expect(localByPath.nodes.some((n) => n.id === "chap-intro")).toBe(true);
+
+    // 3. Match by encoded file URI
+    const graphByUri = buildGraphDataFromIndex(manifest, index, "file:c%3A%2Fdocs%2Fguide.md");
+    expect(graphByUri.nodes.find((n) => n.id === "chap-guide")?.isCurrent).toBe(true);
+  });
 });
