@@ -155,6 +155,12 @@ export function GraphViewPane({
   const onSelectNodeRef = useRef(onSelectNode);
   onSelectNodeRef.current = onSelectNode;
 
+  // Stable refs so Cytoscape callbacks always see latest values without re-init
+  const currentDocIdRef = useRef(currentDocId);
+  currentDocIdRef.current = currentDocId;
+  const isSpacePanningRef = useRef(isSpacePanning);
+  isSpacePanningRef.current = isSpacePanning;
+
   // Cytoscape initialization & re-render
   useEffect(() => {
     if (!containerRef.current) return;
@@ -276,7 +282,7 @@ export function GraphViewPane({
 
     cy.on("mouseout", "node", () => {
       if (containerRef.current) {
-        containerRef.current.style.cursor = isSpacePanning ? "grab" : "default";
+        containerRef.current.style.cursor = isSpacePanningRef.current ? "grab" : "default";
       }
     });
 
@@ -351,7 +357,7 @@ export function GraphViewPane({
     // (avoids the "vertical line" rendering caused by 0-width container on first paint)
     window.requestAnimationFrame(() => {
       if (!cyRef.current) return;
-      const liveTarget = findCurrentNode(cyRef.current, currentDocId);
+      const liveTarget = findCurrentNode(cyRef.current, currentDocIdRef.current);
       cyRef.current.zoom(1.0);
       if (liveTarget && liveTarget.length > 0) {
         cyRef.current.center(liveTarget);
@@ -388,7 +394,7 @@ export function GraphViewPane({
         if (!initialFitDone && cyRef.current.width() > 50) {
           initialFitDone = true;
           cyRef.current.zoom(1.0);
-          const target = findCurrentNode(cyRef.current, currentDocId);
+          const target = findCurrentNode(cyRef.current, currentDocIdRef.current);
           if (target && target.length > 0) {
             cyRef.current.center(target);
           } else {
@@ -409,7 +415,24 @@ export function GraphViewPane({
       cy.destroy();
       cyRef.current = null;
     };
-  }, [filteredData, theme, currentDocId, isSpacePanning]);
+  // Only re-init Cytoscape when graph data or visual theme changes — NOT on currentDocId/isSpacePanning
+  }, [filteredData, theme]);
+
+  // Lightweight effect: update node highlight/data when active document changes
+  // This runs WITHOUT destroying Cytoscape — no more vertical-line flicker on nav
+  useEffect(() => {
+    if (!cyRef.current) return;
+    const cy = cyRef.current;
+    const target = findCurrentNode(cy, currentDocId);
+    if (target && target.length > 0) {
+      cy.batch(() => {
+        cy.elements().removeClass("highlighted dimmed");
+        const neighborhood = target.neighborhood().add(target);
+        neighborhood.addClass("highlighted");
+        cy.elements().difference(neighborhood).addClass("dimmed");
+      });
+    }
+  }, [currentDocId]);
 
   const handleResetFit = () => {
     if (cyRef.current) {

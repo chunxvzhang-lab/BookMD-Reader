@@ -7545,9 +7545,11 @@ body:has(.flash-capsule-overlay) {
 /* Inspector Card (Bottom-Left) */
 .graph-pane-inspector {
   position: absolute;
-  bottom: 16px;
+  bottom: 52px;
   left: 16px;
   width: 220px;
+  max-height: calc(100% - 100px);
+  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
