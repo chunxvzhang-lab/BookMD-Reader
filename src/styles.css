@@ -3913,16 +3913,16 @@ body:has(.flash-capsule-overlay) {
 
 /* Header */
 .flash-header {
-  height: 46px;
-  min-height: 46px;
+  height: 40px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  padding: 0 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
   flex-shrink: 0;
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
 }
 
@@ -3939,7 +3939,7 @@ body:has(.flash-capsule-overlay) {
 .flash-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -3947,8 +3947,8 @@ body:has(.flash-capsule-overlay) {
 .flash-logo-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
+  gap: 5px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -4112,8 +4112,8 @@ body:has(.flash-capsule-overlay) {
 .flash-tools-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 5px;
+  padding: 5px 10px;
   background: rgba(255, 255, 255, 0.04);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   overflow-x: auto;
@@ -4141,9 +4141,9 @@ body:has(.flash-capsule-overlay) {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 4px 9px;
+  padding: 3px 8px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -4369,7 +4369,7 @@ body:has(.flash-capsule-overlay) {
 .flash-input-wrapper {
   flex: 1;
   min-height: 0;
-  padding: 10px 14px;
+  padding: 8px 12px;
   display: flex;
   overflow: hidden;
   box-sizing: border-box;
@@ -4383,9 +4383,9 @@ body:has(.flash-capsule-overlay) {
   outline: none;
   resize: none;
   color: #f8fafc !important;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 450;
-  line-height: 1.65;
+  line-height: 1.6;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
 }
@@ -4431,12 +4431,12 @@ body:has(.flash-capsule-overlay) {
 
 /* Footer */
 .flash-footer {
-  height: 42px;
-  min-height: 42px;
+  height: 38px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  padding: 0 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
   flex-shrink: 0;

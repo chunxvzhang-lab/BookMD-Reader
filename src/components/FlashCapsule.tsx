@@ -720,14 +720,14 @@ export const FlashCapsule: React.FC = () => {
                   onClick={async () => {
                     if (desktop?.resetFlashSize) {
                       await desktop.resetFlashSize();
-                      setSettingsSuccess("✓ 已恢复黄金默认尺寸 (740×500)");
+                      setSettingsSuccess("✓ 已恢复精炼胶囊尺寸 (600×360)");
                       setTimeout(() => setSettingsSuccess(""), 1500);
                     }
                   }}
-                  title="将闪念胶囊窗口恢复为默认标准尺寸 (740×500)"
+                  title="将闪念胶囊窗口恢复为轻巧标准胶囊尺寸 (600×360)"
                 >
                   <RotateCcw size={12} />
-                  <span>恢复默认尺寸 (740×500)</span>
+                  <span>恢复轻巧尺寸 (600×360)</span>
                 </button>
               </div>
 
