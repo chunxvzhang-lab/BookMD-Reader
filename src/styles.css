@@ -3866,36 +3866,40 @@ body:has(.flash-capsule-overlay) {
   width: 100%;
   height: 100%;
   max-height: 100%;
-  border-radius: 16px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  background: rgba(22, 24, 29, 0.88);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  color: #e6edf3;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), 0 2px 12px rgba(0, 0, 0, 0.35);
+  background: rgba(22, 25, 32, 0.94);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   transition: background 0.2s ease, border-color 0.2s ease;
   overflow: hidden;
 }
 
-/* Light Theme */
+/* Light Theme Frosted Glass */
 .flash-capsule-overlay.theme-light .flash-capsule-container,
 [data-theme="light"] .flash-capsule-container {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  color: #1a1a1a;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18), 0 2px 12px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #0f172a;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
 }
 
-/* E-ink Theme */
+/* E-ink Theme Frosted Glass */
 .flash-capsule-overlay.theme-eink .flash-capsule-container,
 [data-theme="eink"] .flash-capsule-container {
-  background: rgba(248, 246, 240, 0.98);
-  border: 1.5px solid #a8a090;
-  color: #1a1a1a;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(248, 246, 240, 0.97);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1.5px solid #8c8273;
+  color: #111111;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
 }
 
 /* Header */
@@ -3909,39 +3913,51 @@ body:has(.flash-capsule-overlay) {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
   flex-shrink: 0;
-  gap: 12px;
+  gap: 10px;
+  overflow: hidden;
 }
 
 [data-theme="light"] .flash-header {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="eink"] .flash-header {
-  border-bottom: 1px solid #ded9cd;
+  border-bottom: 1.5px solid #a8a090;
 }
 
 .flash-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
-  flex: 1;
+  flex-shrink: 0;
 }
 
 .flash-logo-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 800;
   letter-spacing: 0.5px;
   white-space: nowrap;
   flex-shrink: 0;
+  color: inherit;
 }
 
 .flash-title {
   white-space: nowrap;
   flex-shrink: 0;
+  color: #0f172a;
+}
+
+[data-theme="eink"] .flash-title {
+  color: #111111;
+}
+
+[data-theme="dark"] .flash-title,
+.flash-capsule-overlay.theme-dark .flash-title {
+  color: #ffffff;
 }
 
 .flash-zap-icon {
@@ -3957,49 +3973,71 @@ body:has(.flash-capsule-overlay) {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   padding: 2px 8px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  font-weight: 600;
   transition: all 0.15s ease;
 }
 
 .flash-shortcut-badge:hover {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.5);
 }
 
 [data-theme="light"] .flash-shortcut-badge {
-  background: rgba(0, 0, 0, 0.05);
-  color: #64748b;
-  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.06);
+  color: #1e293b;
+  border-color: rgba(0, 0, 0, 0.15);
+  font-weight: 600;
 }
 
 [data-theme="light"] .flash-shortcut-badge:hover {
   background: rgba(217, 119, 6, 0.15);
-  color: #d97706;
+  color: #b45309;
 }
 
 [data-theme="eink"] .flash-shortcut-badge {
   background: #ded9cd;
-  color: #403e39;
-  border-color: #a8a090;
+  color: #111111;
+  border-color: #8c8273;
+  font-weight: 700;
 }
 
 .flash-target-path {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #64748b;
-  max-width: 170px;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  max-width: 220px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 1;
+  min-width: 0;
+}
+
+[data-theme="light"] .flash-target-path {
+  color: #1e293b;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="eink"] .flash-target-path {
+  color: #111111;
+  background: #ded9cd;
+  border-color: #8c8273;
+  font-weight: 700;
 }
 
 .flash-header-right {
@@ -4007,6 +4045,7 @@ body:has(.flash-capsule-overlay) {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .flash-icon-btn {
@@ -4025,17 +4064,35 @@ body:has(.flash-capsule-overlay) {
 }
 
 .flash-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+[data-theme="light"] .flash-icon-btn {
+  color: #334155;
+}
+
+[data-theme="light"] .flash-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+[data-theme="eink"] .flash-icon-btn {
+  color: #2b2926;
+}
+
+[data-theme="eink"] .flash-icon-btn:hover {
+  background: #ded9cd;
+  color: #000000;
 }
 
 .flash-icon-btn.active {
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.25);
   color: #f59e0b;
 }
 
 .flash-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.25);
   color: #ef4444;
 }
 
@@ -4045,55 +4102,72 @@ body:has(.flash-capsule-overlay) {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+
+.flash-tools-bar::-webkit-scrollbar {
+  display: none;
 }
 
 [data-theme="light"] .flash-tools-bar {
-  background: rgba(0, 0, 0, 0.02);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="eink"] .flash-tools-bar {
-  background: #f4f1ea;
-  border-bottom: 1px solid #ded9cd;
+  background: #ede8df;
+  border-bottom: 1.5px solid #a8a090;
 }
 
 .flash-tool-tag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #cbd5e1;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f1f5f9;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
 .flash-tool-tag:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 [data-theme="light"] .flash-tool-tag {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.08);
-  color: #475569;
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #0f172a;
 }
 
 [data-theme="light"] .flash-tool-tag:hover {
-  background: rgba(0, 0, 0, 0.08);
-  color: #0f172a;
+  background: rgba(0, 0, 0, 0.1);
+  color: #000000;
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="eink"] .flash-tool-tag {
   background: #ded9cd;
-  border-color: #a8a090;
-  color: #2b2926;
+  border-color: #8c8273;
+  color: #111111;
+  font-weight: 700;
+}
+
+[data-theme="eink"] .flash-tool-tag:hover {
+  background: #cfc7b5;
+  color: #000000;
 }
 
 /* Settings Drawer */
@@ -4276,9 +4350,11 @@ body:has(.flash-capsule-overlay) {
 /* Textarea Input */
 .flash-input-wrapper {
   flex: 1;
-  padding: 8px 12px;
+  min-height: 0;
+  padding: 10px 14px;
   display: flex;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .flash-textarea {
@@ -4288,34 +4364,69 @@ body:has(.flash-capsule-overlay) {
   background: transparent;
   outline: none;
   resize: none;
-  color: inherit;
-  font-size: 13.5px;
-  line-height: 1.6;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1.65;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
 .flash-textarea::placeholder {
-  color: #64748b;
-  opacity: 0.8;
+  color: #475569;
+  opacity: 1;
+  font-weight: 450;
+}
+
+[data-theme="light"] .flash-textarea {
+  color: #0f172a;
+}
+
+[data-theme="light"] .flash-textarea::placeholder {
+  color: #475569;
+  opacity: 1;
+}
+
+[data-theme="eink"] .flash-textarea {
+  color: #111111;
+  font-weight: 500;
+}
+
+[data-theme="eink"] .flash-textarea::placeholder {
+  color: #383530;
+  opacity: 1;
+}
+
+[data-theme="dark"] .flash-textarea,
+.flash-capsule-overlay.theme-dark .flash-textarea {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .flash-textarea::placeholder,
+.flash-capsule-overlay.theme-dark .flash-textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
 }
 
 /* Footer */
 .flash-footer {
   height: 42px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
+  padding: 0 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 [data-theme="light"] .flash-footer {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="eink"] .flash-footer {
-  border-top: 1px solid #ded9cd;
+  border-top: 1.5px solid #a8a090;
 }
 
 .flash-footer-left {
@@ -4325,28 +4436,42 @@ body:has(.flash-capsule-overlay) {
 }
 
 .flash-char-count {
-  font-size: 11px;
+  font-size: 11.5px;
+  font-weight: 550;
   color: #64748b;
 }
 
+[data-theme="light"] .flash-char-count {
+  color: #334155;
+}
+
+[data-theme="eink"] .flash-char-count {
+  color: #111111;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .flash-char-count {
+  color: #94a3b8;
+}
+
 .flash-status-msg {
-  font-size: 11px;
+  font-size: 11.5px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-weight: 600;
 }
 
 .flash-status-msg.saving {
-  color: #38bdf8;
+  color: #0284c7;
 }
 
 .flash-status-msg.saved {
-  color: #22c55e;
-  font-weight: 500;
+  color: #16a34a;
 }
 
 .flash-status-msg.error {
-  color: #ef4444;
+  color: #dc2626;
 }
 
 .flash-footer-right {
@@ -4359,53 +4484,63 @@ body:has(.flash-capsule-overlay) {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 12px;
+  padding: 5px 14px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border: none;
   transition: all 0.15s ease;
 }
 
 .flash-btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .flash-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
 [data-theme="light"] .flash-btn-secondary {
   background: rgba(0, 0, 0, 0.05);
-  color: #64748b;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #1e293b;
 }
 
 [data-theme="light"] .flash-btn-secondary:hover {
   background: rgba(0, 0, 0, 0.1);
-  color: #1e293b;
+  color: #000000;
+}
+
+[data-theme="eink"] .flash-btn-secondary {
+  background: #ded9cd;
+  border: 1px solid #8c8273;
+  color: #111111;
+}
+
+[data-theme="eink"] .flash-btn-secondary:hover {
+  background: #cfc7b5;
+  color: #000000;
 }
 
 .flash-btn-primary {
-  background: #f59e0b;
-  color: #000000;
-  font-weight: 600;
+  background: #d97706;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .flash-btn-primary:hover {
-  background: #d97706;
-}
-
-.flash-btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  background: #b45309;
 }
 
 [data-theme="eink"] .flash-btn-primary {
-  background: #2b2926;
-  color: #f8f6f0;
+  background: #1c1917;
+  color: #fdfcf9;
+  border: 1px solid #000000;
 }
 
 [data-theme="eink"] .flash-btn-primary:hover {
@@ -4420,49 +4555,53 @@ body:has(.flash-capsule-overlay) {
 .flash-tab-group {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   background: rgba(0, 0, 0, 0.25);
-  padding: 2px;
+  padding: 2.5px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] .flash-tab-group {
   background: rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="eink"] .flash-tab-group {
   background: #ded9cd;
-  border-color: #a8a090;
+  border-color: #8c8273;
 }
 
 .flash-tab-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: 11px;
-  font-weight: 500;
-  color: #94a3b8;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #cbd5e1;
   background: transparent;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
 .flash-tab-btn:hover {
-  color: #f8fafc;
+  color: #ffffff;
 }
 
 .flash-tab-btn.active {
-  background: rgba(245, 158, 11, 0.22);
-  color: #f59e0b;
-  font-weight: 600;
+  background: rgba(245, 158, 11, 0.28);
+  color: #fbbf24;
+  font-weight: 700;
 }
 
 [data-theme="light"] .flash-tab-btn {
-  color: #64748b;
+  color: #334155;
 }
 
 [data-theme="light"] .flash-tab-btn:hover {
@@ -4471,18 +4610,22 @@ body:has(.flash-capsule-overlay) {
 
 [data-theme="light"] .flash-tab-btn.active {
   background: #ffffff;
-  color: #d97706;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  color: #b45309;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
 }
 
 [data-theme="eink"] .flash-tab-btn {
-  color: #57534e;
+  color: #2b2926;
+  font-weight: 600;
 }
 
 [data-theme="eink"] .flash-tab-btn.active {
-  background: #f8f6f0;
-  color: #1c1917;
+  background: #fdfcf9;
+  color: #000000;
   font-weight: 700;
+  border: 1px solid #8c8273;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Pinned Icon Button */
@@ -4711,9 +4854,11 @@ body:has(.flash-capsule-overlay) {
 
 .flash-persistent-input-wrapper {
   flex: 1;
-  padding: 8px 12px;
+  min-height: 0;
+  padding: 10px 14px;
   display: flex;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .flash-persistent-textarea {
@@ -4723,10 +4868,78 @@ body:has(.flash-capsule-overlay) {
   background: transparent;
   outline: none;
   resize: none;
-  color: inherit;
-  font-size: 13px;
+  color: #0f172a;
+  font-size: 13.5px;
+  font-weight: 450;
   line-height: 1.6;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.flash-persistent-textarea::placeholder {
+  color: #475569;
+  opacity: 1;
+}
+
+[data-theme="light"] .flash-persistent-textarea {
+  color: #0f172a;
+}
+
+[data-theme="eink"] .flash-persistent-textarea {
+  color: #111111;
+  font-weight: 500;
+}
+
+[data-theme="eink"] .flash-persistent-textarea::placeholder {
+  color: #383530;
+  opacity: 1;
+}
+
+[data-theme="dark"] .flash-persistent-textarea,
+.flash-capsule-overlay.theme-dark .flash-persistent-textarea {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .flash-persistent-textarea::placeholder,
+.flash-capsule-overlay.theme-dark .flash-persistent-textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+/* Responsive adaptations for Flash Capsule Window */
+@media (max-width: 680px) {
+  .flash-header {
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .flash-header-left {
+    gap: 8px;
+  }
+  .flash-target-path {
+    max-width: 130px;
+  }
+}
+
+@media (max-width: 580px) {
+  .flash-header-left {
+    gap: 6px;
+  }
+  .flash-title {
+    display: none;
+  }
+  .flash-target-path span {
+    display: none;
+  }
+  .flash-target-path {
+    max-width: 28px;
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .flash-target-path {
+    display: none;
+  }
 }
 
 /* Resize handles for frameless window */
