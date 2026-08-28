@@ -4,7 +4,6 @@ import {
   Settings,
   X,
   Check,
-  Calendar,
   Hash,
   Link,
   Clock,
@@ -12,61 +11,117 @@ import {
   Keyboard,
   AlertCircle,
   FileText,
+  Pin,
+  PinOff,
+  Folder,
+  RotateCcw,
+  Copy,
+  StickyNote,
+  Sparkles,
+  Trash2,
+  Bookmark,
+  ArrowRight,
 } from "lucide-react";
 import { loadPreferences, savePreferences } from "../services/storage";
 import type { ThemeMode } from "../core/types";
 
 export const FlashCapsule: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<"note" | "persistent">("note");
   const [content, setContent] = useState("");
+  const [persistentContent, setPersistentContent] = useState("");
+  const [isPinned, setIsPinned] = useState(false);
   const [shortcut, setShortcut] = useState("Alt+Space");
-  const [targetDisplay, setTargetDisplay] = useState("Inbox/YYYY-MM-DD.md");
+  const [targetDisplay, setTargetDisplay] = useState("Space/YYYY-MM-DD_HHmm.md");
   const [theme, setTheme] = useState<ThemeMode>("system");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedShortcut, setRecordedShortcut] = useState("");
   const [autoLaunch, setAutoLaunch] = useState(false);
   const [runInBackground, setRunInBackground] = useState(true);
+  const [spaceConfig, setSpaceConfig] = useState<{ currentDir: string; isCustom: boolean; defaultDir: string }>({
+    currentDir: "",
+    isCustom: false,
+    defaultDir: "",
+  });
   const [settingsError, setSettingsError] = useState("");
   const [settingsSuccess, setSettingsSuccess] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [statusMessage, setStatusMessage] = useState("");
+  const [persistentFeedback, setPersistentFeedback] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const persistentTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const persistentSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
 
-  // Initialize preferences, theme, and hotkey
+  const refreshSpaceConfig = () => {
+    if (desktop?.getFlashSpaceConfig) {
+      desktop.getFlashSpaceConfig().then((cfg) => {
+        if (cfg) setSpaceConfig(cfg);
+      }).catch(() => {});
+    }
+    if (desktop?.getFlashTargetPath) {
+      desktop.getFlashTargetPath().then((res) => {
+        if (res?.relativeDisplay) {
+          setTargetDisplay(res.relativeDisplay);
+        }
+      }).catch(() => {});
+    }
+  };
+
+  // Initialize preferences, theme, hotkey, pin, persistent note and space config
   useEffect(() => {
     const prefs = loadPreferences();
     setTheme(prefs.theme || "system");
     document.documentElement.setAttribute("data-theme", prefs.theme || "system");
 
+    // Load initial hotkey
     if (desktop?.getFlashShortcut) {
       desktop.getFlashShortcut().then((sc) => {
         if (sc) {
           setShortcut(sc);
           setRecordedShortcut(sc);
         }
-      });
+      }).catch(() => {});
     } else if (prefs.flashCapsuleShortcut) {
       setShortcut(prefs.flashCapsuleShortcut);
       setRecordedShortcut(prefs.flashCapsuleShortcut);
     }
 
+    // Load pin status
+    if (desktop?.getFlashPin) {
+      desktop.getFlashPin().then((res) => {
+        if (res && typeof res.pinned === "boolean") {
+          setIsPinned(res.pinned);
+        }
+      }).catch(() => {});
+    }
+
+    // Load app settings
     if (desktop?.getAppSettings) {
       desktop.getAppSettings().then((st) => {
         if (st) {
           setAutoLaunch(st.autoLaunch);
           setRunInBackground(st.runInBackground);
         }
-      });
+      }).catch(() => {});
     }
 
-    if (desktop?.getFlashTargetPath) {
-      desktop.getFlashTargetPath().then((res) => {
-        if (res?.relativeDisplay) {
-          setTargetDisplay(res.relativeDisplay);
+    // Load Space path info
+    refreshSpaceConfig();
+
+    // Load persistent note / prompt template
+    if (desktop?.getPersistentNote) {
+      desktop.getPersistentNote().then((res) => {
+        if (res && typeof res.text === "string") {
+          setPersistentContent(res.text);
         }
-      });
+      }).catch(() => {});
+    } else {
+      try {
+        const cached = localStorage.getItem("knowspace_persistent_note");
+        if (cached) setPersistentContent(cached);
+      } catch {}
     }
 
     // Auto-focus textarea on mount
@@ -78,8 +133,13 @@ export const FlashCapsule: React.FC = () => {
     let cleanupFocus: (() => void) | undefined;
     if (desktop?.onFlashFocus) {
       cleanupFocus = desktop.onFlashFocus(() => {
+        refreshSpaceConfig();
         setTimeout(() => {
-          textareaRef.current?.focus();
+          if (activeTab === "note") {
+            textareaRef.current?.focus();
+          } else {
+            persistentTextareaRef.current?.focus();
+          }
         }, 50);
       });
     }
@@ -104,12 +164,28 @@ export const FlashCapsule: React.FC = () => {
       cleanupFocus?.();
       cleanupShortcut?.();
       cleanupSettings?.();
+      if (persistentSaveTimerRef.current) {
+        clearTimeout(persistentSaveTimerRef.current);
+      }
     };
   }, [desktop]);
 
   const handleClose = () => {
     if (desktop?.hideFlashCapsule) {
       desktop.hideFlashCapsule();
+    }
+  };
+
+  const handleTogglePin = async () => {
+    const next = !isPinned;
+    setIsPinned(next);
+    if (desktop?.setFlashPin) {
+      try {
+        const res = await desktop.setFlashPin(next);
+        if (res && typeof res.pinned === "boolean") {
+          setIsPinned(res.pinned);
+        }
+      } catch {}
     }
   };
 
@@ -120,19 +196,23 @@ export const FlashCapsule: React.FC = () => {
     }
 
     setSaveStatus("saving");
-    setStatusMessage("正在归档...");
+    setStatusMessage("正在归档至 Space...");
 
     try {
       if (desktop?.saveFlashNote) {
         const res = await desktop.saveFlashNote({ content: content.trim() });
         if (res.success) {
           setSaveStatus("saved");
-          setStatusMessage("✓ 已原子归档至 " + (res.dateStr ? `Inbox/${res.dateStr}.md` : "Inbox/"));
+          const targetName = res.fileName || "Space";
+          setStatusMessage(`✓ 已归档至 Space/${targetName}`);
           setContent("");
+          refreshSpaceConfig();
           setTimeout(() => {
             setSaveStatus("idle");
-            handleClose();
-          }, 450);
+            if (!isPinned) {
+              handleClose();
+            }
+          }, 500);
         } else {
           setSaveStatus("error");
           setStatusMessage(res.error || "归档失败");
@@ -175,6 +255,81 @@ export const FlashCapsule: React.FC = () => {
     insertSnippet(timeStr);
   };
 
+  const handleInsertPersistentToNote = () => {
+    if (!persistentContent.trim()) {
+      setPersistentFeedback("便签暂无内容");
+      setTimeout(() => setPersistentFeedback(""), 1200);
+      return;
+    }
+    insertSnippet(persistentContent + "\n\n");
+    setActiveTab("note");
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
+  };
+
+  const handlePersistentChange = (val: string) => {
+    setPersistentContent(val);
+    try {
+      localStorage.setItem("knowspace_persistent_note", val);
+    } catch {}
+    if (persistentSaveTimerRef.current) {
+      clearTimeout(persistentSaveTimerRef.current);
+    }
+    persistentSaveTimerRef.current = setTimeout(() => {
+      desktop?.savePersistentNote?.(val);
+    }, 350);
+  };
+
+  const handleCopyPersistent = () => {
+    if (!persistentContent) return;
+    navigator.clipboard.writeText(persistentContent).then(() => {
+      setPersistentFeedback("✓ 已复制全文");
+      setTimeout(() => setPersistentFeedback(""), 1500);
+    });
+  };
+
+  const handleClearPersistent = () => {
+    if (window.confirm("确定要清空常驻便签/提示模板内容吗？此操作不会影响已归档的文档。")) {
+      handlePersistentChange("");
+      setPersistentFeedback("✓ 已清空");
+      setTimeout(() => setPersistentFeedback(""), 1500);
+    }
+  };
+
+  const handleSelectSpaceDir = async () => {
+    if (!desktop?.selectFlashSpaceDir) return;
+    setSettingsError("");
+    setSettingsSuccess("");
+    const res = await desktop.selectFlashSpaceDir();
+    if (res?.success && res.newDir) {
+      setSettingsSuccess("✓ 已成功切换 Space 存储目录");
+      refreshSpaceConfig();
+      setTimeout(() => setSettingsSuccess(""), 2000);
+    } else if (res?.error) {
+      setSettingsError(res.error);
+    }
+  };
+
+  const handleResetSpaceDir = async () => {
+    if (!desktop?.resetFlashSpaceDir) return;
+    setSettingsError("");
+    setSettingsSuccess("");
+    const res = await desktop.resetFlashSpaceDir();
+    if (res?.success) {
+      setSettingsSuccess("✓ 已恢复为默认 Space 目录");
+      refreshSpaceConfig();
+      setTimeout(() => setSettingsSuccess(""), 2000);
+    }
+  };
+
+  const starterTemplates = [
+    { label: "📌 今日任务待办", text: "## 今日核心待办\n- [ ] 核心目标 1\n- [ ] 核心目标 2\n- [ ] 临时插入事项\n" },
+    { label: "💡 提示词审查模板", text: "作为资深工程师，请对以下代码或方案进行深度代码审查，指出潜在性能与逻辑隐患：\n\n" },
+    { label: "📝 会议与访谈速记", text: "## 沟通纪要\n- **参与人**：\n- **关键决议**：\n- **下一步行动 (Next Actions)**：\n  - [ ] " },
+    { label: "🔬 闪念知识卡片", text: "### 闪念知识卡片\n- **核心概念**：\n- **知识洞察**：\n- **双链关联**：[[]]\n" },
+  ];
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
@@ -192,13 +347,11 @@ export const FlashCapsule: React.FC = () => {
     }
   };
 
-  // Keyboard shortcut recorder
   const handleShortcutKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isRecording) return;
     e.preventDefault();
     e.stopPropagation();
 
-    // Ignore single modifier keys
     if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
       return;
     }
@@ -213,7 +366,6 @@ export const FlashCapsule: React.FC = () => {
     if (key === " ") key = "Space";
     else if (key.length === 1) key = key.toUpperCase();
 
-    // Must have at least one modifier or an F-key
     const isFKey = /^F[1-9][0-2]?$/i.test(key);
     if (parts.length === 0 && !isFKey) {
       setSettingsError("请至少配合 Ctrl / Alt / Shift 修饰键使用（或单按 F1-F12）");
@@ -240,7 +392,7 @@ export const FlashCapsule: React.FC = () => {
       if (res.success) {
         setShortcut(targetSc.trim());
         setRecordedShortcut(targetSc.trim());
-        setSettingsSuccess(`✓ 全局快捷键已成功设定为 [ ${targetSc.trim()} ]`);
+        setSettingsSuccess(`✓ 全局快捷键已设定为 [ ${targetSc.trim()} ]`);
         const prefs = loadPreferences();
         savePreferences({ ...prefs, flashCapsuleShortcut: targetSc.trim() });
         setTimeout(() => {
@@ -272,49 +424,92 @@ export const FlashCapsule: React.FC = () => {
               <Zap size={15} className="flash-zap-icon" />
               <span className="flash-title">闪念胶囊</span>
             </span>
-            <button
-              type="button"
-              className="flash-shortcut-badge"
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              title="点击自定义全局呼出热键"
-              style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-            >
-              <Keyboard size={12} />
-              <span>{shortcut}</span>
-            </button>
-            <span className="flash-target-path" title={`自动原子写入至: ${targetDisplay}`}>
+
+            {/* Segmented Tab Switcher */}
+            <div className="flash-tab-group" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+              <button
+                type="button"
+                className={`flash-tab-btn ${activeTab === "note" ? "active" : ""}`}
+                onClick={() => {
+                  setActiveTab("note");
+                  setTimeout(() => textareaRef.current?.focus(), 50);
+                }}
+                title="即时闪念速记（Ctrl+Enter 瞬时归档）"
+              >
+                <Zap size={12} />
+                <span>闪念速记</span>
+              </button>
+              <button
+                type="button"
+                className={`flash-tab-btn ${activeTab === "persistent" ? "active" : ""}`}
+                onClick={() => {
+                  setActiveTab("persistent");
+                  setTimeout(() => persistentTextareaRef.current?.focus(), 50);
+                }}
+                title="常驻便签 / 提示模板（随写随存，归档不被清空）"
+              >
+                <StickyNote size={12} />
+                <span>常驻便签 / 模板</span>
+              </button>
+            </div>
+
+            <span className="flash-target-path" title={`自动按分钟保存至: ${targetDisplay} (同一分钟追加)`}>
               <FileText size={12} />
               <span>{targetDisplay}</span>
             </span>
           </div>
 
           <div className="flash-header-right" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+            {/* Window Pin Toggle Button */}
+            <button
+              type="button"
+              className={`flash-icon-btn ${isPinned ? "active pinned" : ""}`}
+              onClick={handleTogglePin}
+              title={isPinned ? "已固定窗口：鼠标点击别处不会退出 (再次点击取消固定)" : "固定窗口：开启后鼠标点击外部不退出微窗"}
+            >
+              {isPinned ? <Pin size={15} className="text-orange" /> : <PinOff size={15} />}
+            </button>
+
+            {/* Hotkey Badge */}
+            <button
+              type="button"
+              className="flash-shortcut-badge"
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              title="点击自定义全局呼出热键与存储目录"
+            >
+              <Keyboard size={12} />
+              <span>{shortcut}</span>
+            </button>
+
+            {/* Settings Button */}
             <button
               type="button"
               className={`flash-icon-btn ${isSettingsOpen ? "active" : ""}`}
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              title="设置全局热键"
+              title="设置全局热键与存储路径"
             >
               <Settings size={15} />
             </button>
+
+            {/* Close Button */}
             <button
               type="button"
               className="flash-icon-btn flash-close-btn"
               onClick={handleClose}
-              title="隐藏微窗 (Esc)"
+              title="关闭微窗 (Esc)"
             >
               <X size={16} />
             </button>
           </div>
         </div>
 
-        {/* Hotkey Customization Drawer */}
+        {/* Hotkey & Space Directory Settings Drawer */}
         {isSettingsOpen && (
           <div className="flash-settings-drawer">
             <div className="flash-settings-header">
               <span className="flash-settings-title">
-                <Keyboard size={15} />
-                <span>自定义全局呼出热键</span>
+                <Settings size={14} />
+                <span>闪念胶囊偏好与存储设置</span>
               </span>
               <button
                 type="button"
@@ -326,8 +521,48 @@ export const FlashCapsule: React.FC = () => {
             </div>
 
             <div className="flash-settings-body">
+              {/* Space Storage Directory Section */}
+              <div className="flash-dir-settings-card">
+                <div className="flash-dir-settings-top">
+                  <span className="flash-dir-label">
+                    <Folder size={13} className="text-orange" />
+                    <strong>Space 存储目录：</strong>
+                  </span>
+                  <span className="flash-dir-path" title={spaceConfig.currentDir || "工作区默认 Space 目录"}>
+                    {spaceConfig.currentDir || "加载中..."}
+                  </span>
+                  <span className={`flash-dir-badge ${spaceConfig.isCustom ? "custom" : "default"}`}>
+                    {spaceConfig.isCustom ? "已自定义" : "工作区默认"}
+                  </span>
+                </div>
+                <div className="flash-dir-settings-actions">
+                  <button
+                    type="button"
+                    className="flash-mini-btn"
+                    onClick={handleSelectSpaceDir}
+                    title="选择本地任意文件夹作为 Space 存储路径"
+                  >
+                    <Folder size={12} /> 更改存储位置
+                  </button>
+                  {spaceConfig.isCustom && (
+                    <button
+                      type="button"
+                      className="flash-mini-btn secondary"
+                      onClick={handleResetSpaceDir}
+                      title="重置为当前知识库工作区默认的 Space 目录"
+                    >
+                      <RotateCcw size={12} /> 恢复默认
+                    </button>
+                  )}
+                  <span className="flash-dir-hint">
+                    按时间分钟保存在单独 Space 文件夹中，同一分钟追加合并，不重复新建文件夹。
+                  </span>
+                </div>
+              </div>
+
+              {/* Hotkey Settings */}
               <div className="flash-preset-row">
-                <span className="flash-preset-label">常用预设：</span>
+                <span className="flash-preset-label">快捷热键：</span>
                 {["Alt+Space", "Ctrl+Shift+Space", "Alt+N", "Ctrl+Alt+N", "F9"].map((preset) => (
                   <button
                     key={preset}
@@ -398,6 +633,17 @@ export const FlashCapsule: React.FC = () => {
                   />
                   <span>保持后台运行 (关闭至托盘)</span>
                 </label>
+                <label className="flash-toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={isPinned}
+                    onChange={(e) => {
+                      setIsPinned(e.target.checked);
+                      desktop?.setFlashPin?.(e.target.checked);
+                    }}
+                  />
+                  <span>固定胶囊窗口 (点击外部不退出)</span>
+                </label>
               </div>
 
               {settingsError && (
@@ -416,93 +662,190 @@ export const FlashCapsule: React.FC = () => {
           </div>
         )}
 
-        {/* Quick Insertion Tools Bar */}
-        <div className="flash-tools-bar">
-          <button
-            type="button"
-            className="flash-tool-tag"
-            onClick={() => insertSnippet("- [ ] ")}
-            title="插入待办复选框"
-          >
-            <Check size={13} /> 待办
-          </button>
-          <button
-            type="button"
-            className="flash-tool-tag"
-            onClick={() => insertSnippet("#")}
-            title="插入标签"
-          >
-            <Hash size={13} /> 标签
-          </button>
-          <button
-            type="button"
-            className="flash-tool-tag"
-            onClick={() => insertSnippet("[[")}
-            title="关联双链"
-          >
-            <Link size={13} /> 双链
-          </button>
-          <button
-            type="button"
-            className="flash-tool-tag"
-            onClick={handleInsertTime}
-            title="插入当前时间"
-          >
-            <Clock size={13} /> 时间
-          </button>
-          <button
-            type="button"
-            className="flash-tool-tag"
-            onClick={() => insertSnippet("> 💡 ")}
-            title="灵感重点"
-          >
-            <Lightbulb size={13} /> 灵感
-          </button>
-        </div>
+        {/* Tab 1: Instant Note Mode */}
+        {activeTab === "note" ? (
+          <>
+            {/* Quick Insertion Tools Bar */}
+            <div className="flash-tools-bar">
+              <button
+                type="button"
+                className="flash-tool-tag"
+                onClick={() => insertSnippet("- [ ] ")}
+                title="插入待办复选框"
+              >
+                <Check size={13} /> 待办
+              </button>
+              <button
+                type="button"
+                className="flash-tool-tag"
+                onClick={() => insertSnippet("#")}
+                title="插入标签"
+              >
+                <Hash size={13} /> 标签
+              </button>
+              <button
+                type="button"
+                className="flash-tool-tag"
+                onClick={() => insertSnippet("[[")}
+                title="关联双链"
+              >
+                <Link size={13} /> 双链
+              </button>
+              <button
+                type="button"
+                className="flash-tool-tag"
+                onClick={handleInsertTime}
+                title="插入当前时间"
+              >
+                <Clock size={13} /> 时间
+              </button>
+              <button
+                type="button"
+                className="flash-tool-tag"
+                onClick={() => insertSnippet("> 💡 ")}
+                title="灵感重点"
+              >
+                <Lightbulb size={13} /> 灵感
+              </button>
+              {persistentContent.trim() && (
+                <button
+                  type="button"
+                  className="flash-tool-tag flash-tool-insert-persistent"
+                  onClick={handleInsertPersistentToNote}
+                  title="一键插入常驻便签/提示模板内容"
+                >
+                  <Sparkles size={13} className="text-orange" /> 引用常驻模板
+                </button>
+              )}
+            </div>
 
-        {/* Text Input Area */}
-        <div className="flash-input-wrapper">
-          <textarea
-            ref={textareaRef}
-            className="flash-textarea"
-            placeholder="捕捉此刻灵感火花、临时待办或知识线索... (Ctrl + Enter 瞬时归档，Esc 退出)"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={5}
-          />
-        </div>
+            {/* Text Input Area */}
+            <div className="flash-input-wrapper">
+              <textarea
+                ref={textareaRef}
+                className="flash-textarea"
+                placeholder="捕捉此刻灵感火花、临时待办或知识线索... (Ctrl + Enter 瞬时归档，Esc 退出)"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={5}
+              />
+            </div>
 
-        {/* Footer Bar */}
-        <div className="flash-footer">
-          <div className="flash-footer-left">
-            <span className="flash-char-count">{content.length} 字</span>
-            {statusMessage && (
-              <span className={`flash-status-msg ${saveStatus}`}>
-                {statusMessage}
+            {/* Footer Bar */}
+            <div className="flash-footer">
+              <div className="flash-footer-left">
+                <span className="flash-char-count">{content.length} 字</span>
+                {statusMessage && (
+                  <span className={`flash-status-msg ${saveStatus}`}>
+                    {statusMessage}
+                  </span>
+                )}
+              </div>
+
+              <div className="flash-footer-right">
+                <button
+                  type="button"
+                  className="flash-btn flash-btn-secondary"
+                  onClick={handleClose}
+                >
+                  取消 (Esc)
+                </button>
+                <button
+                  type="button"
+                  className="flash-btn flash-btn-primary flash-save-btn"
+                  onClick={handleSave}
+                  disabled={saveStatus === "saving"}
+                >
+                  <Zap size={14} />
+                  <span>瞬时归档 (Ctrl+↵)</span>
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Tab 2: Persistent Note / Prompt Template Mode */
+          <div className="flash-persistent-container">
+            {/* Banner info */}
+            <div className="flash-persistent-banner">
+              <span className="flash-persistent-banner-text">
+                📌 <strong>常驻便签与提示模板</strong>：实时自动保存，在归档闪念时<strong>绝不清空</strong>，随时备查、复用或作为 AI 常用 Prompt 提示词使用。
               </span>
-            )}
-          </div>
+              {persistentFeedback && (
+                <span className="flash-persistent-badge-feedback">
+                  {persistentFeedback}
+                </span>
+              )}
+            </div>
 
-          <div className="flash-footer-right">
-            <button
-              type="button"
-              className="flash-btn flash-btn-secondary"
-              onClick={handleClose}
-            >
-              取消 (Esc)
-            </button>
-            <button
-              type="button"
-              className="flash-btn flash-btn-primary flash-save-btn"
-              onClick={handleSave}
-              disabled={saveStatus === "saving"}
-            >
-              <Zap size={14} />
-              <span>瞬时归档 (Ctrl+↵)</span>
-            </button>
+            {/* Starter Template Pills */}
+            <div className="flash-starter-row">
+              <span className="flash-starter-label">常用构型：</span>
+              {starterTemplates.map((t, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="flash-starter-tag"
+                  onClick={() => {
+                    const next = persistentContent ? `${persistentContent}\n\n${t.text}` : t.text;
+                    handlePersistentChange(next);
+                  }}
+                  title="点击追加此结构到常驻便签"
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Persistent Textarea */}
+            <div className="flash-persistent-input-wrapper">
+              <textarea
+                ref={persistentTextareaRef}
+                className="flash-textarea flash-persistent-textarea"
+                placeholder="在此记录永久常驻便签、重要 Checklist、常用 Prompt 提示词或固定参考资料... (内容实时自动保存在本地，永不清空)"
+                value={persistentContent}
+                onChange={(e) => handlePersistentChange(e.target.value)}
+                rows={6}
+              />
+            </div>
+
+            {/* Persistent Footer Actions */}
+            <div className="flash-footer">
+              <div className="flash-footer-left">
+                <span className="flash-char-count">{persistentContent.length} 字 · 自动持久化</span>
+              </div>
+              <div className="flash-footer-right">
+                <button
+                  type="button"
+                  className="flash-btn flash-btn-secondary"
+                  onClick={handleClearPersistent}
+                  title="清空常驻便签内容"
+                >
+                  <Trash2 size={13} />
+                  <span>清空</span>
+                </button>
+                <button
+                  type="button"
+                  className="flash-btn flash-btn-secondary"
+                  onClick={handleCopyPersistent}
+                  title="复制常驻便签全文到剪贴板"
+                >
+                  <Copy size={13} />
+                  <span>复制全文</span>
+                </button>
+                <button
+                  type="button"
+                  className="flash-btn flash-btn-primary"
+                  onClick={handleInsertPersistentToNote}
+                  title="将当前模板内容填入闪念速记区"
+                >
+                  <Zap size={14} />
+                  <span>填入速记</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

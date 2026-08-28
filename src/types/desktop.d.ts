@@ -116,8 +116,30 @@ export type KnowSpaceDesktopAPI = {
   hideFlashCapsule?: () => Promise<boolean>;
   getFlashShortcut?: () => Promise<string>;
   setFlashShortcut?: (shortcut: string) => Promise<{ success: boolean; shortcut?: string; error?: string }>;
-  getFlashTargetPath?: () => Promise<{ workspaceDir: string | null; targetFile: string; relativeDisplay: string }>;
-  saveFlashNote?: (payload: { content: string; tags?: string[]; isTodo?: boolean }) => Promise<{ success: boolean; filePath?: string; dateStr?: string; error?: string }>;
+  getFlashTargetPath?: () => Promise<{
+    workspaceDir: string | null;
+    spaceDir?: string;
+    defaultDir?: string;
+    isCustom?: boolean;
+    targetFile: string;
+    minuteFileName?: string;
+    relativeDisplay: string;
+  }>;
+  saveFlashNote?: (payload: { content: string; tags?: string[]; isTodo?: boolean }) => Promise<{
+    success: boolean;
+    filePath?: string;
+    fileName?: string;
+    dateStr?: string;
+    spaceDir?: string;
+    error?: string;
+  }>;
+  getFlashPin?: () => Promise<{ pinned: boolean }>;
+  setFlashPin?: (pinned: boolean) => Promise<{ success: boolean; pinned: boolean }>;
+  getFlashSpaceConfig?: () => Promise<{ currentDir: string; isCustom: boolean; defaultDir: string }>;
+  selectFlashSpaceDir?: () => Promise<{ success: boolean; canceled?: boolean; newDir?: string; error?: string }>;
+  resetFlashSpaceDir?: () => Promise<{ success: boolean; defaultDir: string }>;
+  getPersistentNote?: () => Promise<{ text: string }>;
+  savePersistentNote?: (text: string) => Promise<{ success: boolean }>;
   getAppSettings?: () => Promise<{ autoLaunch: boolean; runInBackground: boolean; flashShortcut: string }>;
   setAppSettings?: (settings: { autoLaunch?: boolean; runInBackground?: boolean }) => Promise<{ success: boolean; settings?: { autoLaunch: boolean; runInBackground: boolean; flashShortcut: string } }>;
   onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;

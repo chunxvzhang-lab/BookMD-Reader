@@ -28,6 +28,8 @@ let documentState = {
 let flashCapsuleWindow = null;
 let lastActiveWorkspaceDir = null;
 let tray = null;
+let isFlashCapsulePinned = false;
+let isNativeDialogOpen = false;
 
 function getAppConfig() {
   try {
@@ -38,6 +40,9 @@ function getAppConfig() {
         flashShortcut: parsed.flashShortcut || "Alt+Space",
         runInBackground: parsed.runInBackground !== false,
         autoLaunch: Boolean(parsed.autoLaunch),
+        flashPinned: Boolean(parsed.flashPinned),
+        flashSpaceDir: typeof parsed.flashSpaceDir === "string" ? parsed.flashSpaceDir : "",
+        persistentNote: typeof parsed.persistentNote === "string" ? parsed.persistentNote : "",
       };
     }
   } catch {}
@@ -45,7 +50,63 @@ function getAppConfig() {
     flashShortcut: "Alt+Space",
     runInBackground: true,
     autoLaunch: false,
+    flashPinned: false,
+    flashSpaceDir: "",
+    persistentNote: "",
   };
+}
+
+isFlashCapsulePinned = Boolean(getAppConfig().flashPinned);
+
+function getDefaultSpaceDir() {
+  let baseDir = lastActiveWorkspaceDir && fs.existsSync(lastActiveWorkspaceDir)
+    ? lastActiveWorkspaceDir
+    : path.join(app.getPath("userData"), "workspace");
+  if (path.basename(baseDir).toLowerCase() === "space") {
+    return baseDir;
+  }
+  return path.join(baseDir, "Space");
+}
+
+function resolveFlashSpaceDir() {
+  const config = getAppConfig();
+  if (config.flashSpaceDir && typeof config.flashSpaceDir === "string" && config.flashSpaceDir.trim()) {
+    const customDir = path.resolve(config.flashSpaceDir.trim());
+    if (!fs.existsSync(customDir)) {
+      try {
+        fs.mkdirSync(customDir, { recursive: true });
+      } catch (err) {
+        console.warn("Could not create custom flash space dir:", err);
+      }
+    }
+    if (fs.existsSync(customDir)) {
+      return { dir: customDir, isCustom: true, defaultDir: getDefaultSpaceDir() };
+    }
+  }
+
+  const defaultDir = getDefaultSpaceDir();
+  if (!fs.existsSync(defaultDir)) {
+    try {
+      fs.mkdirSync(defaultDir, { recursive: true });
+    } catch {}
+  }
+  return { dir: defaultDir, isCustom: false, defaultDir };
+}
+
+function getMinuteFileTimestamp(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  const dateStr = `${year}-${month}-${day}`;
+  const minuteFileName = `${dateStr}_${hours}${minutes}.md`;
+  const timeDisplay = `${hours}:${minutes}:${seconds}`;
+  const minuteDisplay = `${hours}:${minutes}`;
+
+  return { dateStr, minuteFileName, timeDisplay, minuteDisplay };
 }
 
 function saveAppConfig(newConfig) {
@@ -245,8 +306,8 @@ function showMainWindow() {
 
 async function createFlashCapsuleWindow() {
   const win = new BrowserWindow({
-    width: 620,
-    height: 380,
+    width: 660,
+    height: 460,
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
@@ -264,7 +325,7 @@ async function createFlashCapsuleWindow() {
 
   win.on("blur", () => {
     try {
-      if (!win.isDestroyed() && win.isVisible()) {
+      if (!win.isDestroyed() && win.isVisible() && !isFlashCapsulePinned && !isNativeDialogOpen) {
         win.hide();
       }
     } catch {}
@@ -291,8 +352,8 @@ async function toggleFlashCapsuleWindow() {
       const cursorPoint = screen.getCursorScreenPoint();
       const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
       const bounds = currentDisplay.workArea;
-      const winWidth = 620;
-      const winHeight = 380;
+      const winWidth = 660;
+      const winHeight = 460;
       const x = Math.round(bounds.x + (bounds.width - winWidth) / 2);
       const y = Math.round(bounds.y + (bounds.height - winHeight) / 3);
       flashCapsuleWindow.setBounds({ x, y, width: winWidth, height: winHeight });
@@ -632,10 +693,10 @@ async function createWindow(initialFilePath = null) {
   return win;
 }
 
-function findMarkdownPathFromArgs(argv) {
+function findMarkdownPathFromArgs(argv, workingDirectory = null) {
   if (!Array.isArray(argv)) return null;
   for (const arg of argv) {
-    const filePath = normalizeLaunchPath(arg);
+    const filePath = normalizeLaunchPath(arg, workingDirectory);
     if (filePath && isValidMarkdownPath(filePath)) {
       return filePath;
     }
@@ -643,7 +704,7 @@ function findMarkdownPathFromArgs(argv) {
   return null;
 }
 
-function normalizeLaunchPath(value) {
+function normalizeLaunchPath(value, workingDirectory = null) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim().replace(/^"|"$/g, "");
   if (!trimmed || trimmed.startsWith("--") || trimmed.startsWith("-")) return null;
@@ -651,7 +712,7 @@ function normalizeLaunchPath(value) {
     if (/^file:/i.test(trimmed)) {
       return fileURLToPath(trimmed);
     }
-    return path.resolve(trimmed);
+    return workingDirectory ? path.resolve(workingDirectory, trimmed) : path.resolve(trimmed);
   } catch {
     return null;
   }
@@ -660,22 +721,34 @@ function normalizeLaunchPath(value) {
 function sendOpenFilePath(filePath) {
   if (!filePath) return;
   registerPath(filePath);
-  const win = getActiveWindow();
+  let win = mainWindow;
   if (!win || win.isDestroyed()) {
     createWindow(filePath);
     return;
   }
   if (win.isMinimized()) win.restore();
+  if (!win.isVisible()) win.show();
   win.focus();
-  win.webContents.send("bookmd:open-file-path", filePath);
+  try {
+    win.setAlwaysOnTop(true);
+    win.setAlwaysOnTop(false);
+  } catch {}
+
+  if (win.webContents.isLoading()) {
+    win.webContents.once("did-finish-load", () => {
+      win.webContents.send("bookmd:open-file-path", filePath);
+    });
+  } else {
+    win.webContents.send("bookmd:open-file-path", filePath);
+  }
 }
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
 } else {
-  app.on("second-instance", (_event, commandLine) => {
-    const filePath = findMarkdownPathFromArgs(commandLine);
+  app.on("second-instance", (_event, commandLine, workingDirectory) => {
+    const filePath = findMarkdownPathFromArgs(commandLine, workingDirectory);
     if (filePath) {
       sendOpenFilePath(filePath);
     } else {
@@ -969,17 +1042,17 @@ ipcMain.handle("bookmd:set-flash-shortcut", (_event, newShortcut) => {
 });
 
 ipcMain.handle("bookmd:get-flash-target-path", () => {
-  const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10);
-  const baseDir = lastActiveWorkspaceDir && fs.existsSync(lastActiveWorkspaceDir)
-    ? lastActiveWorkspaceDir
-    : path.join(app.getPath("userData"), "workspace");
-  const targetDir = path.join(baseDir, "Inbox");
-  const targetFile = path.join(targetDir, `${dateStr}.md`);
+  const { dir: spaceDir, isCustom, defaultDir } = resolveFlashSpaceDir();
+  const { minuteFileName, dateStr, minuteDisplay } = getMinuteFileTimestamp();
+  const targetFile = path.join(spaceDir, minuteFileName);
   return {
     workspaceDir: lastActiveWorkspaceDir,
+    spaceDir,
+    defaultDir,
+    isCustom,
     targetFile,
-    relativeDisplay: `Inbox/${dateStr}.md`,
+    minuteFileName,
+    relativeDisplay: `Space/${minuteFileName}`,
   };
 });
 
@@ -988,44 +1061,101 @@ ipcMain.handle("bookmd:save-flash-note", async (_event, payload) => {
     return { success: false, error: "速记内容不能为空" };
   }
   try {
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10);
-    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    const { dir: spaceDir } = resolveFlashSpaceDir();
+    const { minuteFileName, dateStr, timeDisplay, minuteDisplay } = getMinuteFileTimestamp();
+    const targetFile = path.join(spaceDir, minuteFileName);
 
-    const baseDir = lastActiveWorkspaceDir && fs.existsSync(lastActiveWorkspaceDir)
-      ? lastActiveWorkspaceDir
-      : path.join(app.getPath("userData"), "workspace");
-    const targetDir = path.join(baseDir, "Inbox");
-    const targetFile = path.join(targetDir, `${dateStr}.md`);
-
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
+    if (!fs.existsSync(spaceDir)) {
+      fs.mkdirSync(spaceDir, { recursive: true });
     }
 
     const isNewFile = !fs.existsSync(targetFile);
     if (isNewFile) {
-      const header = `# 📥 闪念收集箱 (${dateStr})\n\n> 随时记录灵感火花与即刻待办。\n\n---\n\n`;
+      const header = `# ⚡ 闪念笔记 (${dateStr} ${minuteDisplay})\n\n> 归档于 Space 知识库 · 记录即时灵感与知识线索\n\n---\n\n`;
       fs.writeFileSync(targetFile, header, "utf8");
     }
 
     const cleanContent = payload.content.trim();
-    const entry = `### 🕒 ${timeStr}\n\n${cleanContent}\n\n---\n\n`;
+    const entry = `### 🕒 ${timeDisplay}\n\n${cleanContent}\n\n---\n\n`;
     fs.appendFileSync(targetFile, entry, "utf8");
 
     // Broadcast note added to open windows
     for (const w of windows) {
       try {
         if (!w.isDestroyed()) {
-          w.webContents.send("bookmd:flash-note-saved", { filePath: targetFile, dateStr });
+          w.webContents.send("bookmd:flash-note-saved", { filePath: targetFile, dateStr, fileName: minuteFileName });
         }
       } catch {}
     }
 
-    return { success: true, filePath: targetFile, dateStr };
+    return {
+      success: true,
+      filePath: targetFile,
+      fileName: minuteFileName,
+      dateStr,
+      spaceDir,
+    };
   } catch (err) {
     console.error("Failed to save flash note:", err);
     return { success: false, error: err.message || "写入文件失败" };
   }
+});
+
+// Flash Capsule Pin IPC handlers
+ipcMain.handle("bookmd:get-flash-pin", () => {
+  return { pinned: Boolean(isFlashCapsulePinned) };
+});
+
+ipcMain.handle("bookmd:set-flash-pin", (_event, pinned) => {
+  isFlashCapsulePinned = Boolean(pinned);
+  saveAppConfig({ flashPinned: isFlashCapsulePinned });
+  return { success: true, pinned: isFlashCapsulePinned };
+});
+
+// Flash Space Directory Management IPC handlers
+ipcMain.handle("bookmd:get-flash-space-config", () => {
+  const { dir: currentDir, isCustom, defaultDir } = resolveFlashSpaceDir();
+  return { currentDir, isCustom, defaultDir };
+});
+
+ipcMain.handle("bookmd:select-flash-space-dir", async () => {
+  isNativeDialogOpen = true;
+  try {
+    const parentWin = (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed() && flashCapsuleWindow.isVisible())
+      ? flashCapsuleWindow
+      : mainWindow;
+    const result = await dialog.showOpenDialog(parentWin || undefined, {
+      title: "选择闪念 Space 存储目录",
+      properties: ["openDirectory", "createDirectory"],
+    });
+    if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+      return { canceled: true };
+    }
+    const selectedDir = result.filePaths[0];
+    saveAppConfig({ flashSpaceDir: selectedDir });
+    return { success: true, canceled: false, newDir: selectedDir };
+  } catch (err) {
+    return { success: false, error: err.message };
+  } finally {
+    isNativeDialogOpen = false;
+  }
+});
+
+ipcMain.handle("bookmd:reset-flash-space-dir", () => {
+  saveAppConfig({ flashSpaceDir: "" });
+  const defaultDir = getDefaultSpaceDir();
+  return { success: true, defaultDir };
+});
+
+// Persistent Note & Prompt Template Module IPC handlers
+ipcMain.handle("bookmd:get-persistent-note", () => {
+  return { text: getAppConfig().persistentNote || "" };
+});
+
+ipcMain.handle("bookmd:save-persistent-note", (_event, text) => {
+  const safeText = typeof text === "string" ? text : "";
+  saveAppConfig({ persistentNote: safeText });
+  return { success: true };
 });
 
 // App Settings (Background Running & Auto-Launch)

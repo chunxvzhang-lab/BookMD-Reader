@@ -3858,7 +3858,7 @@ body:has(.flash-capsule-overlay) {
 .flash-capsule-container {
   width: 100%;
   height: 100%;
-  max-height: 350px;
+  max-height: 100%;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -4386,4 +4386,322 @@ body:has(.flash-capsule-overlay) {
 [data-theme="eink"] .flash-btn-primary:hover {
   background: #000000;
 }
+
+/* ==========================================================================
+   Flash Capsule Enhancements: Tabs, Pin, Space Directory & Persistent Notes
+   ========================================================================== */
+
+/* Segmented Tab Group */
+.flash-tab-group {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .flash-tab-group {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="eink"] .flash-tab-group {
+  background: #ded9cd;
+  border-color: #a8a090;
+}
+
+.flash-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flash-tab-btn:hover {
+  color: #f8fafc;
+}
+
+.flash-tab-btn.active {
+  background: rgba(245, 158, 11, 0.22);
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+[data-theme="light"] .flash-tab-btn {
+  color: #64748b;
+}
+
+[data-theme="light"] .flash-tab-btn:hover {
+  color: #0f172a;
+}
+
+[data-theme="light"] .flash-tab-btn.active {
+  background: #ffffff;
+  color: #d97706;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="eink"] .flash-tab-btn {
+  color: #57534e;
+}
+
+[data-theme="eink"] .flash-tab-btn.active {
+  background: #f8f6f0;
+  color: #1c1917;
+  font-weight: 700;
+}
+
+/* Pinned Icon Button */
+.flash-icon-btn.pinned {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.flash-tool-insert-persistent {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #f59e0b !important;
+}
+
+/* Space Directory Settings Card */
+.flash-dir-settings-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+[data-theme="light"] .flash-dir-settings-card {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="eink"] .flash-dir-settings-card {
+  background: #f8f6f0;
+  border: 1px solid #ded9cd;
+}
+
+.flash-dir-settings-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.flash-dir-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+[data-theme="light"] .flash-dir-label {
+  color: #334155;
+}
+
+.flash-dir-path {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-theme="light"] .flash-dir-path {
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+}
+
+.flash-dir-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.flash-dir-badge.custom {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.flash-dir-badge.default {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.flash-dir-settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.flash-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flash-mini-btn:hover {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+.flash-mini-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.flash-mini-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+.flash-dir-hint {
+  font-size: 10px;
+  color: #64748b;
+  width: 100%;
+  margin-top: 3px;
+}
+
+/* Persistent Note Mode Container */
+.flash-persistent-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.flash-persistent-banner {
+  padding: 6px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+[data-theme="light"] .flash-persistent-banner {
+  background: rgba(245, 158, 11, 0.08);
+  color: #475569;
+}
+
+[data-theme="eink"] .flash-persistent-banner {
+  background: #ded9cd;
+  color: #2b2926;
+  border-bottom-color: #a8a090;
+}
+
+.flash-persistent-banner-text {
+  line-height: 1.4;
+}
+
+.flash-persistent-badge-feedback {
+  font-size: 10px;
+  color: #22c55e;
+  font-weight: 600;
+  background: rgba(34, 197, 94, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.flash-starter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+}
+
+[data-theme="light"] .flash-starter-row {
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom-color: rgba(0, 0, 0, 0.05);
+}
+
+.flash-starter-label {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.flash-starter-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.flash-starter-tag:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+}
+
+[data-theme="light"] .flash-starter-tag {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #475569;
+}
+
+[data-theme="light"] .flash-starter-tag:hover {
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}
+
+.flash-persistent-input-wrapper {
+  flex: 1;
+  padding: 8px 12px;
+  display: flex;
+  overflow: hidden;
+}
+
+.flash-persistent-textarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  resize: none;
+  color: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 

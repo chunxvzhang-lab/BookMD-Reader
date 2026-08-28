@@ -32,6 +32,13 @@ const desktopApi = {
   setFlashShortcut: (shortcut) => ipcRenderer.invoke("bookmd:set-flash-shortcut", shortcut),
   getFlashTargetPath: () => ipcRenderer.invoke("bookmd:get-flash-target-path"),
   saveFlashNote: (payload) => ipcRenderer.invoke("bookmd:save-flash-note", payload),
+  getFlashPin: () => ipcRenderer.invoke("bookmd:get-flash-pin"),
+  setFlashPin: (pinned) => ipcRenderer.invoke("bookmd:set-flash-pin", pinned),
+  getFlashSpaceConfig: () => ipcRenderer.invoke("bookmd:get-flash-space-config"),
+  selectFlashSpaceDir: () => ipcRenderer.invoke("bookmd:select-flash-space-dir"),
+  resetFlashSpaceDir: () => ipcRenderer.invoke("bookmd:reset-flash-space-dir"),
+  getPersistentNote: () => ipcRenderer.invoke("bookmd:get-persistent-note"),
+  savePersistentNote: (text) => ipcRenderer.invoke("bookmd:save-persistent-note", text),
 
   // App Settings (Background Running & Auto Launch)
   getAppSettings: () => ipcRenderer.invoke("bookmd:get-app-settings"),

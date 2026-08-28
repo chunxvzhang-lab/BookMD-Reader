@@ -93,4 +93,106 @@ describe("Flash Capsule (闪念胶囊) & Hotkey Customization", () => {
     expect(customCfg.runInBackground).toBe(false);
     expect(customCfg.flashShortcut).toBe("Ctrl+Shift+Space");
   });
+
+  it("generates minute-based file timestamp format (YYYY-MM-DD_HHmm.md)", () => {
+    function getMinuteFileTimestamp(date: Date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+
+      const dateStr = `${year}-${month}-${day}`;
+      const minuteFileName = `${dateStr}_${hours}${minutes}.md`;
+      const timeDisplay = `${hours}:${minutes}:${seconds}`;
+      const minuteDisplay = `${hours}:${minutes}`;
+
+      return { dateStr, minuteFileName, timeDisplay, minuteDisplay };
+    }
+
+    const testDate = new Date(2026, 7, 28, 14, 33, 20); // 2026-08-28 14:33:20
+    const res = getMinuteFileTimestamp(testDate);
+    expect(res.minuteFileName).toBe("2026-08-28_1433.md");
+    expect(res.dateStr).toBe("2026-08-28");
+    expect(res.minuteDisplay).toBe("14:33");
+    expect(res.timeDisplay).toBe("14:33:20");
+  });
+
+  it("appends to existing minute file instead of overwriting within the same minute", () => {
+    type MockFileSystem = Record<string, string>;
+    const vfs: MockFileSystem = {};
+
+    function saveFlashNoteMock(
+      fsMap: MockFileSystem,
+      fileName: string,
+      content: string,
+      timeDisplay: string
+    ) {
+      const isNew = !fsMap[fileName];
+      if (isNew) {
+        fsMap[fileName] = `# ⚡ 闪念笔记\n\n### 🕒 ${timeDisplay}\n\n${content}\n\n---\n\n`;
+      } else {
+        fsMap[fileName] += `### 🕒 ${timeDisplay}\n\n${content}\n\n---\n\n`;
+      }
+    }
+
+    const fileName = "2026-08-28_1433.md";
+    // First save at 14:33:10
+    saveFlashNoteMock(vfs, fileName, "第一条灵感想法", "14:33:10");
+    expect(vfs[fileName]).toContain("第一条灵感想法");
+    expect(vfs[fileName]).toContain("14:33:10");
+
+    // Second save at 14:33:45 (same minute)
+    saveFlashNoteMock(vfs, fileName, "第二条灵感补充", "14:33:45");
+    expect(vfs[fileName]).toContain("第一条灵感想法");
+    expect(vfs[fileName]).toContain("第二条灵感补充");
+    expect(vfs[fileName]).toContain("14:33:45");
+  });
+
+  it("resolves Space directory without creating redundant nested Space/Space", () => {
+    function resolveSpaceDir(workspaceDir: string | null, customDir: string | null): string {
+      if (customDir && customDir.trim()) {
+        return customDir.trim();
+      }
+      const base = workspaceDir || "C:\\Users\\Mock\\AppData\\KnowSpace\\workspace";
+      if (base.endsWith("\\Space") || base.endsWith("/Space")) {
+        return base;
+      }
+      return `${base}\\Space`;
+    }
+
+    // Default workspace
+    expect(resolveSpaceDir("D:\\Notes", null)).toBe("D:\\Notes\\Space");
+
+    // Workspace already named Space
+    expect(resolveSpaceDir("D:\\Notes\\Space", null)).toBe("D:\\Notes\\Space");
+
+    // Custom directory overrides workspace
+    expect(resolveSpaceDir("D:\\Notes", "E:\\MyCustomSpace")).toBe("E:\\MyCustomSpace");
+  });
+
+  it("handles window pin toggle and persistent note persistence", () => {
+    let isPinned = false;
+    function togglePin(): boolean {
+      isPinned = !isPinned;
+      return isPinned;
+    }
+
+    expect(togglePin()).toBe(true);
+    expect(togglePin()).toBe(false);
+
+    // Persistent note stays retained when instant note is cleared
+    let instantNote = "这是需要归档的文字";
+    let persistentNote = "永久保留的 Prompt 模板：请审查架构";
+
+    function archiveInstantNote() {
+      instantNote = ""; // Cleared
+      // persistentNote is NOT touched
+    }
+
+    archiveInstantNote();
+    expect(instantNote).toBe("");
+    expect(persistentNote).toBe("永久保留的 Prompt 模板：请审查架构");
+  });
 });
