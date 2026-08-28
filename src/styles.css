@@ -3856,6 +3856,7 @@ body:has(.flash-capsule-overlay) {
 }
 
 .flash-capsule-container {
+  position: relative;
   width: 100%;
   height: 100%;
   max-height: 100%;
@@ -3893,13 +3894,16 @@ body:has(.flash-capsule-overlay) {
 
 /* Header */
 .flash-header {
-  height: 42px;
+  height: 46px;
+  min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
+  padding: 0 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
+  flex-shrink: 0;
+  gap: 12px;
 }
 
 [data-theme="light"] .flash-header {
@@ -3913,20 +3917,30 @@ body:has(.flash-capsule-overlay) {
 .flash-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .flash-logo-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.flash-title {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .flash-zap-icon {
   color: #f59e0b;
+  flex-shrink: 0;
 }
 
 .flash-shortcut-badge {
@@ -3941,6 +3955,8 @@ body:has(.flash-capsule-overlay) {
   color: #94a3b8;
   border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -3977,12 +3993,14 @@ body:has(.flash-capsule-overlay) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 1;
 }
 
 .flash-header-right {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .flash-icon-btn {
@@ -3996,6 +4014,7 @@ body:has(.flash-capsule-overlay) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -4702,6 +4721,48 @@ body:has(.flash-capsule-overlay) {
   font-size: 13px;
   line-height: 1.6;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Resize handles for frameless window */
+.flash-resize-edge-e {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 14px;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 99;
+}
+
+.flash-resize-edge-s {
+  position: absolute;
+  left: 0;
+  right: 14px;
+  bottom: 0;
+  height: 8px;
+  cursor: ns-resize;
+  z-index: 99;
+}
+
+.flash-resize-handle {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.flash-resize-handle:hover {
+  opacity: 1;
+  color: #f59e0b;
 }
 
 

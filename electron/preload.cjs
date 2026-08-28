@@ -39,6 +39,7 @@ const desktopApi = {
   resetFlashSpaceDir: () => ipcRenderer.invoke("bookmd:reset-flash-space-dir"),
   getPersistentNote: () => ipcRenderer.invoke("bookmd:get-persistent-note"),
   savePersistentNote: (text) => ipcRenderer.invoke("bookmd:save-persistent-note", text),
+  setFlashSize: (size) => ipcRenderer.invoke("bookmd:set-flash-size", size),
 
   // App Settings (Background Running & Auto Launch)
   getAppSettings: () => ipcRenderer.invoke("bookmd:get-app-settings"),

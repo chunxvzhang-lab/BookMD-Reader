@@ -268,6 +268,51 @@ export const FlashCapsule: React.FC = () => {
     }, 50);
   };
 
+  const handleResizeMouseDown = (e: React.MouseEvent, direction: "se" | "e" | "s") => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.screenX;
+    const startY = e.screenY;
+    const startWidth = window.innerWidth;
+    const startHeight = window.innerHeight;
+
+    let rafId: number | null = null;
+    let latestWidth = startWidth;
+    let latestHeight = startHeight;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.screenX - startX;
+      const deltaY = moveEvent.screenY - startY;
+
+      if (direction === "se" || direction === "e") {
+        latestWidth = Math.max(520, Math.min(1600, Math.round(startWidth + deltaX)));
+      }
+      if (direction === "se" || direction === "s") {
+        latestHeight = Math.max(320, Math.min(1200, Math.round(startHeight + deltaY)));
+      }
+
+      if (rafId === null) {
+        rafId = requestAnimationFrame(() => {
+          desktop?.setFlashSize?.({ width: latestWidth, height: latestHeight });
+          rafId = null;
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      desktop?.setFlashSize?.({ width: latestWidth, height: latestHeight });
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   const handlePersistentChange = (val: string) => {
     setPersistentContent(val);
     try {
@@ -449,17 +494,17 @@ export const FlashCapsule: React.FC = () => {
                 title="常驻便签 / 提示模板（随写随存，归档不被清空）"
               >
                 <StickyNote size={12} />
-                <span>常驻便签 / 模板</span>
+                <span>常驻模板</span>
               </button>
             </div>
+          </div>
 
+          <div className="flash-header-right" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
             <span className="flash-target-path" title={`自动按分钟保存至: ${targetDisplay} (同一分钟追加)`}>
               <FileText size={12} />
               <span>{targetDisplay}</span>
             </span>
-          </div>
 
-          <div className="flash-header-right" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
             {/* Window Pin Toggle Button */}
             <button
               type="button"
@@ -846,6 +891,32 @@ export const FlashCapsule: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Window Drag Resize Handles */}
+        <div
+          className="flash-resize-edge-e"
+          onMouseDown={(e) => handleResizeMouseDown(e, "e")}
+          title="按住拖拽调节窗口宽度"
+        />
+        <div
+          className="flash-resize-edge-s"
+          onMouseDown={(e) => handleResizeMouseDown(e, "s")}
+          title="按住拖拽调节窗口高度"
+        />
+        <div
+          className="flash-resize-handle"
+          onMouseDown={(e) => handleResizeMouseDown(e, "se")}
+          title="按住拖拽调节窗口尺寸"
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <circle cx="8" cy="8" r="1.2" />
+            <circle cx="4" cy="8" r="1.2" />
+            <circle cx="8" cy="4" r="1.2" />
+            <circle cx="0" cy="8" r="1.2" />
+            <circle cx="4" cy="4" r="1.2" />
+            <circle cx="8" cy="0" r="1.2" />
+          </svg>
+        </div>
       </div>
     </div>
   );

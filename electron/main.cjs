@@ -43,6 +43,8 @@ function getAppConfig() {
         flashPinned: Boolean(parsed.flashPinned),
         flashSpaceDir: typeof parsed.flashSpaceDir === "string" ? parsed.flashSpaceDir : "",
         persistentNote: typeof parsed.persistentNote === "string" ? parsed.persistentNote : "",
+        flashWidth: typeof parsed.flashWidth === "number" ? parsed.flashWidth : 740,
+        flashHeight: typeof parsed.flashHeight === "number" ? parsed.flashHeight : 500,
       };
     }
   } catch {}
@@ -53,6 +55,8 @@ function getAppConfig() {
     flashPinned: false,
     flashSpaceDir: "",
     persistentNote: "",
+    flashWidth: 740,
+    flashHeight: 500,
   };
 }
 
@@ -305,22 +309,39 @@ function showMainWindow() {
 }
 
 async function createFlashCapsuleWindow() {
+  const config = getAppConfig();
+  const initialWidth = config.flashWidth || 740;
+  const initialHeight = config.flashHeight || 500;
+
   const win = new BrowserWindow({
-    width: 660,
-    height: 460,
+    width: initialWidth,
+    height: initialHeight,
+    minWidth: 520,
+    minHeight: 320,
+    maxWidth: 1600,
+    maxHeight: 1200,
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
     hasShadow: true,
     alwaysOnTop: true,
     skipTaskbar: true,
-    resizable: false,
+    resizable: true,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  win.on("resize", () => {
+    try {
+      if (!win.isDestroyed()) {
+        const [w, h] = win.getSize();
+        saveAppConfig({ flashWidth: w, flashHeight: h });
+      }
+    } catch {}
   });
 
   win.on("blur", () => {
@@ -349,11 +370,12 @@ async function toggleFlashCapsuleWindow() {
     if (flashCapsuleWindow.isVisible()) {
       flashCapsuleWindow.hide();
     } else {
+      const config = getAppConfig();
       const cursorPoint = screen.getCursorScreenPoint();
       const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
       const bounds = currentDisplay.workArea;
-      const winWidth = 660;
-      const winHeight = 460;
+      const winWidth = config.flashWidth || 740;
+      const winHeight = config.flashHeight || 500;
       const x = Math.round(bounds.x + (bounds.width - winWidth) / 2);
       const y = Math.round(bounds.y + (bounds.height - winHeight) / 3);
       flashCapsuleWindow.setBounds({ x, y, width: winWidth, height: winHeight });
@@ -1156,6 +1178,18 @@ ipcMain.handle("bookmd:save-persistent-note", (_event, text) => {
   const safeText = typeof text === "string" ? text : "";
   saveAppConfig({ persistentNote: safeText });
   return { success: true };
+});
+
+ipcMain.handle("bookmd:set-flash-size", (_event, payload) => {
+  if (!payload || typeof payload !== "object") return { success: false };
+  if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
+    const w = Math.max(520, Math.min(1600, Math.round(payload.width)));
+    const h = Math.max(320, Math.min(1200, Math.round(payload.height)));
+    flashCapsuleWindow.setSize(w, h);
+    saveAppConfig({ flashWidth: w, flashHeight: h });
+    return { success: true, width: w, height: h };
+  }
+  return { success: false };
 });
 
 // App Settings (Background Running & Auto-Launch)

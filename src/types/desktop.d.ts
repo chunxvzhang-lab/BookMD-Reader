@@ -140,6 +140,7 @@ export type KnowSpaceDesktopAPI = {
   resetFlashSpaceDir?: () => Promise<{ success: boolean; defaultDir: string }>;
   getPersistentNote?: () => Promise<{ text: string }>;
   savePersistentNote?: (text: string) => Promise<{ success: boolean }>;
+  setFlashSize?: (size: { width: number; height: number }) => Promise<{ success: boolean; width?: number; height?: number }>;
   getAppSettings?: () => Promise<{ autoLaunch: boolean; runInBackground: boolean; flashShortcut: string }>;
   setAppSettings?: (settings: { autoLaunch?: boolean; runInBackground?: boolean }) => Promise<{ success: boolean; settings?: { autoLaunch: boolean; runInBackground: boolean; flashShortcut: string } }>;
   onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
