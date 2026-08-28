@@ -1192,6 +1192,198 @@ ipcMain.handle("bookmd:set-flash-size", (_event, payload) => {
   return { success: false };
 });
 
+// Flash Space Timeline & Inbox Hub IPC handlers
+ipcMain.handle("bookmd:get-flash-notes-summary", async () => {
+  try {
+    const { dir: spaceDir } = resolveFlashSpaceDir();
+    if (!fs.existsSync(spaceDir)) {
+      return { success: true, spaceDir, notes: [], totalTodos: 0, completedTodos: 0 };
+    }
+
+    const files = fs.readdirSync(spaceDir);
+    const mdFiles = files.filter((f) => f.endsWith(".md") || f.endsWith(".markdown"));
+
+    const notes = [];
+    let totalTodos = 0;
+    let completedTodos = 0;
+
+    for (const fileName of mdFiles) {
+      try {
+        const filePath = path.join(spaceDir, fileName);
+        const stats = fs.statSync(filePath);
+        const content = fs.readFileSync(filePath, "utf8");
+
+        const lines = content.split(/\r?\n/);
+        const todos = [];
+        const tagsSet = new Set();
+
+        lines.forEach((line, idx) => {
+          // Todo regex: - [ ] or - [x]
+          const todoMatch = line.match(/^(\s*[-*]\s*\[)([ xX])(\]\s+)(.*)$/);
+          if (todoMatch) {
+            const isCompleted = todoMatch[2].toLowerCase() === "x";
+            todos.push({
+              id: `${fileName}:${idx}`,
+              lineIndex: idx,
+              text: todoMatch[4].trim(),
+              completed: isCompleted,
+            });
+            totalTodos++;
+            if (isCompleted) completedTodos++;
+          }
+
+          // Tags regex: #tag
+          const tagMatches = line.match(/(?:^|\s)#([a-zA-Z0-9_\u4e00-\u9fa5]+)/g);
+          if (tagMatches && !line.startsWith("#")) {
+            tagMatches.forEach((t) => {
+              const clean = t.trim().replace(/^#/, "");
+              if (clean) tagsSet.add(clean);
+            });
+          }
+        });
+
+        // Extract date and minute from filename (e.g. 2026-08-28_1433.md)
+        let dateStr = "";
+        let timeDisplay = "";
+        const fnMatch = fileName.match(/^(\d{4}-\d{2}-\d{2})_(\d{2})(\d{2})\.md$/);
+        if (fnMatch) {
+          dateStr = fnMatch[1];
+          timeDisplay = `${fnMatch[2]}:${fnMatch[3]}`;
+        } else {
+          const mDate = new Date(stats.mtime);
+          dateStr = mDate.toISOString().slice(0, 10);
+          timeDisplay = `${String(mDate.getHours()).padStart(2, "0")}:${String(mDate.getMinutes()).padStart(2, "0")}`;
+        }
+
+        notes.push({
+          filePath,
+          fileName,
+          dateStr,
+          timeDisplay,
+          modifiedTime: stats.mtimeMs,
+          size: stats.size,
+          content,
+          todos,
+          tags: Array.from(tagsSet),
+        });
+      } catch (err) {
+        console.warn("Error reading flash note file:", fileName, err);
+      }
+    }
+
+    // Sort newest first
+    notes.sort((a, b) => b.modifiedTime - a.modifiedTime || b.fileName.localeCompare(a.fileName));
+
+    return {
+      success: true,
+      spaceDir,
+      notes,
+      totalTodos,
+      completedTodos,
+    };
+  } catch (err) {
+    console.error("Failed to get flash notes summary:", err);
+    return { success: false, error: err.message || "读取闪念列表失败", notes: [] };
+  }
+});
+
+ipcMain.handle("bookmd:toggle-flash-todo", async (_event, payload) => {
+  if (!payload || typeof payload.filePath !== "string" || typeof payload.lineIndex !== "number") {
+    return { success: false, error: "参数无效" };
+  }
+  try {
+    const { filePath, lineIndex, completed } = payload;
+    if (!fs.existsSync(filePath)) {
+      return { success: false, error: "文件不存在" };
+    }
+
+    const raw = fs.readFileSync(filePath, "utf8");
+    const lines = raw.split(/\r?\n/);
+    if (lineIndex < 0 || lineIndex >= lines.length) {
+      return { success: false, error: "行号超出范围" };
+    }
+
+    const line = lines[lineIndex];
+    const match = line.match(/^(\s*[-*]\s*\[)([ xX])(\]\s+.*)$/);
+    if (!match) {
+      return { success: false, error: "该行不是有效的待办复选框" };
+    }
+
+    const replacementMark = completed ? "x" : " ";
+    lines[lineIndex] = `${match[1]}${replacementMark}${match[3]}`;
+    fs.writeFileSync(filePath, lines.join("\n"), "utf8");
+
+    return { success: true, completed };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("bookmd:delete-flash-note", async (_event, payload) => {
+  if (!payload || typeof payload.filePath !== "string") {
+    return { success: false, error: "参数无效" };
+  }
+  try {
+    const { filePath } = payload;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Image Paste & Drop to Assets IPC handler
+ipcMain.handle("bookmd:save-pasted-image", async (_event, payload) => {
+  if (!payload || !payload.bufferBase64) {
+    return { success: false, error: "缺少图片数据" };
+  }
+  try {
+    const { currentFilePath, bufferBase64, originalName, ext = "png" } = payload;
+
+    // Determine target assets directory
+    let targetDir = "";
+    if (currentFilePath && typeof currentFilePath === "string" && fs.existsSync(path.dirname(currentFilePath))) {
+      targetDir = path.join(path.dirname(currentFilePath), "assets");
+    } else if (lastActiveWorkspaceDir && fs.existsSync(lastActiveWorkspaceDir)) {
+      targetDir = path.join(lastActiveWorkspaceDir, "assets");
+    } else {
+      targetDir = path.join(app.getPath("userData"), "assets");
+    }
+
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    // Format timestamp: YYYYMMDD_HHmmss
+    const now = new Date();
+    const pad = (n, len = 2) => String(n).padStart(len, "0");
+    const timeStamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+    const cleanExt = ext.replace(/^\./, "") || "png";
+    const fileName = originalName
+      ? `${path.basename(originalName, path.extname(originalName))}_${timeStamp}.${cleanExt}`
+      : `image_${timeStamp}.${cleanExt}`;
+
+    const targetPath = path.join(targetDir, fileName);
+    const cleanBase64 = bufferBase64.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(cleanBase64, "base64");
+
+    fs.writeFileSync(targetPath, buffer);
+
+    return {
+      success: true,
+      fileName,
+      relativePath: `assets/${fileName}`,
+      absolutePath: targetPath,
+    };
+  } catch (err) {
+    console.error("Failed to save pasted image:", err);
+    return { success: false, error: err.message || "写入图片文件失败" };
+  }
+});
+
 // App Settings (Background Running & Auto-Launch)
 ipcMain.handle("bookmd:get-app-settings", () => {
   const config = getAppConfig();

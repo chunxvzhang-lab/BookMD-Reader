@@ -28,6 +28,7 @@ type DocumentWorkspaceProps = {
   readOnly?: boolean;
   showLineNumbers?: boolean;
   typewriterMode?: boolean;
+  currentFilePath?: string;
   onOpenLightbox?: (media: LightboxMedia) => void;
   onEditorViewReady?: (view: any) => void;
   navLockUntilRef?: React.MutableRefObject<number>;
@@ -50,6 +51,7 @@ export function DocumentWorkspace({
   readOnly = false,
   showLineNumbers = true,
   typewriterMode = false,
+  currentFilePath,
   onOpenLightbox,
   onEditorViewReady,
   navLockUntilRef,
@@ -167,6 +169,7 @@ export function DocumentWorkspace({
             onSave={onSave}
             readOnly={readOnly}
             typewriterMode={typewriterMode}
+            currentFilePath={currentFilePath}
             onScroll={handleEditorScroll}
             onSelectionChange={handleEditorSelectionChange}
             onEditorViewReady={(view) => {

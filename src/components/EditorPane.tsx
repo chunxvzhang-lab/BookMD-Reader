@@ -36,6 +36,7 @@ type EditorPaneProps = {
   fontScale?: number;
   readOnly?: boolean;
   typewriterMode?: boolean;
+  currentFilePath?: string;
   onSave?: () => void;
   onScroll?: (view: EditorView) => void;
   onSelectionChange?: (view: EditorView) => void;
@@ -213,6 +214,7 @@ export function EditorPane({
   fontScale = 1,
   readOnly = false,
   typewriterMode = false,
+  currentFilePath,
   onSave,
   onScroll,
   onSelectionChange,
@@ -224,6 +226,8 @@ export function EditorPane({
   const readOnlyCompartment = useRef(new Compartment());
   const fontSizeCompartment = useRef(new Compartment());
   const typewriterRafRef = useRef<number | null>(null);
+  const currentFilePathRef = useRef(currentFilePath);
+  currentFilePathRef.current = currentFilePath;
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
   const onChangeRef = useRef(onChange);
@@ -236,6 +240,45 @@ export function EditorPane({
   onEditorViewReadyRef.current = onEditorViewReady;
   const typewriterModeRef = useRef(typewriterMode);
   typewriterModeRef.current = typewriterMode;
+
+  const saveAndInsertImage = (file: File, view: EditorView) => {
+    const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+    if (!desktop?.savePastedImage) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        if (!base64) return;
+
+        const originalName = file.name || "pasted_image";
+        const ext = file.type ? file.type.replace("image/", "") : "png";
+
+        const res = await desktop.savePastedImage?.({
+          currentFilePath: currentFilePathRef.current,
+          bufferBase64: base64,
+          originalName,
+          ext,
+        });
+
+        if (res?.success && res.relativePath) {
+          const insertText = `![${res.fileName || "image"}](${res.relativePath})\n`;
+          const selection = view.state.selection.main;
+          view.dispatch({
+            changes: {
+              from: selection.from,
+              to: selection.to,
+              insert: insertText,
+            },
+            selection: { anchor: selection.from + insertText.length },
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Failed to process pasted image:", err);
+    }
+  };
 
   const isDarkMode =
     theme === "twitter" ||
@@ -351,6 +394,45 @@ export function EditorPane({
               triggerSmoothTypewriterScroll(update.view);
             }
           }
+        }),
+        EditorView.domEventHandlers({
+          paste(event, view) {
+            const clipboardData = event.clipboardData;
+            if (!clipboardData) return false;
+            const items = clipboardData.items;
+            if (!items) return false;
+
+            for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              if (item.type && item.type.startsWith("image/")) {
+                event.preventDefault();
+                const file = item.getAsFile();
+                if (file) {
+                  saveAndInsertImage(file, view);
+                  return true;
+                }
+              }
+            }
+            return false;
+          },
+          drop(event, view) {
+            const dataTransfer = event.dataTransfer;
+            if (!dataTransfer || !dataTransfer.files || dataTransfer.files.length === 0) {
+              return false;
+            }
+            const files = Array.from(dataTransfer.files);
+            const imageFiles = files.filter(
+              (f) => f.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(f.name)
+            );
+            if (imageFiles.length > 0) {
+              event.preventDefault();
+              imageFiles.forEach((file) => {
+                saveAndInsertImage(file, view);
+              });
+              return true;
+            }
+            return false;
+          },
         }),
       ],
     });

@@ -141,6 +141,15 @@ export type KnowSpaceDesktopAPI = {
   getPersistentNote?: () => Promise<{ text: string }>;
   savePersistentNote?: (text: string) => Promise<{ success: boolean }>;
   setFlashSize?: (size: { width: number; height: number }) => Promise<{ success: boolean; width?: number; height?: number }>;
+  getFlashNotesSummary?: () => Promise<FlashNotesSummaryResult>;
+  toggleFlashTodo?: (params: { filePath: string; lineIndex: number; completed: boolean }) => Promise<{ success: boolean; completed?: boolean; error?: string }>;
+  deleteFlashNote?: (params: { filePath: string }) => Promise<{ success: boolean; error?: string }>;
+  savePastedImage?: (params: {
+    currentFilePath?: string;
+    bufferBase64: string;
+    originalName?: string;
+    ext?: string;
+  }) => Promise<SavePastedImageResult>;
   getAppSettings?: () => Promise<{ autoLaunch: boolean; runInBackground: boolean; flashShortcut: string }>;
   setAppSettings?: (settings: { autoLaunch?: boolean; runInBackground?: boolean }) => Promise<{ success: boolean; settings?: { autoLaunch: boolean; runInBackground: boolean; flashShortcut: string } }>;
   onOpenFilePath: (callback: (absolutePath: string) => void) => () => void;
@@ -149,8 +158,44 @@ export type KnowSpaceDesktopAPI = {
   onFullScreenChanged?: (callback: (isFullscreen: boolean) => void) => () => void;
   onFlashFocus?: (callback: () => void) => () => void;
   onFlashShortcutUpdated?: (callback: (shortcut: string) => void) => () => void;
-  onFlashNoteSaved?: (callback: (data: { filePath: string; dateStr: string }) => void) => () => void;
+  onFlashNoteSaved?: (callback: (data: { filePath: string; dateStr: string; fileName?: string }) => void) => () => void;
   onAppSettingsUpdated?: (callback: (data: { autoLaunch: boolean; runInBackground: boolean; flashShortcut: string }) => void) => () => void;
+};
+
+export type FlashNoteTodo = {
+  id: string;
+  lineIndex: number;
+  text: string;
+  completed: boolean;
+};
+
+export type FlashNoteSummaryItem = {
+  filePath: string;
+  fileName: string;
+  dateStr: string;
+  timeDisplay: string;
+  modifiedTime: number;
+  size: number;
+  content: string;
+  todos: FlashNoteTodo[];
+  tags: string[];
+};
+
+export type FlashNotesSummaryResult = {
+  success: boolean;
+  spaceDir: string;
+  notes: FlashNoteSummaryItem[];
+  totalTodos: number;
+  completedTodos: number;
+  error?: string;
+};
+
+export type SavePastedImageResult = {
+  success: boolean;
+  fileName?: string;
+  relativePath?: string;
+  absolutePath?: string;
+  error?: string;
 };
 
 declare global {

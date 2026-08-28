@@ -27,6 +27,7 @@ type DualDocumentWorkspaceProps = {
   readOnly?: boolean;
   showLineNumbers?: boolean;
   typewriterMode?: boolean;
+  currentFilePath?: string;
   onOpenLightbox?: (media: LightboxMedia) => void;
   onEditorViewReady?: (view: any) => void;
 
@@ -55,6 +56,7 @@ export function DualDocumentWorkspace({
   readOnly,
   showLineNumbers = true,
   typewriterMode,
+  currentFilePath,
   onOpenLightbox,
   onEditorViewReady,
 
@@ -152,6 +154,7 @@ export function DualDocumentWorkspace({
             readOnly={readOnly}
             showLineNumbers={showLineNumbers}
             typewriterMode={typewriterMode}
+            currentFilePath={currentFilePath}
             onOpenLightbox={onOpenLightbox}
             onEditorViewReady={onEditorViewReady}
           />

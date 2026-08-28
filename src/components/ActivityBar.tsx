@@ -19,7 +19,7 @@ import {
 import appLogo from "../assets/icon.png";
 import type { EditorViewMode, ThemeMode } from "../core/types";
 
-type SidebarTab = "toc" | "bookmarks" | "search";
+type SidebarTab = "toc" | "bookmarks" | "search" | "space";
 
 type ActivityBarProps = {
   directoryOpen: boolean;
@@ -106,6 +106,16 @@ export function ActivityBar({
           aria-label="全文搜索"
         >
           <Search size={18} />
+        </button>
+
+        <button
+          type="button"
+          className={`activity-btn ${sidebarOpen && activeSidebarTab === "space" ? "active" : ""}`}
+          onClick={() => onSelectSidebarTab("space")}
+          data-tooltip="闪念时间线与收集箱"
+          aria-label="闪念时间线看板"
+        >
+          <Zap size={18} style={{ color: "#f59e0b" }} />
         </button>
       </div>
 

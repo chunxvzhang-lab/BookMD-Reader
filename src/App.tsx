@@ -9,6 +9,7 @@ import { DualDocumentWorkspace } from "./components/DualDocumentWorkspace";
 import { FileConflictDialog } from "./components/FileConflictDialog";
 import { MediaLightbox, type LightboxMedia } from "./components/MediaLightbox";
 import { SearchPanel } from "./components/SearchPanel";
+import { SpaceTimelinePanel } from "./components/SpaceTimelinePanel";
 import { StatusBar } from "./components/StatusBar";
 import { TabBar, type TabItem } from "./components/TabBar";
 import { TocPanel } from "./components/TocPanel";
@@ -1642,6 +1643,21 @@ export function App() {
     }
   }, [sidebarOpen, sidebarTab]);
 
+  const handleMergeFlashNote = useCallback((content: string, fileName: string) => {
+    const formatted = `\n\n> 📥 来自闪念 [${fileName}]\n\n${content.trim()}\n\n`;
+    if (editorViewRef.current) {
+      const view = editorViewRef.current;
+      const selection = view.state.selection.main;
+      const insertPos = selection.empty && selection.from > 0 ? selection.from : view.state.doc.length;
+      view.dispatch({
+        changes: { from: insertPos, to: insertPos, insert: formatted },
+        selection: { anchor: insertPos + formatted.length },
+      });
+    } else if (session) {
+      updateSource(session.source + formatted);
+    }
+  }, [session, updateSource]);
+
   return (
     <div
       className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${isDualSplitMode ? " is-dual-split-mode" : ""}`}
@@ -1742,11 +1758,11 @@ export function App() {
           />
         )}
 
-        {!isDualSplitMode && sidebarOpen && manifest ? (
+        {!isDualSplitMode && sidebarOpen && (manifest || sidebarTab === "space") ? (
           <>
             <aside className="side-panel" style={{ width: sidebarWidth, flex: `0 0 ${sidebarWidth}px` }}>
               <div className="tabs" role="tablist" aria-label="侧栏区域">
-                {(["toc", "bookmarks", "search"] as SidebarTab[]).map((tab) => (
+                {((manifest ? ["toc", "bookmarks", "search", "space"] : ["space"]) as SidebarTab[]).map((tab) => (
                   <button
                     key={tab}
                     id={`${tab}-tab`}
@@ -1760,7 +1776,7 @@ export function App() {
                   </button>
                 ))}
               </div>
-              {sidebarTab === "toc" ? (
+              {sidebarTab === "toc" && manifest ? (
                 <section id="toc-panel" role="tabpanel" aria-labelledby="toc-tab">
                   <TocPanel
                     headings={
@@ -1776,7 +1792,7 @@ export function App() {
                   />
                 </section>
               ) : null}
-              {sidebarTab === "bookmarks" ? (
+              {sidebarTab === "bookmarks" && manifest ? (
                 <section id="bookmarks-panel" role="tabpanel" aria-labelledby="bookmarks-tab">
                   <BookmarkPanel
                     bookmarks={bookmarks}
@@ -1786,7 +1802,7 @@ export function App() {
                   />
                 </section>
               ) : null}
-              {sidebarTab === "search" ? (
+              {sidebarTab === "search" && manifest ? (
                 <section id="search-panel" role="tabpanel" aria-labelledby="search-tab">
                   <SearchPanel
                     query={searchQuery}
@@ -1800,6 +1816,18 @@ export function App() {
                       }
                     }}
                     onJump={handleSearchJump}
+                  />
+                </section>
+              ) : null}
+              {sidebarTab === "space" ? (
+                <section id="space-panel" role="tabpanel" aria-labelledby="space-tab">
+                  <SpaceTimelinePanel
+                    onOpenNoteFile={(filePath) => {
+                      if (openDesktopMarkdownPathRef.current) {
+                        openDesktopMarkdownPathRef.current(filePath);
+                      }
+                    }}
+                    onMergeIntoDocument={handleMergeFlashNote}
                   />
                 </section>
               ) : null}
@@ -1849,6 +1877,7 @@ export function App() {
               readOnly={!session?.writable}
               showLineNumbers={preferences.showLineNumbers}
               typewriterMode={typewriterMode}
+              currentFilePath={session?.absolutePath || undefined}
               onOpenLightbox={(media) => setLightboxMedia(media)}
               onEditorViewReady={(view) => {
                 editorViewRef.current = view;
@@ -1876,6 +1905,7 @@ export function App() {
               readOnly={!session.writable}
               showLineNumbers={preferences.showLineNumbers}
               typewriterMode={typewriterMode}
+              currentFilePath={session.absolutePath || undefined}
               onOpenLightbox={(media) => setLightboxMedia(media)}
               onEditorViewReady={(view) => {
                 editorViewRef.current = view;
@@ -1977,6 +2007,7 @@ const tabLabels: Record<SidebarTab, string> = {
   toc: "大纲",
   bookmarks: "书签",
   search: "搜索",
+  space: "闪念 Space",
 };
 
 function resolveMermaidTheme(theme: ThemeMode): MermaidTheme {
