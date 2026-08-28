@@ -1,24 +1,36 @@
-import React, { useMemo } from "react";
-import { GitFork, FileText, ArrowUpRight, Link2, Sparkles } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { GitFork, FileText, ArrowUpRight, Link2, Sparkles, List, Network } from "lucide-react";
 import type { BacklinkRef, UnlinkedMention } from "../services/backlinkIndex";
+import type { GraphData } from "../services/graphService";
+import type { ThemeMode } from "../core/types";
+import { LocalGraphView } from "./LocalGraphView";
 
 type BacklinksPanelProps = {
   currentTitle: string;
   currentPath?: string;
+  currentDocId?: string | null;
   linkedReferences: BacklinkRef[];
   unlinkedMentions: UnlinkedMention[];
   onJumpToSource: (sourceId: string, line?: number) => void;
   onConvertMention: (mention: UnlinkedMention) => void;
+  graphData?: GraphData;
+  theme?: ThemeMode;
+  onOpenGlobalGraph?: () => void;
 };
 
 export function BacklinksPanel({
   currentTitle,
   currentPath,
+  currentDocId,
   linkedReferences,
   unlinkedMentions,
   onJumpToSource,
   onConvertMention,
+  graphData,
+  theme = "twitter",
+  onOpenGlobalGraph,
 }: BacklinksPanelProps) {
+  const [panelSubTab, setPanelSubTab] = useState<"list" | "graph">("list");
   // Group linked references by sourceId
   const linkedGroups = useMemo(() => {
     const map = new Map<string, { title: string; path?: string; items: BacklinkRef[] }>();
@@ -84,7 +96,36 @@ export function BacklinksPanel({
         {currentPath && <div className="backlinks-target-path">{currentPath}</div>}
       </div>
 
-      <div className="backlinks-content-scroll">
+      {/* Mode Switcher: List vs Graph */}
+      <div className="backlinks-mode-switcher">
+        <button
+          type="button"
+          className={`backlinks-mode-tab ${panelSubTab === "list" ? "is-active" : ""}`}
+          onClick={() => setPanelSubTab("list")}
+        >
+          <List size={13} />
+          <span>引用列表</span>
+        </button>
+        <button
+          type="button"
+          className={`backlinks-mode-tab ${panelSubTab === "graph" ? "is-active" : ""}`}
+          onClick={() => setPanelSubTab("graph")}
+        >
+          <Network size={13} />
+          <span>局部图谱</span>
+        </button>
+      </div>
+
+      {panelSubTab === "graph" && graphData && currentDocId ? (
+        <LocalGraphView
+          graphData={graphData}
+          currentDocId={currentDocId}
+          theme={theme}
+          onSelectNode={(docId) => onJumpToSource(docId)}
+          onOpenGlobalGraph={onOpenGlobalGraph}
+        />
+      ) : (
+        <div className="backlinks-content-scroll">
         {/* Section 1: Linked References */}
         <section className="backlinks-section">
           <div className="backlinks-section-title">
@@ -200,6 +241,7 @@ export function BacklinksPanel({
           )}
         </section>
       </div>
+      )}
     </div>
   );
 }

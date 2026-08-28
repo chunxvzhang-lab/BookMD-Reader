@@ -8,6 +8,7 @@ import { ChapterList } from "./components/ChapterList";
 import { DocumentWorkspace } from "./components/DocumentWorkspace";
 import { DualDocumentWorkspace } from "./components/DualDocumentWorkspace";
 import type { WikiLinkTarget } from "./components/EditorPane";
+import { GlobalGraphDialog } from "./components/GlobalGraphDialog";
 import {
   createBacklinkIndex,
   updateDocumentInIndex,
@@ -17,6 +18,7 @@ import {
   type BacklinkIndexData,
   type UnlinkedMention,
 } from "./services/backlinkIndex";
+import { buildGraphDataFromIndex } from "./services/graphService";
 import { FileConflictDialog } from "./components/FileConflictDialog";
 import { MediaLightbox, type LightboxMedia } from "./components/MediaLightbox";
 import { SearchPanel } from "./components/SearchPanel";
@@ -105,6 +107,7 @@ export function App() {
   const [preferences, setPreferences] = useState(preferencesRef.current);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [globalGraphOpen, setGlobalGraphOpen] = useState(false);
 
   const [directoryWidth, setDirectoryWidth] = useState(() => {
     try {
@@ -1829,6 +1832,10 @@ export function App() {
     return getUnlinkedMentions(backlinkIndex, session.chapterId, currentDocTitle);
   }, [backlinkIndex, currentDocTitle, session?.chapterId]);
 
+  const graphData = useMemo(() => {
+    return buildGraphDataFromIndex(manifest, backlinkIndex, session?.chapterId);
+  }, [manifest, backlinkIndex, session?.chapterId]);
+
   const handleJumpToBacklink = useCallback(
     (sourceId: string, line?: number) => {
       selectChapter(sourceId);
@@ -1903,6 +1910,7 @@ export function App() {
           onOpenAbout={() => setAboutOpen(true)}
           isDirty={isDirty}
           backlinksCount={currentLinkedReferences.length}
+          onOpenGlobalGraph={() => setGlobalGraphOpen(true)}
         />
       )}
 
@@ -2060,10 +2068,14 @@ export function App() {
                   <BacklinksPanel
                     currentTitle={currentDocTitle}
                     currentPath={session?.absolutePath || session?.fileName}
+                    currentDocId={session?.chapterId}
                     linkedReferences={currentLinkedReferences}
                     unlinkedMentions={currentUnlinkedMentions}
                     onJumpToSource={handleJumpToBacklink}
                     onConvertMention={handleConvertMention}
+                    graphData={graphData}
+                    theme={preferences.theme}
+                    onOpenGlobalGraph={() => setGlobalGraphOpen(true)}
                   />
                 </section>
               ) : null}
@@ -2240,6 +2252,16 @@ export function App() {
       <AboutDialog
         isOpen={aboutOpen}
         onClose={() => setAboutOpen(false)}
+      />
+
+      {/* Global Knowledge Graph Dialog */}
+      <GlobalGraphDialog
+        isOpen={globalGraphOpen}
+        onClose={() => setGlobalGraphOpen(false)}
+        graphData={graphData}
+        currentDocId={session?.chapterId}
+        theme={preferences.theme}
+        onSelectNode={handleJumpToBacklink}
       />
 
       {notice ? (

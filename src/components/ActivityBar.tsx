@@ -16,6 +16,7 @@ import {
   Minimize2,
   Zap,
   GitFork,
+  Network,
 } from "lucide-react";
 import appLogo from "../assets/icon.png";
 import type { EditorViewMode, ThemeMode, SidebarTab } from "../core/types";
@@ -37,6 +38,7 @@ type ActivityBarProps = {
   onOpenAbout?: () => void;
   isDirty?: boolean;
   backlinksCount?: number;
+  onOpenGlobalGraph?: () => void;
 };
 
 export function ActivityBar({
@@ -56,6 +58,7 @@ export function ActivityBar({
   onOpenAbout,
   isDirty = false,
   backlinksCount = 0,
+  onOpenGlobalGraph,
 }: ActivityBarProps) {
   return (
     <nav className="activity-bar" aria-label="快捷工具栏">
@@ -174,6 +177,18 @@ export function ActivityBar({
         >
           <Zap size={18} style={{ color: "#f59e0b" }} />
         </button>
+
+        {onOpenGlobalGraph && (
+          <button
+            type="button"
+            className="activity-btn"
+            onClick={onOpenGlobalGraph}
+            data-tooltip="知识网络全景图谱"
+            aria-label="知识网络全景图谱"
+          >
+            <Network size={18} style={{ color: "#38bdf8" }} />
+          </button>
+        )}
       </div>
 
       {/* Bottom Controls: View Mode & Fullscreen & Theme Switch & About */}

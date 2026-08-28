@@ -1,0 +1,140 @@
+import { describe, expect, it } from "vitest";
+import type { BookManifest } from "../core/types";
+import {
+  createBacklinkIndex,
+  updateDocumentInIndex,
+} from "../services/backlinkIndex";
+import {
+  buildGraphDataFromIndex,
+  extractLocalSubgraph,
+  filterGraphData,
+  toCytoscapeElements,
+} from "../services/graphService";
+
+describe("graphService", () => {
+  const mockManifest: BookManifest = {
+    id: "test-book",
+    title: "Test Book",
+    chapters: [
+      { id: "doc-1", title: "Introduction", src: "intro.md" },
+      { id: "doc-2", title: "Architecture", src: "arch.md" },
+      { id: "doc-3", title: "Deployment", src: "deploy.md" },
+      { id: "doc-4", title: "Orphan Doc", src: "orphan.md" },
+    ],
+  };
+
+  it("builds correct nodes, edges, and degree counts from backlink index", () => {
+    const index = createBacklinkIndex([]);
+
+    // doc-1 links to Architecture and Deployment
+    updateDocumentInIndex(
+      index,
+      "doc-1",
+      "Introduction",
+      "We follow [[Architecture]] before doing [[Deployment]].",
+      "intro.md"
+    );
+
+    // doc-2 links to Deployment
+    updateDocumentInIndex(
+      index,
+      "doc-2",
+      "Architecture",
+      "See [[Deployment]] guide for containers.",
+      "arch.md"
+    );
+
+    // doc-3 has no outgoing links
+    updateDocumentInIndex(index, "doc-3", "Deployment", "Deploying with Docker.", "deploy.md");
+
+    // doc-4 is orphan
+    updateDocumentInIndex(index, "doc-4", "Orphan Doc", "No links here.", "orphan.md");
+
+    const graph = buildGraphDataFromIndex(mockManifest, index, "doc-1");
+
+    expect(graph.nodes.length).toBe(4);
+    expect(graph.edges.length).toBe(3);
+
+    const doc1 = graph.nodes.find((n) => n.id === "doc-1")!;
+    expect(doc1.isCurrent).toBe(true);
+    expect(doc1.outDegree).toBe(2);
+    expect(doc1.inDegree).toBe(0);
+
+    const doc3 = graph.nodes.find((n) => n.id === "doc-3")!;
+    expect(doc3.inDegree).toBe(2); // linked by doc-1 and doc-2
+    expect(doc3.outDegree).toBe(0);
+
+    const doc4 = graph.nodes.find((n) => n.id === "doc-4")!;
+    expect(doc4.inDegree).toBe(0);
+    expect(doc4.outDegree).toBe(0);
+  });
+
+  it("extracts 1-hop local subgraph around a center node", () => {
+    const index = createBacklinkIndex([]);
+    updateDocumentInIndex(index, "doc-1", "Introduction", "See [[Architecture]]", "intro.md");
+    updateDocumentInIndex(index, "doc-2", "Architecture", "See [[Deployment]]", "arch.md");
+    updateDocumentInIndex(index, "doc-3", "Deployment", "Nothing", "deploy.md");
+    updateDocumentInIndex(index, "doc-4", "Orphan Doc", "Lonely", "orphan.md");
+
+    const fullGraph = buildGraphDataFromIndex(mockManifest, index, "doc-2");
+    const subGraph = extractLocalSubgraph(fullGraph, "doc-2", 1);
+
+    // doc-2 is linked from doc-1 and links to doc-3. doc-4 should NOT be in subgraph.
+    const subNodeIds = subGraph.nodes.map((n) => n.id).sort();
+    expect(subNodeIds).toEqual(["doc-1", "doc-2", "doc-3"].sort());
+    expect(subNodeIds.includes("doc-4")).toBe(false);
+
+    // Current node should be doc-2
+    const center = subGraph.nodes.find((n) => n.id === "doc-2");
+    expect(center?.isCurrent).toBe(true);
+  });
+
+  it("filters isolate nodes and search queries", () => {
+    const index = createBacklinkIndex([]);
+    updateDocumentInIndex(index, "doc-1", "Introduction", "See [[Architecture]]", "intro.md");
+    updateDocumentInIndex(index, "doc-2", "Architecture", "Done", "arch.md");
+    updateDocumentInIndex(index, "doc-4", "Orphan Doc", "Nothing", "orphan.md");
+
+    const fullGraph = buildGraphDataFromIndex(mockManifest, index, "doc-1");
+
+    // Filter isolates: doc-4 should be excluded, doc-1 and doc-2 retained
+    const noIsolates = filterGraphData(fullGraph, { hideIsolates: true });
+    expect(noIsolates.nodes.map((n) => n.id)).toEqual(["doc-1", "doc-2"]);
+
+    // Search query filter: search "Arch"
+    const searchArch = filterGraphData(fullGraph, { query: "Arch" });
+    expect(searchArch.nodes.length).toBe(1);
+    expect(searchArch.nodes[0].id).toBe("doc-2");
+  });
+
+  it("converts GraphData to Cytoscape elements correctly", () => {
+    const graph = {
+      nodes: [
+        {
+          id: "n1",
+          label: "Node 1",
+          type: "chapter" as const,
+          inDegree: 0,
+          outDegree: 1,
+          normTitle: "node 1",
+        },
+        {
+          id: "n2",
+          label: "Node 2",
+          type: "chapter" as const,
+          inDegree: 1,
+          outDegree: 0,
+          normTitle: "node 2",
+        },
+      ],
+      edges: [{ id: "n1->n2", source: "n1", target: "n2" }],
+    };
+
+    const cyElements = toCytoscapeElements(graph);
+    expect(cyElements.length).toBe(3);
+    expect(cyElements[0].group).toBe("nodes");
+    expect(cyElements[0].data.id).toBe("n1");
+    expect(cyElements[2].group).toBe("edges");
+    expect((cyElements[2].data as any).source).toBe("n1");
+  });
+});
