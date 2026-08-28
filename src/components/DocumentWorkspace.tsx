@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { EditorViewMode, RenderedChapter, ThemeMode } from "../core/types";
 import type { MermaidTheme } from "../services/mermaid";
-import { EditorPane } from "./EditorPane";
+import { EditorPane, type WikiLinkTarget } from "./EditorPane";
 import { ReaderPane } from "./ReaderPane";
 import { RefreshCw, AlertCircle, Link2, Link2Off } from "lucide-react";
 import { useSyncScroll } from "../hooks/useSyncScroll";
@@ -32,6 +32,8 @@ type DocumentWorkspaceProps = {
   onOpenLightbox?: (media: LightboxMedia) => void;
   onEditorViewReady?: (view: any) => void;
   navLockUntilRef?: React.MutableRefObject<number>;
+  wikiLinkTargets?: WikiLinkTarget[];
+  onWikiLinkClick?: (target: string) => void;
 };
 
 export function DocumentWorkspace({
@@ -55,6 +57,8 @@ export function DocumentWorkspace({
   onOpenLightbox,
   onEditorViewReady,
   navLockUntilRef,
+  wikiLinkTargets,
+  onWikiLinkClick,
 }: DocumentWorkspaceProps) {
   const [splitRatio, setSplitRatio] = useState(() => {
     try {
@@ -170,6 +174,7 @@ export function DocumentWorkspace({
             readOnly={readOnly}
             typewriterMode={typewriterMode}
             currentFilePath={currentFilePath}
+            wikiLinkTargets={wikiLinkTargets}
             onScroll={handleEditorScroll}
             onSelectionChange={handleEditorSelectionChange}
             onEditorViewReady={(view) => {
@@ -242,6 +247,8 @@ export function DocumentWorkspace({
             onElementClick={handlePreviewSelectionChange}
             showLineNumbers={showLineNumbers}
             onOpenLightbox={onOpenLightbox}
+            wikiLinkTargets={wikiLinkTargets}
+            onWikiLinkClick={onWikiLinkClick}
           />
         </div>
       )}

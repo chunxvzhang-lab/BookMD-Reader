@@ -1,7 +1,8 @@
-import { memo, useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { RenderedChapter } from "../core/types";
 import { renderMermaid, type MermaidTheme } from "../services/mermaid";
 import type { LightboxMedia } from "./MediaLightbox";
+import type { WikiLinkTarget } from "./EditorPane";
 
 type ReaderPaneProps = {
   chapter: RenderedChapter | null;
@@ -12,6 +13,8 @@ type ReaderPaneProps = {
   onElementClick?: (targetElement: HTMLElement, selectedText: string) => void;
   showLineNumbers?: boolean;
   onOpenLightbox?: (media: LightboxMedia) => void;
+  wikiLinkTargets?: WikiLinkTarget[];
+  onWikiLinkClick?: (target: string) => void;
 };
 
 export const ReaderPane = memo(function ReaderPane({
@@ -23,8 +26,20 @@ export const ReaderPane = memo(function ReaderPane({
   onElementClick,
   showLineNumbers = true,
   onOpenLightbox,
+  wikiLinkTargets,
+  onWikiLinkClick,
 }: ReaderPaneProps) {
   const articleRef = useRef<HTMLElement | null>(null);
+  const [hoverPopover, setHoverPopover] = useState<{
+    target: string;
+    label: string;
+    x: number;
+    y: number;
+    exists: boolean;
+    path?: string;
+  } | null>(null);
+  const hoverTimerRef = useRef<number | null>(null);
+
   // Mermaid mutates the sanitized article HTML after React commits it. Keep
   // this prop stable so unrelated renders do not restore the pre-render HTML.
   const articleHtml = useMemo(() => ({ __html: chapter?.html ?? "" }), [chapter?.html]);
@@ -36,11 +51,65 @@ export const ReaderPane = memo(function ReaderPane({
     articleRef.current = node;
   }, []);
 
-  // Handle article clicks: code copy, lightbox for images and mermaid charts, selection sync
+  const handleMouseOver = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      const el = (e.target as HTMLElement).closest<HTMLAnchorElement>("a.wikilink");
+      if (!el) return;
+      const target = el.getAttribute("data-wikilink-target");
+      const label = el.getAttribute("data-wikilink-label") || target;
+      if (!target) return;
+
+      if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+      const rect = el.getBoundingClientRect();
+
+      const cleanTarget = target.trim().replace(/\.md$/i, "").toLowerCase();
+      const found = wikiLinkTargets?.find((t) => {
+        const tTitle = t.title.trim().toLowerCase();
+        const tFile = (t.relativePath?.split("/").pop() ?? "").replace(/\.md$/i, "").toLowerCase();
+        return tTitle === cleanTarget || tFile === cleanTarget;
+      });
+
+      hoverTimerRef.current = window.setTimeout(() => {
+        setHoverPopover({
+          target,
+          label: label || target,
+          x: Math.min(window.innerWidth - 280, Math.max(12, rect.left)),
+          y: rect.bottom + 6,
+          exists: Boolean(found),
+          path: found?.relativePath,
+        });
+      }, 240);
+    },
+    [wikiLinkTargets]
+  );
+
+  const handleMouseOut = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const nextEl = e.relatedTarget as HTMLElement | null;
+    if (nextEl?.closest(".wikilink-preview-popover") || nextEl?.closest("a.wikilink")) {
+      return;
+    }
+    if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+    setHoverPopover(null);
+  }, []);
+
+  // Handle article clicks: code copy, lightbox for images and mermaid charts, wikilinks, selection sync
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLElement>) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
+
+      // 0. Check if clicking a WikiLink
+      const wikiLink = target.closest<HTMLAnchorElement>("a.wikilink");
+      if (wikiLink) {
+        e.preventDefault();
+        e.stopPropagation();
+        const wikilinkTarget = wikiLink.getAttribute("data-wikilink-target");
+        if (wikilinkTarget && onWikiLinkClick) {
+          setHoverPopover(null);
+          onWikiLinkClick(wikilinkTarget);
+        }
+        return;
+      }
 
       // 1. Check if clicking code copy button
       const copyBtn = target.closest<HTMLButtonElement>(".code-copy-btn");
@@ -99,7 +168,7 @@ export const ReaderPane = memo(function ReaderPane({
         }
       }
     },
-    [onOpenLightbox]
+    [onOpenLightbox, onWikiLinkClick]
   );
 
   const handleMouseUp = useCallback(
@@ -184,8 +253,42 @@ export const ReaderPane = memo(function ReaderPane({
         ref={attachArticle}
         onClick={handleClick}
         onMouseUp={handleMouseUp}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
         dangerouslySetInnerHTML={articleHtml}
       />
+      {hoverPopover && (
+        <div
+          className="wikilink-preview-popover"
+          style={{ left: hoverPopover.x, top: hoverPopover.y }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onWikiLinkClick) {
+              setHoverPopover(null);
+              onWikiLinkClick(hoverPopover.target);
+            }
+          }}
+          onMouseEnter={() => {
+            if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+          }}
+          onMouseLeave={() => setHoverPopover(null)}
+        >
+          <div className="wikilink-popover-header">
+            <span className="wikilink-popover-icon">🔗</span>
+            <span className="wikilink-popover-title">{hoverPopover.label}</span>
+          </div>
+          {hoverPopover.path ? (
+            <div className="wikilink-popover-path">{hoverPopover.path}</div>
+          ) : null}
+          <div className="wikilink-popover-status">
+            {hoverPopover.exists ? (
+              <span className="wikilink-status-exists">✓ 文档已存在，点击跳转阅读</span>
+            ) : (
+              <span className="wikilink-status-missing">⚡ 尚未创建，点击即可自动新建</span>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 });

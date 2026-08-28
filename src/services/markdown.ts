@@ -132,6 +132,7 @@ const markdown: MarkdownIt = new MarkdownIt({
 })
   .use(sourceLineMappingPlugin)
   .use(mathPlugin)
+  .use(wikiLinkPlugin)
   .use(taskLists, { enabled: true, label: true })
   .use(frontMatterPlugin, (frontMatter: string) => {
     capturedFrontMatter = frontMatter;
@@ -155,6 +156,8 @@ export async function renderMarkdown(source: string, baseUrl = window.location.h
       "data-mermaid-src",
       "data-source-line",
       "data-source-line-end",
+      "data-wikilink-target",
+      "data-wikilink-label",
       "decoding",
       "encoding",
       "fetchpriority",
@@ -774,3 +777,55 @@ function firstVisibleParagraph(container: HTMLElement): HTMLElement | null {
 function compactWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
+
+function wikiLinkPlugin(md: MarkdownIt): void {
+  md.inline.ruler.before("link", "wikilink", (state: any, silent: boolean) => {
+    if (
+      state.src.charCodeAt(state.pos) !== 0x5b /* [ */ ||
+      state.src.charCodeAt(state.pos + 1) !== 0x5b /* [ */
+    ) {
+      return false;
+    }
+
+    const start = state.pos;
+    const max = state.posMax;
+    const close = state.src.indexOf("]]", start + 2);
+    if (close === -1 || close > max) return false;
+
+    const raw = state.src.slice(start + 2, close);
+    if (raw.includes("\n") || !raw.trim()) return false;
+
+    if (!silent) {
+      let target = raw.trim();
+      let label = target;
+      const pipeIdx = raw.indexOf("|");
+      if (pipeIdx !== -1) {
+        target = raw.slice(0, pipeIdx).trim();
+        label = raw.slice(pipeIdx + 1).trim() || target;
+      }
+
+      const token = state.push("wikilink", "a", 0);
+      token.attrs = [
+        ["class", "wikilink"],
+        ["href", `#wikilink:${encodeURIComponent(target)}`],
+        ["data-wikilink-target", target],
+        ["data-wikilink-label", label],
+      ];
+      token.content = label;
+    }
+
+    state.pos = close + 2;
+    return true;
+  });
+
+  md.renderer.rules.wikilink = (tokens, index) => {
+    const token = tokens[index];
+    const target = token.attrGet("data-wikilink-target") || "";
+    const label = token.attrGet("data-wikilink-label") || target;
+    const escapedTarget = md.utils.escapeHtml(target);
+    const escapedLabel = md.utils.escapeHtml(label);
+    const encodedTarget = encodeURIComponent(target);
+    return `<a class="wikilink" href="#wikilink:${encodedTarget}" data-wikilink-target="${escapedTarget}" data-wikilink-label="${escapedLabel}" title="跳转至: ${escapedTarget}"><span class="wikilink-bracket">[[</span><span class="wikilink-text">${escapedLabel}</span><span class="wikilink-bracket">]]</span></a>`;
+  };
+}
+

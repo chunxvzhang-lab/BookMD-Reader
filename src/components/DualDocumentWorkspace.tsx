@@ -4,6 +4,7 @@ import type { LightboxMedia } from "./MediaLightbox";
 import type { MermaidTheme } from "../services/mermaid";
 import { DocumentWorkspace } from "./DocumentWorkspace";
 import { ReaderPane } from "./ReaderPane";
+import type { WikiLinkTarget } from "./EditorPane";
 import { X, Columns2, BookOpen } from "lucide-react";
 
 const DUAL_SPLIT_RATIO_KEY = "bookmd.layout.dualSplitRatio";
@@ -30,6 +31,8 @@ type DualDocumentWorkspaceProps = {
   currentFilePath?: string;
   onOpenLightbox?: (media: LightboxMedia) => void;
   onEditorViewReady?: (view: any) => void;
+  wikiLinkTargets?: WikiLinkTarget[];
+  onWikiLinkClick?: (target: string) => void;
 
   // Secondary (Right) Document
   secondaryTitle: string;
@@ -59,6 +62,8 @@ export function DualDocumentWorkspace({
   currentFilePath,
   onOpenLightbox,
   onEditorViewReady,
+  wikiLinkTargets,
+  onWikiLinkClick,
 
   secondaryTitle,
   secondaryRenderedChapter,
@@ -157,6 +162,8 @@ export function DualDocumentWorkspace({
             currentFilePath={currentFilePath}
             onOpenLightbox={onOpenLightbox}
             onEditorViewReady={onEditorViewReady}
+            wikiLinkTargets={wikiLinkTargets}
+            onWikiLinkClick={onWikiLinkClick}
           />
         </div>
       </div>
@@ -212,6 +219,8 @@ export function DualDocumentWorkspace({
             onMermaidError={onMermaidError}
             showLineNumbers={showLineNumbers}
             onOpenLightbox={onOpenLightbox}
+            wikiLinkTargets={wikiLinkTargets}
+            onWikiLinkClick={onWikiLinkClick}
           />
         </div>
       </div>

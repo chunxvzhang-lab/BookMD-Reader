@@ -6,6 +6,7 @@ import { BookmarkPanel } from "./components/BookmarkPanel";
 import { ChapterList } from "./components/ChapterList";
 import { DocumentWorkspace } from "./components/DocumentWorkspace";
 import { DualDocumentWorkspace } from "./components/DualDocumentWorkspace";
+import type { WikiLinkTarget } from "./components/EditorPane";
 import { FileConflictDialog } from "./components/FileConflictDialog";
 import { MediaLightbox, type LightboxMedia } from "./components/MediaLightbox";
 import { SearchPanel } from "./components/SearchPanel";
@@ -1658,6 +1659,101 @@ export function App() {
     }
   }, [session, updateSource]);
 
+  const wikiLinkTargets = useMemo(() => {
+    const list: WikiLinkTarget[] = [];
+    if (manifest?.chapters) {
+      for (const ch of manifest.chapters) {
+        list.push({
+          id: ch.id,
+          title: ch.title,
+          relativePath: ch.src,
+          absolutePath: ch.absolutePath,
+        });
+      }
+    }
+    return list;
+  }, [manifest?.chapters]);
+
+  const handleWikiLinkClick = useCallback(
+    async (target: string) => {
+      if (!target.trim()) return;
+      const cleanTarget = target.trim().replace(/\.md$/i, "");
+
+      // 1. Search in current workspace chapters
+      if (manifest?.chapters && manifest.chapters.length > 0) {
+        const found = manifest.chapters.find((c) => {
+          const cTitle = c.title.trim().toLowerCase();
+          const cFileName = (c.src.split("/").pop() ?? "").replace(/\.md$/i, "").toLowerCase();
+          const targetLower = cleanTarget.toLowerCase();
+          return cTitle === targetLower || cFileName === targetLower;
+        });
+
+        if (found) {
+          selectChapter(found.id);
+          setNotice(`已跳转至双链文档：${found.title}`);
+          return;
+        }
+      }
+
+      // 2. Check in Space flash notes
+      const desktop = window.bookMDDesktop;
+      if (desktop?.getFlashNotesSummary) {
+        try {
+          const summary = await desktop.getFlashNotesSummary();
+          if (summary?.success && summary.notes) {
+            const foundNote = summary.notes.find((n) => {
+              const baseName = n.fileName.replace(/\.md$/i, "").toLowerCase();
+              return (
+                baseName === cleanTarget.toLowerCase() ||
+                n.content.toLowerCase().includes(cleanTarget.toLowerCase())
+              );
+            });
+            if (foundNote && openDesktopMarkdownPathRef.current) {
+              openDesktopMarkdownPathRef.current(foundNote.filePath);
+              setNotice(`已跳转至 Space 闪念文档：${foundNote.fileName}`);
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Document not found: ask user to create in current workspace
+      const rootPath = manifest?.rootPath;
+      if (rootPath && desktop?.createMarkdownFile) {
+        const confirmCreate = window.confirm(
+          `双链文档「${cleanTarget}」尚未创建。\n\n是否立即在当前知识库新建「${cleanTarget}.md」？`
+        );
+        if (confirmCreate) {
+          try {
+            const newRes = await desktop.createMarkdownFile({
+              rootPath,
+              defaultName: `${cleanTarget}.md`,
+            });
+            if (!newRes.canceled && newRes.success) {
+              let nextManifest = manifest;
+              if (desktop.refreshDirectory) {
+                nextManifest = await desktop.refreshDirectory(rootPath);
+              } else {
+                nextManifest = {
+                  ...manifest,
+                  chapters: [...manifest.chapters, newRes.chapter],
+                };
+              }
+              setManifest(nextManifest);
+              selectChapter(newRes.chapter.id);
+              setNotice(`已为您创建并打开双链新文档：${cleanTarget}.md`);
+            }
+          } catch (err: any) {
+            setNotice(err?.message || "创建双链新文档失败");
+          }
+        }
+      } else {
+        setNotice(`未找到匹配的双链目标「${cleanTarget}」`);
+      }
+    },
+    [manifest, selectChapter]
+  );
+
   return (
     <div
       className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${isDualSplitMode ? " is-dual-split-mode" : ""}`}
@@ -1886,6 +1982,8 @@ export function App() {
               secondaryRenderedChapter={secondaryRenderedChapter}
               secondaryContainerRef={secondaryReaderRef}
               onCloseSecondary={handleCloseDualSplit}
+              wikiLinkTargets={wikiLinkTargets}
+              onWikiLinkClick={handleWikiLinkClick}
             />
           ) : session ? (
             <DocumentWorkspace
@@ -1911,6 +2009,8 @@ export function App() {
                 editorViewRef.current = view;
               }}
               navLockUntilRef={navLockUntilRef}
+              wikiLinkTargets={wikiLinkTargets}
+              onWikiLinkClick={handleWikiLinkClick}
             />
           ) : (
             <main className="empty-reader" ref={readerRef}>

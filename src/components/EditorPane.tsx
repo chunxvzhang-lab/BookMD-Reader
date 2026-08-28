@@ -25,9 +25,22 @@ import {
 import { tags } from "@lezer/highlight";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { autocompletion, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import {
+  autocompletion,
+  closeBrackets,
+  closeBracketsKeymap,
+  type CompletionContext,
+  type CompletionResult,
+} from "@codemirror/autocomplete";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import type { ThemeMode } from "../core/types";
+
+export type WikiLinkTarget = {
+  id?: string;
+  title: string;
+  relativePath?: string;
+  absolutePath?: string;
+};
 
 type EditorPaneProps = {
   value: string;
@@ -37,6 +50,7 @@ type EditorPaneProps = {
   readOnly?: boolean;
   typewriterMode?: boolean;
   currentFilePath?: string;
+  wikiLinkTargets?: WikiLinkTarget[];
   onSave?: () => void;
   onScroll?: (view: EditorView) => void;
   onSelectionChange?: (view: EditorView) => void;
@@ -215,6 +229,7 @@ export function EditorPane({
   readOnly = false,
   typewriterMode = false,
   currentFilePath,
+  wikiLinkTargets,
   onSave,
   onScroll,
   onSelectionChange,
@@ -228,6 +243,8 @@ export function EditorPane({
   const typewriterRafRef = useRef<number | null>(null);
   const currentFilePathRef = useRef(currentFilePath);
   currentFilePathRef.current = currentFilePath;
+  const wikiLinkTargetsRef = useRef<WikiLinkTarget[]>(wikiLinkTargets ?? []);
+  wikiLinkTargetsRef.current = wikiLinkTargets ?? [];
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
   const onChangeRef = useRef(onChange);
@@ -344,6 +361,40 @@ export function EditorPane({
     lastInternalValueRef.current = value;
     const initialCursorPos = 0;
 
+    const wikiLinkCompletionSource = (context: CompletionContext): CompletionResult | null => {
+      const word = context.matchBefore(/\[\[([^\]\n|]*)/);
+      if (!word || !word.text.startsWith("[[")) return null;
+
+      const query = word.text.slice(2).trim().toLowerCase();
+      const targets = wikiLinkTargetsRef.current;
+
+      const matched = targets.filter((t) => {
+        if (!query) return true;
+        const titleLower = t.title.toLowerCase();
+        const pathLower = (t.relativePath || "").toLowerCase();
+        return titleLower.includes(query) || pathLower.includes(query);
+      });
+
+      return {
+        from: word.from + 2,
+        options: matched.map((t) => ({
+          label: t.title,
+          detail: t.relativePath || undefined,
+          type: "file",
+          apply: (view: EditorView, completion: any, from: number, to: number) => {
+            const docAfter = view.state.sliceDoc(to, to + 2);
+            const needsClosing = docAfter !== "]]";
+            const insert = completion.label + (needsClosing ? "]]" : "");
+            view.dispatch({
+              changes: { from, to, insert },
+              selection: { anchor: from + insert.length },
+            });
+          },
+        })),
+        filter: false,
+      };
+    };
+
     const state = EditorState.create({
       doc: value,
       selection: { anchor: initialCursorPos, head: initialCursorPos },
@@ -359,7 +410,9 @@ export function EditorPane({
         indentOnInput(),
         bracketMatching(),
         closeBrackets(),
-        autocompletion(),
+        autocompletion({
+          override: [wikiLinkCompletionSource],
+        }),
         rectangularSelection(),
         crosshairCursor(),
         highlightActiveLine(),
