@@ -3874,9 +3874,9 @@ body:has(.flash-capsule-overlay) {
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
   color: #f1f5f9;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  border: none;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s ease;
   overflow: hidden;
 }
 
@@ -3886,9 +3886,9 @@ body:has(.flash-capsule-overlay) {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: none;
   color: #0f172a;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 /* E-ink Theme Frosted Glass */
@@ -3897,9 +3897,9 @@ body:has(.flash-capsule-overlay) {
   background: rgba(248, 246, 240, 0.97);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
-  border: 1.5px solid #8c8273;
+  border: none;
   color: #111111;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Header */
@@ -3948,16 +3948,17 @@ body:has(.flash-capsule-overlay) {
 .flash-title {
   white-space: nowrap;
   flex-shrink: 0;
-  color: #0f172a;
+  color: #f59e0b !important;
+  font-weight: 800;
 }
 
 [data-theme="eink"] .flash-title {
-  color: #111111;
+  color: #f59e0b !important;
 }
 
 [data-theme="dark"] .flash-title,
 .flash-capsule-overlay.theme-dark .flash-title {
-  color: #ffffff;
+  color: #f59e0b !important;
 }
 
 .flash-zap-icon {
@@ -4526,25 +4527,32 @@ body:has(.flash-capsule-overlay) {
   color: #000000;
 }
 
-.flash-btn-primary {
-  background: #d97706;
-  color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+.flash-btn-primary,
+.flash-save-btn {
+  background: #f59e0b !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
 }
 
-.flash-btn-primary:hover {
-  background: #b45309;
+.flash-btn-primary:hover,
+.flash-save-btn:hover {
+  background: #d97706 !important;
+  color: #000000 !important;
 }
 
-[data-theme="eink"] .flash-btn-primary {
-  background: #1c1917;
-  color: #fdfcf9;
-  border: 1px solid #000000;
+[data-theme="eink"] .flash-btn-primary,
+[data-theme="eink"] .flash-save-btn {
+  background: #f59e0b !important;
+  color: #000000 !important;
+  border: none !important;
 }
 
-[data-theme="eink"] .flash-btn-primary:hover {
-  background: #000000;
+[data-theme="eink"] .flash-btn-primary:hover,
+[data-theme="eink"] .flash-save-btn:hover {
+  background: #d97706 !important;
+  color: #000000 !important;
 }
 
 /* ==========================================================================
