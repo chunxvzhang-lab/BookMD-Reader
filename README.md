@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.6.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.6.0" />
+  <img src="https://img.shields.io/badge/Version-v1.7.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.7.0" />
   <img src="https://img.shields.io/badge/Flash_Notes-Alt%2BSpace-F59E0B?style=flat-square" alt="Flash Notes" />
   <img src="https://img.shields.io/badge/Theme-E--ink%20Paper%20%7C%20Geek%20Dark-1D9BF0?style=flat-square" alt="Themes" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -53,7 +53,22 @@
 
 ## 🌟 核心功能特性
 
-### 1. v1.6.0 重磅更新：闪念胶囊速记、全局热键、后台常驻与开机自启动
+### 1. v1.7.0 重磅更新：闪念时间线聚合看板、待办任务归纳与剪贴板图片直接粘贴落盘
+- **⚡ 闪念时间线与收集箱聚合看板 (Space Timeline & Inbox Hub)**：
+  - **左侧 ActivityBar 直达**：左侧活动栏常驻琥珀色闪念时间线入口，侧边栏随时调出 `[大纲 | 书签 | 搜索 | 闪念 Space]` 聚合面板。
+  - **流式瀑布流时间轴**：自动按天（今天、昨天、更早之前）分组呈现所有按分钟保存在 `Space/` 目录下的灵感卡片，包含精确分钟时间戳、文件标签、内容摘要与标签云（`#tag`）。
+  - **待办事项清单与实时交互打勾**：集中归纳所有闪念笔记中的待办复选框（`- [ ]` / `- [x]`），支持按待处理/已完成状态分类过滤。在面板中直接点击 Checkbox，自动原子写回源 Markdown 文件！
+  - **知识消化闭环**：支持一键「在编辑器中打开」、一键「并入当前正文」（以规范引用块直接追加到当前编辑文档光标处）、一键复制全文与安全删除。
+  - **胶囊实时广播联动**：闪念胶囊按 `Ctrl + Enter` 保存后，主窗口看板无感实时刷新，最新灵感即刻呈现。
+- **🖼️ 剪贴板图片一键直接粘贴落盘与拖拽插入 (Image Paste & Drop to Local `assets/`)**：
+  - **截图即粘即显 (`Ctrl + V`)**：在编辑器中直接粘贴微信、QQ、Snipaste 截图或网页图片，系统自动在当前文档同级的 `assets/` 目录下生成时间戳命名图片（如 `assets/image_20260828_111530.png`），自动在光标处插入 Markdown 语法并实时在双栏预览中渲染。
+  - **外部图片拖拽支持**：支持直接从桌面或文件管理器拖拽图片（`.png`, `.jpg`, `.webp`, `.gif`, `.svg`）至编辑器，自动完成本地落盘与语法插入。
+- **📌 闪念胶囊窗口钉住、常驻模板与自由拖拉调节**：
+  - **钉住窗口 (Pin)**：点击胶囊顶部 📌 图标，窗口在鼠标点击其他地方时不会自动隐匿，方便对照其他资料录入。
+  - **常驻模板 / 常用提示语 (Persistent Templates)**：提供随写随存、归档不被清空的常驻便签与模板库，一键将模板内容填入闪念速记区。
+  - **自由拖拉调节窗口尺寸与记忆**：胶囊微窗右下角支持点阵拖拽手柄，四周边框支持按住拉伸，尺寸自动持久化记忆。
+
+### 2. v1.6.0：闪念胶囊速记、全局热键、后台常驻与开机自启动
 - **⚡ 闪念胶囊 (Flash Notes) 独立毛玻璃微窗**：
   - 无论处于任何工作、游戏或编码窗口，按下全局快捷键（默认 `Alt + Space`）即刻在当前显示器黄金视线区域秒级唤起轻巧毛玻璃微窗（`620×380`）。
   - **无打扰沉浸速记**：随时捕获灵感火花与即刻待办，失焦自动隐匿（Auto-Hide on Blur），按 `Esc` 键亦可快速退出。
