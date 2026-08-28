@@ -160,6 +160,7 @@ export type KnowSpaceDesktopAPI = {
   onFlashShortcutUpdated?: (callback: (shortcut: string) => void) => () => void;
   onFlashNoteSaved?: (callback: (data: { filePath: string; dateStr: string; fileName?: string }) => void) => () => void;
   onAppSettingsUpdated?: (callback: (data: { autoLaunch: boolean; runInBackground: boolean; flashShortcut: string }) => void) => () => void;
+  onThemeUpdated?: (callback: (theme: string) => void) => () => void;
 };
 
 export type FlashNoteTodo = {

@@ -71,9 +71,16 @@ export const FlashCapsule: React.FC = () => {
 
   // Initialize preferences, theme, hotkey, pin, persistent note and space config
   useEffect(() => {
+    const applyTheme = (t?: string) => {
+      const prefs = loadPreferences();
+      const nextTheme = (t as ThemeMode) || prefs.theme || "system";
+      setTheme(nextTheme);
+      document.documentElement.setAttribute("data-theme", nextTheme);
+      document.documentElement.dataset.theme = nextTheme;
+    };
+
+    applyTheme();
     const prefs = loadPreferences();
-    setTheme(prefs.theme || "system");
-    document.documentElement.setAttribute("data-theme", prefs.theme || "system");
 
     // Load initial hotkey
     if (desktop?.getFlashShortcut) {
@@ -133,6 +140,7 @@ export const FlashCapsule: React.FC = () => {
     let cleanupFocus: (() => void) | undefined;
     if (desktop?.onFlashFocus) {
       cleanupFocus = desktop.onFlashFocus(() => {
+        applyTheme();
         refreshSpaceConfig();
         setTimeout(() => {
           if (activeTab === "note") {
@@ -160,10 +168,26 @@ export const FlashCapsule: React.FC = () => {
       });
     }
 
+    let cleanupTheme: (() => void) | undefined;
+    if (desktop?.onThemeUpdated) {
+      cleanupTheme = desktop.onThemeUpdated((newTheme) => {
+        applyTheme(newTheme);
+      });
+    }
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "knowspace_preferences" || e.key === "bookmd_preferences") {
+        applyTheme();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
     return () => {
       cleanupFocus?.();
       cleanupShortcut?.();
       cleanupSettings?.();
+      cleanupTheme?.();
+      window.removeEventListener("storage", onStorage);
       if (persistentSaveTimerRef.current) {
         clearTimeout(persistentSaveTimerRef.current);
       }

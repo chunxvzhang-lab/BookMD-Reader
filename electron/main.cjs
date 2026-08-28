@@ -917,6 +917,11 @@ ipcMain.handle("bookmd:set-native-theme", (_event, theme) => {
       }
     } catch {}
   }
+  if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
+    try {
+      flashCapsuleWindow.webContents.send("bookmd:theme-updated", theme);
+    } catch {}
+  }
 });
 
 ipcMain.handle("bookmd:set-document-state", (_event, state) => {

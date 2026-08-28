@@ -3926,10 +3926,12 @@ body:has(.flash-capsule-overlay) {
   overflow: hidden;
 }
 
+.flash-capsule-overlay.theme-light .flash-header,
 [data-theme="light"] .flash-header {
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+.flash-capsule-overlay.theme-eink .flash-header,
 [data-theme="eink"] .flash-header {
   border-bottom: 1.5px solid #a8a090;
 }
@@ -3961,15 +3963,6 @@ body:has(.flash-capsule-overlay) {
   font-weight: 800;
 }
 
-[data-theme="eink"] .flash-title {
-  color: #f59e0b !important;
-}
-
-[data-theme="dark"] .flash-title,
-.flash-capsule-overlay.theme-dark .flash-title {
-  color: #f59e0b !important;
-}
-
 .flash-zap-icon {
   color: #f59e0b;
   flex-shrink: 0;
@@ -3999,6 +3992,7 @@ body:has(.flash-capsule-overlay) {
   border-color: rgba(245, 158, 11, 0.5);
 }
 
+.flash-capsule-overlay.theme-light .flash-shortcut-badge,
 [data-theme="light"] .flash-shortcut-badge {
   background: rgba(0, 0, 0, 0.06);
   color: #1e293b;
@@ -4006,11 +4000,13 @@ body:has(.flash-capsule-overlay) {
   font-weight: 600;
 }
 
+.flash-capsule-overlay.theme-light .flash-shortcut-badge:hover,
 [data-theme="light"] .flash-shortcut-badge:hover {
   background: rgba(217, 119, 6, 0.15);
   color: #b45309;
 }
 
+.flash-capsule-overlay.theme-eink .flash-shortcut-badge,
 [data-theme="eink"] .flash-shortcut-badge {
   background: #ded9cd;
   color: #111111;
@@ -4037,12 +4033,14 @@ body:has(.flash-capsule-overlay) {
   min-width: 0;
 }
 
+.flash-capsule-overlay.theme-light .flash-target-path,
 [data-theme="light"] .flash-target-path {
   color: #1e293b;
   background: rgba(0, 0, 0, 0.05);
   border-color: rgba(0, 0, 0, 0.12);
 }
 
+.flash-capsule-overlay.theme-eink .flash-target-path,
 [data-theme="eink"] .flash-target-path {
   color: #111111;
   background: #ded9cd;
@@ -4078,19 +4076,23 @@ body:has(.flash-capsule-overlay) {
   color: #ffffff;
 }
 
+.flash-capsule-overlay.theme-light .flash-icon-btn,
 [data-theme="light"] .flash-icon-btn {
   color: #334155;
 }
 
+.flash-capsule-overlay.theme-light .flash-icon-btn:hover,
 [data-theme="light"] .flash-icon-btn:hover {
   background: rgba(0, 0, 0, 0.08);
   color: #0f172a;
 }
 
+.flash-capsule-overlay.theme-eink .flash-icon-btn,
 [data-theme="eink"] .flash-icon-btn {
   color: #2b2926;
 }
 
+.flash-capsule-overlay.theme-eink .flash-icon-btn:hover,
 [data-theme="eink"] .flash-icon-btn:hover {
   background: #ded9cd;
   color: #000000;
@@ -4123,11 +4125,13 @@ body:has(.flash-capsule-overlay) {
   display: none;
 }
 
+.flash-capsule-overlay.theme-light .flash-tools-bar,
 [data-theme="light"] .flash-tools-bar {
   background: rgba(0, 0, 0, 0.03);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.flash-capsule-overlay.theme-eink .flash-tools-bar,
 [data-theme="eink"] .flash-tools-bar {
   background: #ede8df;
   border-bottom: 1.5px solid #a8a090;
@@ -4156,18 +4160,21 @@ body:has(.flash-capsule-overlay) {
   border-color: rgba(255, 255, 255, 0.28);
 }
 
+.flash-capsule-overlay.theme-light .flash-tool-tag,
 [data-theme="light"] .flash-tool-tag {
   background: rgba(0, 0, 0, 0.05);
   border-color: rgba(0, 0, 0, 0.12);
   color: #0f172a;
 }
 
+.flash-capsule-overlay.theme-light .flash-tool-tag:hover,
 [data-theme="light"] .flash-tool-tag:hover {
   background: rgba(0, 0, 0, 0.1);
   color: #000000;
   border-color: rgba(0, 0, 0, 0.2);
 }
 
+.flash-capsule-overlay.theme-eink .flash-tool-tag,
 [data-theme="eink"] .flash-tool-tag {
   background: #ded9cd;
   border-color: #8c8273;
@@ -4175,6 +4182,7 @@ body:has(.flash-capsule-overlay) {
   font-weight: 700;
 }
 
+.flash-capsule-overlay.theme-eink .flash-tool-tag:hover,
 [data-theme="eink"] .flash-tool-tag:hover {
   background: #cfc7b5;
   color: #000000;
@@ -4517,23 +4525,27 @@ body:has(.flash-capsule-overlay) {
   color: #ffffff;
 }
 
+.flash-capsule-overlay.theme-light .flash-btn-secondary,
 [data-theme="light"] .flash-btn-secondary {
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.12);
   color: #1e293b;
 }
 
+.flash-capsule-overlay.theme-light .flash-btn-secondary:hover,
 [data-theme="light"] .flash-btn-secondary:hover {
   background: rgba(0, 0, 0, 0.1);
   color: #000000;
 }
 
+.flash-capsule-overlay.theme-eink .flash-btn-secondary,
 [data-theme="eink"] .flash-btn-secondary {
   background: #ded9cd;
   border: 1px solid #8c8273;
   color: #111111;
 }
 
+.flash-capsule-overlay.theme-eink .flash-btn-secondary:hover,
 [data-theme="eink"] .flash-btn-secondary:hover {
   background: #cfc7b5;
   color: #000000;
@@ -4583,11 +4595,13 @@ body:has(.flash-capsule-overlay) {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.flash-capsule-overlay.theme-light .flash-tab-group,
 [data-theme="light"] .flash-tab-group {
   background: rgba(0, 0, 0, 0.06);
   border-color: rgba(0, 0, 0, 0.12);
 }
 
+.flash-capsule-overlay.theme-eink .flash-tab-group,
 [data-theme="eink"] .flash-tab-group {
   background: #ded9cd;
   border-color: #8c8273;
@@ -4620,14 +4634,17 @@ body:has(.flash-capsule-overlay) {
   font-weight: 700;
 }
 
+.flash-capsule-overlay.theme-light .flash-tab-btn,
 [data-theme="light"] .flash-tab-btn {
   color: #334155;
 }
 
+.flash-capsule-overlay.theme-light .flash-tab-btn:hover,
 [data-theme="light"] .flash-tab-btn:hover {
   color: #0f172a;
 }
 
+.flash-capsule-overlay.theme-light .flash-tab-btn.active,
 [data-theme="light"] .flash-tab-btn.active {
   background: #ffffff;
   color: #b45309;
@@ -4635,11 +4652,13 @@ body:has(.flash-capsule-overlay) {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
 }
 
+.flash-capsule-overlay.theme-eink .flash-tab-btn,
 [data-theme="eink"] .flash-tab-btn {
   color: #2b2926;
   font-weight: 600;
 }
 
+.flash-capsule-overlay.theme-eink .flash-tab-btn.active,
 [data-theme="eink"] .flash-tab-btn.active {
   background: #fdfcf9;
   color: #000000;

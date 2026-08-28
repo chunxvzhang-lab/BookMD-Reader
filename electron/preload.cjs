@@ -89,6 +89,11 @@ const desktopApi = {
     ipcRenderer.on("bookmd:app-settings-updated", listener);
     return () => ipcRenderer.removeListener("bookmd:app-settings-updated", listener);
   },
+  onThemeUpdated: (callback) => {
+    const listener = (_event, theme) => callback(theme);
+    ipcRenderer.on("bookmd:theme-updated", listener);
+    return () => ipcRenderer.removeListener("bookmd:theme-updated", listener);
+  },
 };
 
 contextBridge.exposeInMainWorld("knowSpaceDesktop", desktopApi);
