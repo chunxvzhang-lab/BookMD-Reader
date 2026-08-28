@@ -53,6 +53,23 @@ export function GlobalGraphDialog({
 
   const [isSpacePanning, setIsSpacePanning] = useState(false);
   const [zoomPercent, setZoomPercent] = useState(100);
+  const [zoomInputValue, setZoomInputValue] = useState("100%");
+
+  const handleApplyZoomInput = () => {
+    const raw = zoomInputValue.replace(/[^0-9.]/g, "");
+    const val = parseFloat(raw);
+    if (Number.isFinite(val) && val >= 10 && val <= 500) {
+      const clamped = Math.round(val);
+      if (cyRef.current) {
+        cyRef.current.zoom(clamped / 100);
+        cyRef.current.center();
+      }
+      setZoomPercent(clamped);
+      setZoomInputValue(`${clamped}%`);
+    } else {
+      setZoomInputValue(`${zoomPercent}%`);
+    }
+  };
 
   // Filtered graph elements
   const filteredData = useMemo(() => {
@@ -108,9 +125,38 @@ export function GlobalGraphDialog({
     const normalBorder = isEink ? "#000000" : isDark ? "#64748b" : "#cbd5e1";
     const spaceBg = isEink ? "#777777" : "#f59e0b";
     const edgeColor = isEink ? "rgba(0, 0, 0, 0.45)" : isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(100, 116, 139, 0.25)";
-    const textColor = isEink ? "#000000" : isDark ? "#e2e8f0" : "#1e293b";
+    const nodeTextColor = isEink ? "#000000" : isDark ? "#f8fafc" : "#0f172a";
+    const textOutlineColor = isEink ? "#ffffff" : isDark ? "#060911" : "#ffffff";
 
     const elements = toCytoscapeElements(filteredData);
+    const hasEdges = filteredData.edges.length > 0;
+    const layoutConfig = hasEdges
+      ? {
+          name: "cose",
+          animate: false,
+          randomize: false,
+          componentSpacing: 120,
+          nodeOverlap: 40,
+          nodeRepulsion: () => 2500000,
+          idealEdgeLength: () => 95,
+          edgeElasticity: () => 100,
+          nestingFactor: 5,
+          gravity: 25,
+          numIter: 300,
+          coolingFactor: 0.95,
+          padding: 60,
+          nodeDimensionsIncludeLabels: true,
+        }
+      : {
+          name: "concentric",
+          animate: false,
+          padding: 80,
+          spacingFactor: 1.5,
+          minNodeSpacing: 90,
+          concentric: (node: any) => (node.data("isCurrent") ? 10 : 1),
+          levelWidth: () => 1,
+          nodeDimensionsIncludeLabels: true,
+        };
 
     const cy = cytoscape({
       container: containerRef.current,
@@ -126,26 +172,31 @@ export function GlobalGraphDialog({
           selector: "node",
           style: {
             label: "data(label)",
-            "font-size": "11px",
-            "font-family": "system-ui, -apple-system, sans-serif",
-            color: textColor,
+            "font-size": "11.5px",
+            "font-family": "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            "font-weight": 600,
+            color: nodeTextColor,
             "text-valign": "bottom",
-            "text-margin-y": 4,
-            "text-max-width": "110px",
+            "text-margin-y": 6,
+            "text-max-width": "125px",
+            "text-wrap": "wrap",
+            "text-outline-color": textOutlineColor,
+            "text-outline-width": 2.5,
+            "text-outline-opacity": 1,
             width: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 26 : Math.min(32, Math.max(14, 14 + inDeg * 3));
+              return ele.data("isCurrent") ? 28 : Math.min(32, Math.max(16, 16 + inDeg * 3));
             },
             height: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 26 : Math.min(32, Math.max(14, 14 + inDeg * 3));
+              return ele.data("isCurrent") ? 28 : Math.min(32, Math.max(16, 16 + inDeg * 3));
             },
             "background-color": (ele: any) => {
               if (ele.data("isCurrent")) return currentBg;
               if (ele.data("type") === "space") return spaceBg;
               return normalBg;
             },
-            "border-width": (ele: any) => (ele.data("isCurrent") ? 3.5 : 1.5),
+            "border-width": (ele: any) => (ele.data("isCurrent") ? 3.5 : 2),
             "border-color": (ele: any) => (ele.data("isCurrent") ? currentBorder : normalBorder),
           },
         },
@@ -164,7 +215,7 @@ export function GlobalGraphDialog({
         {
           selector: ".highlighted",
           style: {
-            "border-width": 3,
+            "border-width": 3.5,
             "border-color": isEink ? "#000000" : "#f59e0b",
             "line-color": isEink ? "#000000" : "#38bdf8",
             "target-arrow-color": isEink ? "#000000" : "#38bdf8",
@@ -179,21 +230,7 @@ export function GlobalGraphDialog({
           },
         },
       ] as any,
-      layout: {
-        name: "cose",
-        animate: false, // Compute in single tick, no ongoing CPU loop
-        randomize: false,
-        componentSpacing: 60,
-        nodeOverlap: 20,
-        nodeRepulsion: () => 400000,
-        idealEdgeLength: () => 65,
-        edgeElasticity: () => 100,
-        nestingFactor: 5,
-        gravity: 80,
-        numIter: 200,
-        coolingFactor: 0.95,
-        padding: 40,
-      } as any,
+      layout: layoutConfig as any,
     });
 
     cyRef.current = cy;
@@ -220,22 +257,21 @@ export function GlobalGraphDialog({
       });
     });
 
-    // Double click node: navigate and close dialog
+    // Double click node: navigate to document and close dialog
     let lastTapTime = 0;
-    let lastTapTargetId = "";
+    let lastTapNodeId = "";
     cy.on("tap", "node", (evt) => {
-      const now = Date.now();
-      const node = evt.target;
-      const targetId = node.data("id");
-      if (now - lastTapTime < 320 && lastTapTargetId === targetId) {
-        onSelectNode(targetId);
+      const currentTime = Date.now();
+      const nodeId = evt.target.data("id");
+      if (currentTime - lastTapTime < 320 && lastTapNodeId === nodeId) {
+        onSelectNode(nodeId);
         onClose();
       }
-      lastTapTime = now;
-      lastTapTargetId = targetId;
+      lastTapTime = currentTime;
+      lastTapNodeId = nodeId;
     });
 
-    // Tap background: clear selection
+    // Click background: clear selection and highlights
     cy.on("tap", (evt) => {
       if (evt.target === cy) {
         setSelectedNode(null);
@@ -246,17 +282,43 @@ export function GlobalGraphDialog({
     });
 
     cy.on("zoom", () => {
-      setZoomPercent(Math.round(cy.zoom() * 100));
+      const z = Math.round(cy.zoom() * 100);
+      setZoomPercent(z);
+      setZoomInputValue(`${z}%`);
     });
 
-    cy.fit(undefined, 40);
-    setZoomPercent(Math.round(cy.zoom() * 100));
+    // Default to 100% zoom and center on active document or canvas center
+    cy.zoom(1.0);
+    if (currentDocId) {
+      const cur = cy.getElementById(currentDocId);
+      if (cur && cur.length > 0) {
+        cy.center(cur);
+      } else {
+        cy.center();
+      }
+    } else {
+      cy.center();
+    }
+    setZoomPercent(100);
+    setZoomInputValue("100%");
 
     // Initial resize after modal animation settles
     const initialResizeTimer = setTimeout(() => {
       if (cyRef.current) {
         cyRef.current.resize();
-        cyRef.current.fit(undefined, 40);
+        cyRef.current.zoom(1.0);
+        if (currentDocId) {
+          const cur = cyRef.current.getElementById(currentDocId);
+          if (cur && cur.length > 0) {
+            cyRef.current.center(cur);
+          } else {
+            cyRef.current.center();
+          }
+        } else {
+          cyRef.current.center();
+        }
+        setZoomPercent(100);
+        setZoomInputValue("100%");
       }
     }, 60);
 
@@ -417,7 +479,27 @@ export function GlobalGraphDialog({
             >
               <ZoomIn size={14} />
             </button>
-            <span className="graph-zoom-badge" title="当前缩放级别">{zoomPercent}%</span>
+            <div className="graph-zoom-input-wrapper" title="可手动输入缩放比例 (10% - 500%)，回车或失焦生效">
+              <input
+                type="text"
+                className="graph-zoom-input"
+                value={zoomInputValue}
+                onChange={(e) => setZoomInputValue(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onBlur={handleApplyZoomInput}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleApplyZoomInput();
+                    (e.target as HTMLInputElement).blur();
+                  } else if (e.key === "Escape") {
+                    setZoomInputValue(`${zoomPercent}%`);
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
+                aria-label="图谱缩放百分比"
+              />
+            </div>
             <button
               type="button"
               className="graph-action-btn"

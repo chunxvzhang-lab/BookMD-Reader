@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, FilePlus2, FileText, FolderOpen } from "lucide-react";
+import { BookOpen, FilePlus2, FileText, FolderOpen, Zap, X } from "lucide-react";
 import { AboutDialog } from "./components/AboutDialog";
 import { ActivityBar } from "./components/ActivityBar";
 import { BookmarkPanel } from "./components/BookmarkPanel";
@@ -2138,66 +2138,25 @@ export function App() {
         {!isDualSplitMode && sidebarOpen && (manifest || sidebarTab === "space") ? (
           <>
             <aside className="side-panel" style={{ width: sidebarWidth, flex: `0 0 ${sidebarWidth}px` }}>
-              <div className="tabs" role="tablist" aria-label="侧栏区域">
-                {((manifest ? ["toc", "bookmarks", "search", "space"] : ["space"]) as SidebarTab[]).map((tab) => (
-                  <button
-                    key={tab}
-                    id={`${tab}-tab`}
-                    role="tab"
-                    aria-selected={sidebarTab === tab}
-                    aria-controls={`${tab}-panel`}
-                    className={sidebarTab === tab ? "active" : ""}
-                    onClick={() => setSidebarTab(tab)}
-                  >
-                    {tabLabels[tab]}
-                  </button>
-                ))}
-              </div>
-              {sidebarTab === "toc" && manifest ? (
-                <section id="toc-panel" role="tabpanel" aria-labelledby="toc-tab">
-                  <TocPanel
-                    headings={
-                      renderedChapter?.headings?.length
-                        ? renderedChapter.headings
-                        : session?.source
-                          ? extractHeadingsFromSource(session.source)
-                          : []
-                    }
-                    activeHeadingId={activeHeadingId}
-                    bookmarkedHeadingIds={bookmarkedHeadingIds}
-                    onJump={jumpToHeading}
-                  />
-                </section>
-              ) : null}
-              {sidebarTab === "bookmarks" && manifest ? (
-                <section id="bookmarks-panel" role="tabpanel" aria-labelledby="bookmarks-tab">
-                  <BookmarkPanel
-                    bookmarks={bookmarks}
-                    manifest={manifest}
-                    onJump={jumpBookmark}
-                    onDelete={(bookmarkId) => persistBookmarks(bookmarks.filter((item) => item.id !== bookmarkId))}
-                  />
-                </section>
-              ) : null}
-              {sidebarTab === "search" && manifest ? (
-                <section id="search-panel" role="tabpanel" aria-labelledby="search-tab">
-                  <SearchPanel
-                    query={searchQuery}
-                    results={searchResults}
-                    activeResultId={activeSearchMatchId}
-                    onQueryChange={(q) => {
-                      setSearchQuery(q);
-                      setActiveSearchMatchId(null);
-                      if (!q.trim()) {
-                        clearSearchHighlights();
-                      }
-                    }}
-                    onJump={handleSearchJump}
-                  />
-                </section>
-              ) : null}
               {sidebarTab === "space" ? (
                 <section id="space-panel" role="tabpanel" aria-labelledby="space-tab">
+                  <div className="space-standalone-header">
+                    <div className="space-standalone-title">
+                      <Zap size={15} style={{ color: "#f59e0b" }} />
+                      <span>闪念 Space 收集箱</span>
+                    </div>
+                    {manifest && (
+                      <button
+                        type="button"
+                        className="space-standalone-close-btn"
+                        onClick={() => setSidebarTab("toc")}
+                        title="返回大纲目录"
+                        aria-label="返回大纲目录"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
                   <SpaceTimelinePanel
                     onOpenNoteFile={(filePath) => {
                       if (openDesktopMarkdownPathRef.current) {
@@ -2207,23 +2166,84 @@ export function App() {
                     onMergeIntoDocument={handleMergeFlashNote}
                   />
                 </section>
-              ) : null}
-              {sidebarTab === "backlinks" ? (
-                <section id="backlinks-panel" role="tabpanel" aria-labelledby="backlinks-tab">
-                  <BacklinksPanel
-                    currentTitle={currentDocTitle}
-                    currentPath={session?.absolutePath || session?.fileName}
-                    currentDocId={session?.chapterId}
-                    linkedReferences={currentLinkedReferences}
-                    unlinkedMentions={currentUnlinkedMentions}
-                    onJumpToSource={handleJumpToBacklink}
-                    onConvertMention={handleConvertMention}
-                    graphData={graphData}
-                    theme={preferences.theme}
-                    onOpenGlobalGraph={() => setGlobalGraphOpen(true)}
-                  />
-                </section>
-              ) : null}
+              ) : (
+                <>
+                  <div className="tabs" role="tablist" aria-label="侧栏区域">
+                    {(["toc", "bookmarks", "search"] as SidebarTab[]).map((tab) => (
+                      <button
+                        key={tab}
+                        id={`${tab}-tab`}
+                        role="tab"
+                        aria-selected={sidebarTab === tab}
+                        aria-controls={`${tab}-panel`}
+                        className={sidebarTab === tab ? "active" : ""}
+                        onClick={() => setSidebarTab(tab)}
+                      >
+                        {tabLabels[tab]}
+                      </button>
+                    ))}
+                  </div>
+                  {sidebarTab === "toc" && manifest ? (
+                    <section id="toc-panel" role="tabpanel" aria-labelledby="toc-tab">
+                      <TocPanel
+                        headings={
+                          renderedChapter?.headings?.length
+                            ? renderedChapter.headings
+                            : session?.source
+                              ? extractHeadingsFromSource(session.source)
+                              : []
+                        }
+                        activeHeadingId={activeHeadingId}
+                        bookmarkedHeadingIds={bookmarkedHeadingIds}
+                        onJump={jumpToHeading}
+                      />
+                    </section>
+                  ) : null}
+                  {sidebarTab === "bookmarks" && manifest ? (
+                    <section id="bookmarks-panel" role="tabpanel" aria-labelledby="bookmarks-tab">
+                      <BookmarkPanel
+                        bookmarks={bookmarks}
+                        manifest={manifest}
+                        onJump={jumpBookmark}
+                        onDelete={(bookmarkId) => persistBookmarks(bookmarks.filter((item) => item.id !== bookmarkId))}
+                      />
+                    </section>
+                  ) : null}
+                  {sidebarTab === "search" && manifest ? (
+                    <section id="search-panel" role="tabpanel" aria-labelledby="search-tab">
+                      <SearchPanel
+                        query={searchQuery}
+                        results={searchResults}
+                        activeResultId={activeSearchMatchId}
+                        onQueryChange={(q) => {
+                          setSearchQuery(q);
+                          setActiveSearchMatchId(null);
+                          if (!q.trim()) {
+                            clearSearchHighlights();
+                          }
+                        }}
+                        onJump={handleSearchJump}
+                      />
+                    </section>
+                  ) : null}
+                  {sidebarTab === "backlinks" ? (
+                    <section id="backlinks-panel" role="tabpanel" aria-labelledby="backlinks-tab">
+                      <BacklinksPanel
+                        currentTitle={currentDocTitle}
+                        currentPath={session?.absolutePath || session?.fileName}
+                        currentDocId={session?.chapterId}
+                        linkedReferences={currentLinkedReferences}
+                        unlinkedMentions={currentUnlinkedMentions}
+                        onJumpToSource={handleJumpToBacklink}
+                        onConvertMention={handleConvertMention}
+                        graphData={graphData}
+                        theme={preferences.theme}
+                        onOpenGlobalGraph={() => setGlobalGraphOpen(true)}
+                      />
+                    </section>
+                  ) : null}
+                </>
+              )}
             </aside>
             <div
               className={`layout-resizer ${resizingType === "sidebar" ? "is-active" : ""}`}

@@ -24,11 +24,20 @@ export function ChapterList({
   onSelectChapter,
   onRenameChapter,
 }: ChapterListProps) {
-  const tree = useMemo(() => buildTree(manifest.chapters), [manifest.chapters]);
   const activeChapter = useMemo(
     () => manifest.chapters.find((chapter) => chapter.id === activeChapterId),
     [activeChapterId, manifest.chapters],
   );
+  // By default, hide Space flash notes from the main document directory tree unless currently opened
+  const filteredChapters = useMemo(() => {
+    const isCurrentInSpace = Boolean(activeChapter?.src && activeChapter.src.toLowerCase().startsWith("space/"));
+    return manifest.chapters.filter((ch) => {
+      const isSpace = ch.src.toLowerCase().startsWith("space/");
+      return !isSpace || isCurrentInSpace;
+    });
+  }, [manifest.chapters, activeChapter?.src]);
+
+  const tree = useMemo(() => buildTree(filteredChapters), [filteredChapters]);
   const defaultOpen = useMemo(() => collectParentFolderPaths(activeChapter?.src), [activeChapter?.src]);
   const [openFolders, setOpenFolders] = useState<Set<string>>(() => new Set(defaultOpen));
 

@@ -983,6 +983,43 @@ body.is-resizing-col * {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.space-standalone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.space-standalone-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.space-standalone-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.space-standalone-close-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
 .toc-panel,
 .bookmark-panel,
 .search-panel {
@@ -6769,32 +6806,66 @@ body:has(.flash-capsule-overlay) {
   background: rgba(56, 189, 248, 0.22);
 }
 
-.graph-zoom-badge {
+.graph-zoom-input-wrapper {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
-  padding: 4px 6px;
-  font-size: 11px;
+}
+
+.graph-zoom-input {
+  width: 52px;
+  height: 27px;
+  padding: 2px 4px;
+  font-size: 11.5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 600;
-  color: #94a3b8;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 5px;
-  user-select: none;
+  outline: none;
+  transition: all 0.15s ease;
 }
 
-[data-theme="light"] .graph-zoom-badge {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #475569;
+.graph-zoom-input:hover {
+  border-color: rgba(56, 189, 248, 0.5);
 }
 
-[data-theme="eink"] .graph-zoom-badge {
+.graph-zoom-input:focus {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+}
+
+[data-theme="light"] .graph-zoom-input {
   background: #ffffff;
-  border-color: #000000;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .graph-zoom-input:hover {
+  border-color: #94a3b8;
+}
+
+[data-theme="light"] .graph-zoom-input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+  color: #0284c7;
+}
+
+[data-theme="eink"] .graph-zoom-input {
+  background: #ffffff;
+  border: 1.5px solid #000000;
   color: #000000;
+  border-radius: 0;
+}
+
+[data-theme="eink"] .graph-zoom-input:focus {
+  box-shadow: none;
+  background: #000000;
+  color: #ffffff;
 }
 
 /* Canvas Area */
