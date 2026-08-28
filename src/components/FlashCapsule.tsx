@@ -176,7 +176,7 @@ export const FlashCapsule: React.FC = () => {
     }
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "knowspace_preferences" || e.key === "bookmd_preferences") {
+      if (e.key === "bookmd.preferences.v1" || e.key?.includes("preferences")) {
         applyTheme();
       }
     };
@@ -713,6 +713,22 @@ export const FlashCapsule: React.FC = () => {
                   />
                   <span>固定胶囊窗口 (点击外部不退出)</span>
                 </label>
+                <button
+                  type="button"
+                  className="flash-btn flash-btn-secondary"
+                  style={{ marginLeft: "auto", fontSize: "11px", padding: "4px 9px", display: "inline-flex", alignItems: "center", gap: "5px" }}
+                  onClick={async () => {
+                    if (desktop?.resetFlashSize) {
+                      await desktop.resetFlashSize();
+                      setSettingsSuccess("✓ 已恢复黄金默认尺寸 (740×500)");
+                      setTimeout(() => setSettingsSuccess(""), 1500);
+                    }
+                  }}
+                  title="将闪念胶囊窗口恢复为默认标准尺寸 (740×500)"
+                >
+                  <RotateCcw size={12} />
+                  <span>恢复默认尺寸 (740×500)</span>
+                </button>
               </div>
 
               {settingsError && (

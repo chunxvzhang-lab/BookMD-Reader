@@ -40,6 +40,7 @@ const desktopApi = {
   getPersistentNote: () => ipcRenderer.invoke("bookmd:get-persistent-note"),
   savePersistentNote: (text) => ipcRenderer.invoke("bookmd:save-persistent-note", text),
   setFlashSize: (size) => ipcRenderer.invoke("bookmd:set-flash-size", size),
+  resetFlashSize: () => ipcRenderer.invoke("bookmd:reset-flash-size"),
   getFlashNotesSummary: () => ipcRenderer.invoke("bookmd:get-flash-notes-summary"),
   toggleFlashTodo: (params) => ipcRenderer.invoke("bookmd:toggle-flash-todo", params),
   deleteFlashNote: (params) => ipcRenderer.invoke("bookmd:delete-flash-note", params),

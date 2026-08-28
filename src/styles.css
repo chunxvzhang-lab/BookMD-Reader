@@ -3857,7 +3857,7 @@ body:has(.flash-capsule-overlay) {
   justify-content: center;
   background: transparent;
   user-select: none;
-  padding: 12px;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -3933,7 +3933,7 @@ body:has(.flash-capsule-overlay) {
 
 .flash-capsule-overlay.theme-eink .flash-header,
 [data-theme="eink"] .flash-header {
-  border-bottom: 1.5px solid #a8a090;
+  border-bottom: 1px solid #d5cebf;
 }
 
 .flash-header-left {
@@ -4134,7 +4134,7 @@ body:has(.flash-capsule-overlay) {
 .flash-capsule-overlay.theme-eink .flash-tools-bar,
 [data-theme="eink"] .flash-tools-bar {
   background: #ede8df;
-  border-bottom: 1.5px solid #a8a090;
+  border-bottom: 1px solid #d5cebf;
 }
 
 .flash-tool-tag {
@@ -4203,7 +4203,7 @@ body:has(.flash-capsule-overlay) {
 
 [data-theme="eink"] .flash-settings-drawer {
   background: #f4f1ea;
-  border-bottom: 1.5px solid #a8a090;
+  border-bottom: 1px solid #d5cebf;
 }
 
 @keyframes flashDrawerSlide {
@@ -4447,7 +4447,7 @@ body:has(.flash-capsule-overlay) {
 }
 
 [data-theme="eink"] .flash-footer {
-  border-top: 1.5px solid #a8a090;
+  border-top: 1px solid #d5cebf;
 }
 
 .flash-footer-left {
@@ -4663,7 +4663,6 @@ body:has(.flash-capsule-overlay) {
   background: #fdfcf9;
   color: #000000;
   font-weight: 700;
-  border: 1px solid #8c8273;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -4827,7 +4826,7 @@ body:has(.flash-capsule-overlay) {
 .flash-capsule-overlay.theme-eink .flash-persistent-banner {
   background: #ded9cd;
   color: #111111;
-  border-bottom-color: #8c8273;
+  border-bottom-color: #d5cebf;
 }
 
 .flash-persistent-banner-text {

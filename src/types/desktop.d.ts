@@ -141,6 +141,7 @@ export type KnowSpaceDesktopAPI = {
   getPersistentNote?: () => Promise<{ text: string }>;
   savePersistentNote?: (text: string) => Promise<{ success: boolean }>;
   setFlashSize?: (size: { width: number; height: number }) => Promise<{ success: boolean; width?: number; height?: number }>;
+  resetFlashSize?: () => Promise<{ success: boolean; width?: number; height?: number }>;
   getFlashNotesSummary?: () => Promise<FlashNotesSummaryResult>;
   toggleFlashTodo?: (params: { filePath: string; lineIndex: number; completed: boolean }) => Promise<{ success: boolean; completed?: boolean; error?: string }>;
   deleteFlashNote?: (params: { filePath: string }) => Promise<{ success: boolean; error?: string }>;

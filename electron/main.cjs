@@ -318,8 +318,8 @@ async function createFlashCapsuleWindow() {
     height: initialHeight,
     minWidth: 520,
     minHeight: 320,
-    maxWidth: 1600,
-    maxHeight: 1200,
+    maxWidth: 1280,
+    maxHeight: 860,
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
@@ -327,6 +327,7 @@ async function createFlashCapsuleWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: true,
+    maximizable: false,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -337,9 +338,11 @@ async function createFlashCapsuleWindow() {
 
   win.on("resize", () => {
     try {
-      if (!win.isDestroyed()) {
+      if (!win.isDestroyed() && !win.isMaximized()) {
         const [w, h] = win.getSize();
-        saveAppConfig({ flashWidth: w, flashHeight: h });
+        if (w >= 520 && w <= 1280 && h >= 320 && h <= 860) {
+          saveAppConfig({ flashWidth: w, flashHeight: h });
+        }
       }
     } catch {}
   });
@@ -1188,13 +1191,25 @@ ipcMain.handle("bookmd:save-persistent-note", (_event, text) => {
 ipcMain.handle("bookmd:set-flash-size", (_event, payload) => {
   if (!payload || typeof payload !== "object") return { success: false };
   if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
-    const w = Math.max(520, Math.min(1600, Math.round(payload.width)));
-    const h = Math.max(320, Math.min(1200, Math.round(payload.height)));
+    const w = Math.max(520, Math.min(1280, Math.round(payload.width)));
+    const h = Math.max(320, Math.min(860, Math.round(payload.height)));
     flashCapsuleWindow.setSize(w, h);
     saveAppConfig({ flashWidth: w, flashHeight: h });
     return { success: true, width: w, height: h };
   }
   return { success: false };
+});
+
+ipcMain.handle("bookmd:reset-flash-size", () => {
+  const w = 740;
+  const h = 500;
+  if (flashCapsuleWindow && !flashCapsuleWindow.isDestroyed()) {
+    flashCapsuleWindow.setSize(w, h);
+    saveAppConfig({ flashWidth: w, flashHeight: h });
+    return { success: true, width: w, height: h };
+  }
+  saveAppConfig({ flashWidth: w, flashHeight: h });
+  return { success: true, width: w, height: h };
 });
 
 // Flash Space Timeline & Inbox Hub IPC handlers
