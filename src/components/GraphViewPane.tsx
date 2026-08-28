@@ -347,38 +347,53 @@ export function GraphViewPane({
       });
     });
 
-    // Default to 100% zoom and center on active document or canvas center
-    cy.zoom(1.0);
-    const initialTarget = findCurrentNode(cy, currentDocId);
-    if (initialTarget && initialTarget.length > 0) {
-      cy.center(initialTarget);
-      setSelectedNode({
-        id: initialTarget.data("id"),
-        label: initialTarget.data("label"),
-        path: initialTarget.data("path"),
-        type: initialTarget.data("type"),
-        inDegree: initialTarget.data("inDegree") || 0,
-        outDegree: initialTarget.data("outDegree") || 0,
-        isCurrent: Boolean(initialTarget.data("isCurrent")),
-      });
-      cy.batch(() => {
-        cy.elements().removeClass("highlighted dimmed");
-        const neighborhood = initialTarget.neighborhood().add(initialTarget);
-        neighborhood.addClass("highlighted");
-        cy.elements().difference(neighborhood).addClass("dimmed");
-      });
-    } else {
-      cy.center();
-    }
-    setZoomPercent(100);
-    setZoomInputValue("100%");
+    // Defer initial zoom/center to rAF so the flex split pane has settled
+    // (avoids the "vertical line" rendering caused by 0-width container on first paint)
+    window.requestAnimationFrame(() => {
+      if (!cyRef.current) return;
+      const liveTarget = findCurrentNode(cyRef.current, currentDocId);
+      cyRef.current.zoom(1.0);
+      if (liveTarget && liveTarget.length > 0) {
+        cyRef.current.center(liveTarget);
+        setSelectedNode({
+          id: liveTarget.data("id"),
+          label: liveTarget.data("label"),
+          path: liveTarget.data("path"),
+          type: liveTarget.data("type"),
+          inDegree: liveTarget.data("inDegree") || 0,
+          outDegree: liveTarget.data("outDegree") || 0,
+          isCurrent: Boolean(liveTarget.data("isCurrent")),
+        });
+        cyRef.current.batch(() => {
+          cyRef.current!.elements().removeClass("highlighted dimmed");
+          const neighborhood = liveTarget.neighborhood().add(liveTarget);
+          neighborhood.addClass("highlighted");
+          cyRef.current!.elements().difference(neighborhood).addClass("dimmed");
+        });
+      } else {
+        cyRef.current.fit(undefined, 40);
+      }
+      setZoomPercent(100);
+      setZoomInputValue("100%");
+    });
 
-    // ResizeObserver to re-center or fit when pane width changes
+    // ResizeObserver: re-fit on first meaningful width to fix zero-width init
+    let initialFitDone = false;
     let ro: ResizeObserver | null = null;
     if (containerRef.current && typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(() => {
-        if (cyRef.current) {
-          cyRef.current.resize();
+        if (!cyRef.current) return;
+        cyRef.current.resize();
+        // On the first time we get a real width (>50px), re-fit properly
+        if (!initialFitDone && cyRef.current.width() > 50) {
+          initialFitDone = true;
+          cyRef.current.zoom(1.0);
+          const target = findCurrentNode(cyRef.current, currentDocId);
+          if (target && target.length > 0) {
+            cyRef.current.center(target);
+          } else {
+            cyRef.current.fit(undefined, 40);
+          }
         }
       });
       ro.observe(containerRef.current);
