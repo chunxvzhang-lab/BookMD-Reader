@@ -3870,12 +3870,12 @@ body:has(.flash-capsule-overlay) {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  background: rgba(22, 25, 32, 0.94);
+  background: rgba(22, 25, 32, 0.96);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
-  color: #f1f5f9;
-  border: none;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35);
+  color: #f8fafc;
+  border: none !important;
+  box-shadow: none !important;
   transition: background 0.2s ease;
   overflow: hidden;
 }
@@ -3883,23 +3883,32 @@ body:has(.flash-capsule-overlay) {
 /* Light Theme Frosted Glass */
 .flash-capsule-overlay.theme-light .flash-capsule-container,
 [data-theme="light"] .flash-capsule-container {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
-  border: none;
+  border: none !important;
   color: #0f172a;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 2px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: none !important;
 }
 
 /* E-ink Theme Frosted Glass */
 .flash-capsule-overlay.theme-eink .flash-capsule-container,
 [data-theme="eink"] .flash-capsule-container {
-  background: rgba(248, 246, 240, 0.97);
+  background: rgba(248, 246, 240, 0.98);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
-  border: none;
+  border: none !important;
   color: #111111;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none !important;
+}
+
+@media (prefers-color-scheme: light) {
+  .flash-capsule-overlay.theme-system .flash-capsule-container {
+    background: rgba(255, 255, 255, 0.96);
+    color: #0f172a;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* Header */
@@ -4365,7 +4374,7 @@ body:has(.flash-capsule-overlay) {
   background: transparent;
   outline: none;
   resize: none;
-  color: #0f172a;
+  color: #f8fafc !important;
   font-size: 14px;
   font-weight: 450;
   line-height: 1.65;
@@ -4374,39 +4383,42 @@ body:has(.flash-capsule-overlay) {
 }
 
 .flash-textarea::placeholder {
-  color: #475569;
-  opacity: 1;
+  color: #94a3b8 !important;
+  opacity: 1 !important;
   font-weight: 450;
 }
 
+/* Light Theme overrides */
+.flash-capsule-overlay.theme-light .flash-textarea,
 [data-theme="light"] .flash-textarea {
-  color: #0f172a;
+  color: #0f172a !important;
 }
 
+.flash-capsule-overlay.theme-light .flash-textarea::placeholder,
 [data-theme="light"] .flash-textarea::placeholder {
-  color: #475569;
-  opacity: 1;
+  color: #475569 !important;
 }
 
+/* E-ink Theme overrides */
+.flash-capsule-overlay.theme-eink .flash-textarea,
 [data-theme="eink"] .flash-textarea {
-  color: #111111;
-  font-weight: 500;
+  color: #111111 !important;
+  font-weight: 550;
 }
 
+.flash-capsule-overlay.theme-eink .flash-textarea::placeholder,
 [data-theme="eink"] .flash-textarea::placeholder {
-  color: #383530;
-  opacity: 1;
+  color: #383530 !important;
 }
 
-[data-theme="dark"] .flash-textarea,
-.flash-capsule-overlay.theme-dark .flash-textarea {
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .flash-textarea::placeholder,
-.flash-capsule-overlay.theme-dark .flash-textarea::placeholder {
-  color: #94a3b8;
-  opacity: 1;
+/* System Theme in Light mode */
+@media (prefers-color-scheme: light) {
+  .flash-capsule-overlay.theme-system .flash-textarea {
+    color: #0f172a !important;
+  }
+  .flash-capsule-overlay.theme-system .flash-textarea::placeholder {
+    color: #475569 !important;
+  }
 }
 
 /* Footer */
@@ -4776,24 +4788,27 @@ body:has(.flash-capsule-overlay) {
 
 .flash-persistent-banner {
   padding: 6px 12px;
-  background: rgba(245, 158, 11, 0.08);
-  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
+  background: rgba(245, 158, 11, 0.12);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
-  color: #cbd5e1;
+  font-size: 11.5px;
+  color: #f1f5f9;
 }
 
-[data-theme="light"] .flash-persistent-banner {
+[data-theme="light"] .flash-persistent-banner,
+.flash-capsule-overlay.theme-light .flash-persistent-banner {
   background: rgba(245, 158, 11, 0.08);
-  color: #475569;
+  color: #1e293b;
+  border-bottom-color: rgba(217, 119, 6, 0.2);
 }
 
-[data-theme="eink"] .flash-persistent-banner {
+[data-theme="eink"] .flash-persistent-banner,
+.flash-capsule-overlay.theme-eink .flash-persistent-banner {
   background: #ded9cd;
-  color: #2b2926;
-  border-bottom-color: #a8a090;
+  color: #111111;
+  border-bottom-color: #8c8273;
 }
 
 .flash-persistent-banner-text {
@@ -4876,7 +4891,7 @@ body:has(.flash-capsule-overlay) {
   background: transparent;
   outline: none;
   resize: none;
-  color: #0f172a;
+  color: #f8fafc !important;
   font-size: 13.5px;
   font-weight: 450;
   line-height: 1.6;
@@ -4885,33 +4900,41 @@ body:has(.flash-capsule-overlay) {
 }
 
 .flash-persistent-textarea::placeholder {
-  color: #475569;
-  opacity: 1;
+  color: #94a3b8 !important;
+  opacity: 1 !important;
 }
 
+/* Light Theme overrides */
+.flash-capsule-overlay.theme-light .flash-persistent-textarea,
 [data-theme="light"] .flash-persistent-textarea {
-  color: #0f172a;
+  color: #0f172a !important;
 }
 
+.flash-capsule-overlay.theme-light .flash-persistent-textarea::placeholder,
+[data-theme="light"] .flash-persistent-textarea::placeholder {
+  color: #475569 !important;
+}
+
+/* E-ink Theme overrides */
+.flash-capsule-overlay.theme-eink .flash-persistent-textarea,
 [data-theme="eink"] .flash-persistent-textarea {
-  color: #111111;
-  font-weight: 500;
+  color: #111111 !important;
+  font-weight: 550;
 }
 
+.flash-capsule-overlay.theme-eink .flash-persistent-textarea::placeholder,
 [data-theme="eink"] .flash-persistent-textarea::placeholder {
-  color: #383530;
-  opacity: 1;
+  color: #383530 !important;
 }
 
-[data-theme="dark"] .flash-persistent-textarea,
-.flash-capsule-overlay.theme-dark .flash-persistent-textarea {
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .flash-persistent-textarea::placeholder,
-.flash-capsule-overlay.theme-dark .flash-persistent-textarea::placeholder {
-  color: #94a3b8;
-  opacity: 1;
+/* System Theme in Light mode */
+@media (prefers-color-scheme: light) {
+  .flash-capsule-overlay.theme-system .flash-persistent-textarea {
+    color: #0f172a !important;
+  }
+  .flash-capsule-overlay.theme-system .flash-persistent-textarea::placeholder {
+    color: #475569 !important;
+  }
 }
 
 /* Responsive adaptations for Flash Capsule Window */

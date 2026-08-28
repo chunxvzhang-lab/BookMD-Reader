@@ -323,7 +323,7 @@ async function createFlashCapsuleWindow() {
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
-    hasShadow: true,
+    hasShadow: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: true,
