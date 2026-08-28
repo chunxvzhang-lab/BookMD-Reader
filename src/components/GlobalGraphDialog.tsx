@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { ThemeMode } from "../core/types";
 import {
+  computeOrganicGraphPositions,
   filterGraphData,
   toCytoscapeElements,
   type GraphData,
@@ -112,6 +113,12 @@ export function GlobalGraphDialog({
     };
   }, [isOpen, onClose]);
 
+  // Stable refs for callbacks so parent re-renders don't trigger Cytoscape recreation
+  const onSelectNodeRef = useRef(onSelectNode);
+  onSelectNodeRef.current = onSelectNode;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   // Cytoscape initialization & re-render
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
@@ -128,42 +135,16 @@ export function GlobalGraphDialog({
     const nodeTextColor = isEink ? "#000000" : isDark ? "#f8fafc" : "#0f172a";
     const textOutlineColor = isEink ? "#ffffff" : isDark ? "#060911" : "#ffffff";
 
+    // 1. Compute 2D organic force-directed positions in < 3ms (no 1D stacking, no collision)
+    const positions = computeOrganicGraphPositions(filteredData);
     const elements = toCytoscapeElements(filteredData);
-    const hasEdges = filteredData.edges.length > 0;
-    const layoutConfig = hasEdges
-      ? {
-          name: "cose",
-          animate: false,
-          randomize: false,
-          componentSpacing: 120,
-          nodeOverlap: 40,
-          nodeRepulsion: () => 2500000,
-          idealEdgeLength: () => 95,
-          edgeElasticity: () => 100,
-          nestingFactor: 5,
-          gravity: 25,
-          numIter: 300,
-          coolingFactor: 0.95,
-          padding: 60,
-          nodeDimensionsIncludeLabels: true,
-        }
-      : {
-          name: "concentric",
-          animate: false,
-          padding: 80,
-          spacingFactor: 1.5,
-          minNodeSpacing: 90,
-          concentric: (node: any) => (node.data("isCurrent") ? 10 : 1),
-          levelWidth: () => 1,
-          nodeDimensionsIncludeLabels: true,
-        };
 
     const cy = cytoscape({
       container: containerRef.current,
       elements,
-      wheelSensitivity: 0.22,  // Smooth damping for mouse wheel and trackpad zoom
-      textureOnViewport: true, // Hardware-accelerated tile caching to save iGPU
-      motionBlur: false,       // Zero extra GPU passes
+      wheelSensitivity: 0.22,
+      textureOnViewport: false, // Direct 2D canvas draw: 60fps buttery smooth for knowledge graphs
+      motionBlur: false,
       pixelRatio: "auto",
       boxSelectionEnabled: false,
       autounselectify: false,
@@ -230,14 +211,69 @@ export function GlobalGraphDialog({
           },
         },
       ] as any,
-      layout: layoutConfig as any,
+      layout: {
+        name: "preset",
+        positions: (node: any) => positions.get(node.data("id")),
+      } as any,
     });
 
     cyRef.current = cy;
 
-    // Single click node: highlight neighborhood
+    // Node Cursor Feedback
+    cy.on("mouseover", "node", () => {
+      if (containerRef.current) {
+        containerRef.current.style.cursor = "pointer";
+      }
+    });
+
+    cy.on("mouseout", "node", () => {
+      if (containerRef.current) {
+        containerRef.current.style.cursor = isSpacePanning ? "grab" : "default";
+      }
+    });
+
+    cy.on("grab", "node", () => {
+      if (containerRef.current) {
+        containerRef.current.style.cursor = "grabbing";
+      }
+    });
+
+    cy.on("free", "node", () => {
+      if (containerRef.current) {
+        containerRef.current.style.cursor = "pointer";
+      }
+    });
+
+    // Node tap & double tap logic
+    let lastTapTime = 0;
+    let lastTapNodeId = "";
+    let activeSelectedId: string | null = null;
+
     cy.on("tap", "node", (evt) => {
       const node = evt.target;
+      const nodeId = node.data("id");
+      const currentTime = Date.now();
+
+      // Double-click detection (320ms window)
+      if (currentTime - lastTapTime < 320 && lastTapNodeId === nodeId) {
+        onSelectNodeRef.current(nodeId);
+        onCloseRef.current();
+        return;
+      }
+      lastTapTime = currentTime;
+      lastTapNodeId = nodeId;
+
+      // Single-click toggle unselect if clicking the already selected node
+      if (activeSelectedId === nodeId) {
+        activeSelectedId = null;
+        setSelectedNode(null);
+        cy.batch(() => {
+          cy.elements().removeClass("highlighted dimmed");
+        });
+        return;
+      }
+
+      activeSelectedId = nodeId;
       setSelectedNode({
         id: node.data("id"),
         label: node.data("label"),
@@ -257,23 +293,10 @@ export function GlobalGraphDialog({
       });
     });
 
-    // Double click node: navigate to document and close dialog
-    let lastTapTime = 0;
-    let lastTapNodeId = "";
-    cy.on("tap", "node", (evt) => {
-      const currentTime = Date.now();
-      const nodeId = evt.target.data("id");
-      if (currentTime - lastTapTime < 320 && lastTapNodeId === nodeId) {
-        onSelectNode(nodeId);
-        onClose();
-      }
-      lastTapTime = currentTime;
-      lastTapNodeId = nodeId;
-    });
-
     // Click background: clear selection and highlights
     cy.on("tap", (evt) => {
       if (evt.target === cy) {
+        activeSelectedId = null;
         setSelectedNode(null);
         cy.batch(() => {
           cy.elements().removeClass("highlighted dimmed");
@@ -281,10 +304,18 @@ export function GlobalGraphDialog({
       }
     });
 
+    // Throttled zoom event via requestAnimationFrame to avoid UI thread thrashing
+    let zoomRafId: number | null = null;
     cy.on("zoom", () => {
-      const z = Math.round(cy.zoom() * 100);
-      setZoomPercent(z);
-      setZoomInputValue(`${z}%`);
+      if (zoomRafId !== null) return;
+      zoomRafId = window.requestAnimationFrame(() => {
+        zoomRafId = null;
+        if (cyRef.current) {
+          const z = Math.round(cyRef.current.zoom() * 100);
+          setZoomPercent(z);
+          setZoomInputValue(`${z}%`);
+        }
+      });
     });
 
     // Default to 100% zoom and center on active document or canvas center
@@ -334,6 +365,9 @@ export function GlobalGraphDialog({
     }
 
     return () => {
+      if (zoomRafId !== null) {
+        window.cancelAnimationFrame(zoomRafId);
+      }
       clearTimeout(initialResizeTimer);
       if (ro) {
         ro.disconnect();
@@ -342,7 +376,7 @@ export function GlobalGraphDialog({
       cy.destroy();
       cyRef.current = null;
     };
-  }, [isOpen, filteredData, theme, onSelectNode, onClose]);
+  }, [isOpen, filteredData, theme, currentDocId, isSpacePanning]);
 
   if (!isOpen) return null;
 

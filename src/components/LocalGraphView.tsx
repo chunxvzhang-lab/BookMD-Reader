@@ -55,9 +55,9 @@ export function LocalGraphView({
     const cy = cytoscape({
       container: containerRef.current,
       elements,
-      wheelSensitivity: 0.25,  // Smooth damping for mouse wheel and trackpad zoom
-      textureOnViewport: true, // Reuses tile textures during pan/zoom to protect iGPU
-      motionBlur: false,       // Disables expensive multi-pass frame blending
+      wheelSensitivity: 0.25,
+      textureOnViewport: false,
+      motionBlur: false,
       pixelRatio: "auto",
       boxSelectionEnabled: false,
       autounselectify: true,
@@ -87,8 +87,6 @@ export function LocalGraphView({
             },
             "border-width": (ele: any) => (ele.data("isCurrent") ? 3 : 1.5),
             "border-color": (ele: any) => (ele.data("isCurrent") ? currentBorder : normalBorder),
-            "transition-property": "background-color, border-color, width, height",
-            "transition-duration": 0.15,
           },
         },
         {

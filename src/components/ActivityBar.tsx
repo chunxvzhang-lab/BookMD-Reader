@@ -116,8 +116,8 @@ export function ActivityBar({
           type="button"
           className={`activity-btn ${sidebarOpen && activeSidebarTab === "space" ? "active" : ""}`}
           onClick={() => onSelectSidebarTab("space")}
-          data-tooltip="闪念时间线与收集箱"
-          aria-label="闪念时间线看板"
+          data-tooltip="闪念 Space 时间线"
+          aria-label="闪念 Space 时间线看板"
         >
           <Zap size={18} style={{ color: "#f59e0b" }} />
         </button>

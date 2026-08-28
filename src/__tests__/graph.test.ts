@@ -6,6 +6,7 @@ import {
 } from "../services/backlinkIndex";
 import {
   buildGraphDataFromIndex,
+  computeOrganicGraphPositions,
   extractLocalSubgraph,
   filterGraphData,
   toCytoscapeElements,
@@ -136,5 +137,46 @@ describe("graphService", () => {
     expect(cyElements[0].data.id).toBe("n1");
     expect(cyElements[2].group).toBe("edges");
     expect((cyElements[2].data as any).source).toBe("n1");
+  });
+
+  it("computes organic 2D positions for nodes without 1D stacking or collision", () => {
+    const graph: any = {
+      nodes: [
+        { id: "n1", label: "Doc 1" },
+        { id: "n2", label: "Doc 2" },
+        { id: "n3", label: "Doc 3" },
+        { id: "n4", label: "Doc 4" },
+        { id: "n5", label: "Doc 5" },
+      ],
+      edges: [{ id: "n1->n2", source: "n1", target: "n2" }],
+    };
+
+    const positions = computeOrganicGraphPositions(graph);
+    expect(positions.size).toBe(5);
+
+    // All nodes have valid numeric positions
+    for (const [id, pos] of positions.entries()) {
+      expect(Number.isFinite(pos.x)).toBe(true);
+      expect(Number.isFinite(pos.y)).toBe(true);
+    }
+
+    // Nodes are not all stacked on a single 1D axis (both x and y have variance)
+    const xCoords = Array.from(positions.values()).map((p) => p.x);
+    const yCoords = Array.from(positions.values()).map((p) => p.y);
+    const uniqueX = new Set(xCoords);
+    const uniqueY = new Set(yCoords);
+    expect(uniqueX.size).toBeGreaterThanOrEqual(4);
+    expect(uniqueY.size).toBeGreaterThanOrEqual(4);
+
+    // Distance between any two nodes is adequately spaced
+    const posArr = Array.from(positions.values());
+    for (let i = 0; i < posArr.length; i++) {
+      for (let j = i + 1; j < posArr.length; j++) {
+        const dx = posArr[i].x - posArr[j].x;
+        const dy = posArr[i].y - posArr[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        expect(dist).toBeGreaterThan(40);
+      }
+    }
   });
 });

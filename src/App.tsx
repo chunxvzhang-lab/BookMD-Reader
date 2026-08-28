@@ -1852,9 +1852,24 @@ export function App() {
     return buildGraphDataFromIndex(manifest, backlinkIndex, session?.chapterId);
   }, [manifest, backlinkIndex, session?.chapterId]);
 
+  const handleCloseGlobalGraph = useCallback(() => {
+    setGlobalGraphOpen(false);
+  }, []);
+
   const handleJumpToBacklink = useCallback(
     (sourceId: string, line?: number) => {
-      selectChapter(sourceId);
+      const chap = manifest?.chapters.find((c) => c.id === sourceId);
+      if (chap) {
+        selectChapter(sourceId);
+      } else {
+        const doc = backlinkIndex.documents.get(sourceId);
+        const targetPath = doc?.path || (sourceId.endsWith(".md") ? sourceId : undefined);
+        if (targetPath && openDesktopMarkdownPathRef.current) {
+          openDesktopMarkdownPathRef.current(targetPath);
+        } else {
+          selectChapter(sourceId);
+        }
+      }
       if (line && editorViewRef.current) {
         window.setTimeout(() => {
           const view = editorViewRef.current;
@@ -1870,7 +1885,7 @@ export function App() {
         }, 120);
       }
     },
-    [selectChapter]
+    [manifest?.chapters, backlinkIndex, selectChapter]
   );
 
   const handleConvertMention = useCallback(
@@ -2143,7 +2158,7 @@ export function App() {
                   <div className="space-standalone-header">
                     <div className="space-standalone-title">
                       <Zap size={15} style={{ color: "#f59e0b" }} />
-                      <span>闪念 Space 收集箱</span>
+                      <span>闪念 Space</span>
                     </div>
                     {manifest && (
                       <button
@@ -2422,7 +2437,7 @@ export function App() {
       {/* Global Knowledge Graph Dialog */}
       <GlobalGraphDialog
         isOpen={globalGraphOpen}
-        onClose={() => setGlobalGraphOpen(false)}
+        onClose={handleCloseGlobalGraph}
         graphData={graphData}
         currentDocId={session?.chapterId}
         theme={preferences.theme}
