@@ -307,7 +307,9 @@ export function App() {
         : session?.source
           ? extractHeadingsFromSource(session.source)
           : [];
-      const heading = allHeadings.find((h) => h.id === headingId);
+      const heading = allHeadings.find(
+        (h) => h.id === headingId || h.text.trim().toLowerCase() === headingId.trim().toLowerCase()
+      );
 
       // 1. If Reader pane is present (read or split mode), scroll preview accurately and scoped
       const container = readerRef.current;
@@ -320,7 +322,10 @@ export function App() {
           const headingsInDom = Array.from(container.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6"));
           target =
             headingsInDom.find(
-              (el) => el.id === headingId || el.getAttribute("data-heading-id") === headingId
+              (el) =>
+                el.id === headingId ||
+                el.getAttribute("data-heading-id") === headingId ||
+                el.textContent?.trim().toLowerCase() === headingId.toLowerCase()
             ) || null;
         }
 
@@ -1690,7 +1695,9 @@ export function App() {
   const handleWikiLinkClick = useCallback(
     async (target: string) => {
       if (!target.trim()) return;
-      const cleanTarget = target.trim().replace(/\.md$/i, "");
+      const [docPart, anchorPart] = target.split("#");
+      const cleanTarget = (docPart || "").trim().replace(/\.md$/i, "");
+      if (!cleanTarget) return;
 
       // 1. Search in current workspace chapters
       if (manifest?.chapters && manifest.chapters.length > 0) {
@@ -1703,7 +1710,12 @@ export function App() {
 
         if (found) {
           selectChapter(found.id);
-          setNotice(`已跳转至双链文档：${found.title}`);
+          if (anchorPart) {
+            window.setTimeout(() => {
+              jumpToHeading(anchorPart.trim());
+            }, 150);
+          }
+          setNotice(`已跳转至双链文档：${found.title}${anchorPart ? ` #${anchorPart}` : ""}`);
           return;
         }
       }
@@ -1764,7 +1776,7 @@ export function App() {
         setNotice(`未找到匹配的双链目标「${cleanTarget}」`);
       }
     },
-    [manifest, selectChapter]
+    [manifest, selectChapter, jumpToHeading]
   );
 
   // Backlink Index & Mentions
@@ -1808,17 +1820,20 @@ export function App() {
     };
   }, [manifest?.chapters]);
 
-  // Real-time incremental update when current session content changes
+  // Real-time incremental update when current session content changes (debounced by 200ms to keep typing silky smooth)
   useEffect(() => {
     if (!session) return;
-    updateDocumentInIndex(
-      backlinkIndex,
-      session.chapterId,
-      activeChapter?.title || session.fileName,
-      session.source,
-      session.absolutePath || session.fileName
-    );
-    setBacklinkIndex({ ...backlinkIndex });
+    const timer = setTimeout(() => {
+      updateDocumentInIndex(
+        backlinkIndex,
+        session.chapterId,
+        activeChapter?.title || session.fileName,
+        session.source,
+        session.absolutePath || session.fileName
+      );
+      setBacklinkIndex({ ...backlinkIndex });
+    }, 200);
+    return () => clearTimeout(timer);
   }, [session?.source, session?.chapterId]);
 
   const currentDocTitle = activeChapter?.title || session?.fileName?.replace(/\.md$/i, "") || "";

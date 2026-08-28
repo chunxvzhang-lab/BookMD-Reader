@@ -40,7 +40,8 @@ export type BacklinkIndexData = {
 };
 
 export function normalizeTitle(title: string): string {
-  return title.trim().toLowerCase().replace(/\.md$/i, "");
+  const base = title.split("#")[0] || "";
+  return base.trim().toLowerCase().replace(/\.md$/i, "");
 }
 
 /**
@@ -65,8 +66,10 @@ export function extractWikiLinksFromMarkdown(content: string): WikiLinkMatch[] {
     const regex = /\[\[([^\]\n|]+)(?:\|([^\]\n]+))?\]\]/g;
     let match: RegExpExecArray | null;
     while ((match = regex.exec(line)) !== null) {
+      const rawTarget = match[1].trim();
+      const target = rawTarget.split("#")[0].trim();
       results.push({
-        target: match[1].trim(),
+        target,
         alias: match[2] ? match[2].trim() : undefined,
         line: i + 1,
         snippet: line.trim(),
@@ -89,7 +92,8 @@ export function findUnlinkedMentions(
   sourcePath?: string,
 ): UnlinkedMention[] {
   if (!targetTitle || !sourceContent) return [];
-  const cleanTitle = targetTitle.trim().replace(/\.md$/i, "");
+  const baseTitle = targetTitle.split("#")[0] || "";
+  const cleanTitle = baseTitle.trim().replace(/\.md$/i, "");
   if (cleanTitle.length < 2) return [];
 
   const lines = sourceContent.split(/\r?\n/);
@@ -97,8 +101,8 @@ export function findUnlinkedMentions(
   let inCodeBlock = false;
 
   const escaped = cleanTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  // Match the title if not preceded or followed by [[ or ]] or within word bounds
-  const regex = new RegExp(`(?<!\\[\\[|#|\\w)(${escaped})(?!\\]\\]|\\w)`, "gi");
+  // Match title without 'g' flag to prevent stateful lastIndex skipping subsequent lines
+  const regex = new RegExp(`(?<!\\[\\[|#|\\w)(${escaped})(?!\\]\\]|\\w)`, "i");
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -144,7 +148,7 @@ export function convertUnlinkedMentionInText(
 
   const line = lines[targetLineIdx];
   const escaped = mentionText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`(?<!\\[\\[|#|\\w)(${escaped})(?!\\]\\]|\\w)`);
+  const regex = new RegExp(`(?<!\\[\\[|#|\\w)(${escaped})(?!\\]\\]|\\w)`, "i");
   lines[targetLineIdx] = line.replace(regex, "[[$1]]");
   return lines.join("\n");
 }

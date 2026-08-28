@@ -223,7 +223,30 @@ export function GlobalGraphDialog({
 
     cy.fit(undefined, 40);
 
+    // Initial resize after modal animation settles
+    const initialResizeTimer = setTimeout(() => {
+      if (cyRef.current) {
+        cyRef.current.resize();
+        cyRef.current.fit(undefined, 40);
+      }
+    }, 60);
+
+    // Observe container size changes (e.g. window resize or display scaling)
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+      ro = new ResizeObserver(() => {
+        if (cyRef.current) {
+          cyRef.current.resize();
+        }
+      });
+      ro.observe(containerRef.current);
+    }
+
     return () => {
+      clearTimeout(initialResizeTimer);
+      if (ro) {
+        ro.disconnect();
+      }
       // Free Canvas & GPU resources immediately
       cy.destroy();
       cyRef.current = null;

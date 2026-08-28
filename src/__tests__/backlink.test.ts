@@ -106,4 +106,24 @@ Line 3`;
     expect(updatedRefs).toHaveLength(1);
     expect(updatedRefs[0].sourceId).toBe("doc-3");
   });
+
+  it("handles anchor references like [[System Architecture#Section 2|Details]]", () => {
+    const markdown = "See [[System Architecture#Section 2|Details]] for more info.";
+    const links = extractWikiLinksFromMarkdown(markdown);
+    expect(links).toHaveLength(1);
+    expect(links[0].target).toBe("System Architecture");
+    expect(links[0].alias).toBe("Details");
+  });
+
+  it("reliably detects unlinked mentions across consecutive lines without RegExp state leakage", () => {
+    const targetTitle = "KnowSpace";
+    const content = `KnowSpace line 1
+KnowSpace line 2
+KnowSpace line 3`;
+    const mentions = findUnlinkedMentions(targetTitle, content, "doc-test", "Test Doc");
+    expect(mentions).toHaveLength(3);
+    expect(mentions[0].line).toBe(1);
+    expect(mentions[1].line).toBe(2);
+    expect(mentions[2].line).toBe(3);
+  });
 });

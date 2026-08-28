@@ -144,7 +144,21 @@ export function LocalGraphView({
     // Center and fit
     cy.fit(undefined, 20);
 
+    // Observe container size changes (e.g. sidebar drag resizing)
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+      ro = new ResizeObserver(() => {
+        if (cyRef.current) {
+          cyRef.current.resize();
+        }
+      });
+      ro.observe(containerRef.current);
+    }
+
     return () => {
+      if (ro) {
+        ro.disconnect();
+      }
       // Immediate destruction to free GPU canvas & memory
       cy.destroy();
       cyRef.current = null;
