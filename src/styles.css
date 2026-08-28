@@ -1417,20 +1417,20 @@ body.is-resizing-col * {
   overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;
-  padding: 32px clamp(20px, 4vw, 56px) 80px;
-  scroll-padding-top: 24px;
+  padding: 12px clamp(8px, 1.8vw, 20px) 48px;
+  scroll-padding-top: 20px;
 }
 
 .frontmatter-card {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  margin: 0 auto 24px;
-  padding: 20px 28px;
+  margin: 0 auto 16px;
+  padding: 16px 22px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-radius: 0;
   background: var(--surface);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 
 .frontmatter-card strong {
@@ -1465,18 +1465,18 @@ body.is-resizing-col * {
   max-width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 36px clamp(24px, 4vw, 52px);
+  padding: 24px clamp(18px, 2.8vw, 36px);
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-radius: 0;
   background: var(--surface);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", serif;
   font-size: calc(16px * var(--reader-scale));
   line-height: 1.75;
   color: var(--text);
   overflow-wrap: break-word;
   word-break: normal;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .markdown-body p,
@@ -2381,11 +2381,13 @@ body.is-resizing-col * {
   }
 
   .reader-pane {
-    padding: 20px 14px 48px;
+    padding: 8px 8px 36px;
   }
 
   .markdown-body {
-    padding: 28px 20px;
+    padding: 16px 12px;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .status-metrics {
@@ -3582,7 +3584,7 @@ body.is-resizing-col * {
 .app-shell.is-fullscreen .reader-pane {
   width: 100%;
   height: 100%;
-  padding: 24px clamp(20px, 3.5vw, 48px) 60px;
+  padding: 12px clamp(8px, 1.8vw, 20px) 48px;
   overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;
@@ -3592,13 +3594,17 @@ body.is-resizing-col * {
   width: 100%;
   max-width: 100%;
   min-height: calc(100vh - 120px);
-  padding: 36px clamp(24px, 4vw, 56px);
+  padding: 24px clamp(18px, 2.8vw, 36px);
+  border-radius: 0;
+  box-shadow: none;
   box-sizing: border-box;
 }
 
 .app-shell.is-fullscreen .frontmatter-card {
   width: 100%;
   max-width: 100%;
+  border-radius: 0;
+  box-shadow: none;
   box-sizing: border-box;
 }
 
