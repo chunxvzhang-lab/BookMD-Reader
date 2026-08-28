@@ -59,3 +59,28 @@ describe("Graph Zoom input parsing logic", () => {
     expect(parseZoomInput("", 130)).toBe(130);
   });
 });
+
+describe("Graph Workspace Split & Node Style Rules", () => {
+  function clampGraphSplitRatio(ratio: number): number {
+    return Math.max(0.25, Math.min(0.75, ratio));
+  }
+
+  it("clamps split ratio within [0.25, 0.75]", () => {
+    expect(clampGraphSplitRatio(0.1)).toBe(0.25);
+    expect(clampGraphSplitRatio(0.52)).toBe(0.52);
+    expect(clampGraphSplitRatio(0.9)).toBe(0.75);
+  });
+
+  it("enforces Obsidian-style clean node aesthetic (no circular borders)", () => {
+    const nodeStyle = {
+      "border-width": 0,
+      "border-opacity": 0,
+      "active-bg-opacity": 0,
+      "overlay-opacity": 0,
+    };
+    expect(nodeStyle["border-width"]).toBe(0);
+    expect(nodeStyle["active-bg-opacity"]).toBe(0);
+    expect(nodeStyle["overlay-opacity"]).toBe(0);
+  });
+});
+

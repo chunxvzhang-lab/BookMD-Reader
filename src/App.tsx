@@ -8,7 +8,7 @@ import { ChapterList } from "./components/ChapterList";
 import { DocumentWorkspace } from "./components/DocumentWorkspace";
 import { DualDocumentWorkspace } from "./components/DualDocumentWorkspace";
 import type { WikiLinkTarget } from "./components/EditorPane";
-import { GlobalGraphDialog } from "./components/GlobalGraphDialog";
+import { GraphWorkspaceLayout } from "./components/GraphWorkspaceLayout";
 import {
   createBacklinkIndex,
   updateDocumentInIndex,
@@ -108,7 +108,34 @@ export function App() {
   const [preferences, setPreferences] = useState(preferencesRef.current);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [globalGraphOpen, setGlobalGraphOpen] = useState(false);
+  const [isGraphPaneOpen, setIsGraphPaneOpen] = useState(() => {
+    try {
+      return localStorage.getItem("knowspace.layout.graphPaneOpen") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleGraphPane = useCallback(() => {
+    setIsGraphPaneOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("knowspace.layout.graphPaneOpen", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCloseGraphPane = useCallback(() => {
+    setIsGraphPaneOpen(false);
+    try {
+      localStorage.setItem("knowspace.layout.graphPaneOpen", "false");
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const [directoryWidth, setDirectoryWidth] = useState(() => {
     try {
@@ -1617,6 +1644,10 @@ export function App() {
         event.preventDefault();
         goNext();
       }
+      if (event.ctrlKey && event.key.toLowerCase() === "g") {
+        event.preventDefault();
+        handleToggleGraphPane();
+      }
       if (event.ctrlKey && event.key === "\\") {
         event.preventDefault();
         setDirectoryOpen((open) => !open);
@@ -1634,6 +1665,7 @@ export function App() {
     goPrevious,
     handleCloseDualSplit,
     handleCloseTab,
+    handleToggleGraphPane,
     isFullscreen,
     lightboxMedia,
     openMarkdownDirectory,
@@ -1853,10 +1885,6 @@ export function App() {
     return buildGraphDataFromIndex(manifest, backlinkIndex, currentActiveId);
   }, [manifest, backlinkIndex, currentActiveId]);
 
-  const handleCloseGlobalGraph = useCallback(() => {
-    setGlobalGraphOpen(false);
-  }, []);
-
   const handleJumpToBacklink = useCallback(
     (sourceId: string, line?: number) => {
       const chap = manifest?.chapters.find((c) => c.id === sourceId);
@@ -2070,7 +2098,8 @@ export function App() {
           onOpenAbout={() => setAboutOpen(true)}
           isDirty={isDirty}
           backlinksCount={currentLinkedReferences.length}
-          onOpenGlobalGraph={() => setGlobalGraphOpen(true)}
+          onOpenGlobalGraph={handleToggleGraphPane}
+          isGraphOpen={isGraphPaneOpen}
         />
       )}
 
@@ -2254,7 +2283,7 @@ export function App() {
                         onConvertMention={handleConvertMention}
                         graphData={graphData}
                         theme={preferences.theme}
-                        onOpenGlobalGraph={() => setGlobalGraphOpen(true)}
+                        onOpenGlobalGraph={() => setIsGraphPaneOpen(true)}
                       />
                     </section>
                   ) : null}
@@ -2285,110 +2314,130 @@ export function App() {
               onOpenDualSplit={handleOpenDualSplit}
               onCloseDualSplit={handleCloseDualSplit}
               onDetachTab={handleDetachTab}
+              isGraphPaneOpen={isGraphPaneOpen}
+              onToggleGraphPane={handleToggleGraphPane}
             />
           )}
-          {isDualSplitMode && secondaryRenderedChapter ? (
-            <DualDocumentWorkspace
-              primaryTitle={activeChapter?.title ?? session?.fileName ?? "主文档"}
-              viewMode={viewMode}
-              source={session?.source ?? ""}
-              onSourceChange={updateSource}
-              renderedChapter={renderedChapter}
-              primaryContainerRef={readerRef}
-              theme={preferences.theme}
-              fontScale={preferences.fontScale}
-              mermaidTheme={resolveMermaidTheme(preferences.theme)}
-              onMermaidError={handleMermaidError}
-              onSave={() => saveSession()}
-              isLargeDocument={isLargeDocument}
-              autoPreviewPaused={autoPreviewPaused}
-              onRefreshPreview={renderPreviewNow}
-              readOnly={!session?.writable}
-              showLineNumbers={preferences.showLineNumbers}
-              typewriterMode={typewriterMode}
-              currentFilePath={session?.absolutePath || undefined}
-              onOpenLightbox={(media) => setLightboxMedia(media)}
-              onEditorViewReady={(view) => {
-                editorViewRef.current = view;
-              }}
-              secondaryTitle={tabs.find((t) => t.id === dualSplitTabId)?.title ?? "对照文档"}
-              secondaryRenderedChapter={secondaryRenderedChapter}
-              secondaryContainerRef={secondaryReaderRef}
-              onCloseSecondary={handleCloseDualSplit}
-              wikiLinkTargets={wikiLinkTargets}
-              onWikiLinkClick={handleWikiLinkClick}
-              backlinksCount={currentLinkedReferences.length}
-              onOpenBacklinks={() => {
-                setSidebarTab("backlinks");
-                setSidebarOpen(true);
-              }}
-            />
-          ) : session ? (
-            <DocumentWorkspace
-              viewMode={viewMode}
-              source={session.source}
-              onSourceChange={updateSource}
-              renderedChapter={renderedChapter}
-              containerRef={readerRef}
-              theme={preferences.theme}
-              fontScale={preferences.fontScale}
-              mermaidTheme={resolveMermaidTheme(preferences.theme)}
-              onMermaidError={handleMermaidError}
-              onSave={() => saveSession()}
-              isLargeDocument={isLargeDocument}
-              autoPreviewPaused={autoPreviewPaused}
-              onRefreshPreview={renderPreviewNow}
-              readOnly={!session.writable}
-              showLineNumbers={preferences.showLineNumbers}
-              typewriterMode={typewriterMode}
-              currentFilePath={session.absolutePath || undefined}
-              onOpenLightbox={(media) => setLightboxMedia(media)}
-              onEditorViewReady={(view) => {
-                editorViewRef.current = view;
-              }}
-              navLockUntilRef={navLockUntilRef}
-              wikiLinkTargets={wikiLinkTargets}
-              onWikiLinkClick={handleWikiLinkClick}
-              backlinksCount={currentLinkedReferences.length}
-              onOpenBacklinks={() => {
-                setSidebarTab("backlinks");
-                setSidebarOpen(true);
-              }}
-            />
-          ) : (
-            <main className="empty-reader" ref={readerRef}>
-              <div className="empty-reader-card">
-                <h1 className="empty-reader-title">选择或新建 Markdown 文档</h1>
-                <p className="empty-reader-desc">
-                  体验现代化本地优先的 Markdown 阅读与极客编辑。支持双向同步滚动、选择联动高亮、多级大纲与原子物理落盘。
-                </p>
-                <div className="empty-actions-grid">
-                  {window.bookMDDesktop ? (
-                    <button type="button" className="empty-action-card" onClick={createNewFile}>
-                      <FilePlus2 size={22} className="about-icon text-orange" />
-                      <span>新建 Markdown</span>
+          {(() => {
+            const innerWorkspace = isDualSplitMode && secondaryRenderedChapter ? (
+              <DualDocumentWorkspace
+                primaryTitle={activeChapter?.title ?? session?.fileName ?? "主文档"}
+                viewMode={viewMode}
+                source={session?.source ?? ""}
+                onSourceChange={updateSource}
+                renderedChapter={renderedChapter}
+                primaryContainerRef={readerRef}
+                theme={preferences.theme}
+                fontScale={preferences.fontScale}
+                mermaidTheme={resolveMermaidTheme(preferences.theme)}
+                onMermaidError={handleMermaidError}
+                onSave={() => saveSession()}
+                isLargeDocument={isLargeDocument}
+                autoPreviewPaused={autoPreviewPaused}
+                onRefreshPreview={renderPreviewNow}
+                readOnly={!session?.writable}
+                showLineNumbers={preferences.showLineNumbers}
+                typewriterMode={typewriterMode}
+                currentFilePath={session?.absolutePath || undefined}
+                onOpenLightbox={(media) => setLightboxMedia(media)}
+                onEditorViewReady={(view) => {
+                  editorViewRef.current = view;
+                }}
+                secondaryTitle={tabs.find((t) => t.id === dualSplitTabId)?.title ?? "对照文档"}
+                secondaryRenderedChapter={secondaryRenderedChapter}
+                secondaryContainerRef={secondaryReaderRef}
+                onCloseSecondary={handleCloseDualSplit}
+                wikiLinkTargets={wikiLinkTargets}
+                onWikiLinkClick={handleWikiLinkClick}
+                backlinksCount={currentLinkedReferences.length}
+                onOpenBacklinks={() => {
+                  setSidebarTab("backlinks");
+                  setSidebarOpen(true);
+                }}
+              />
+            ) : session ? (
+              <DocumentWorkspace
+                viewMode={viewMode}
+                source={session.source}
+                onSourceChange={updateSource}
+                renderedChapter={renderedChapter}
+                containerRef={readerRef}
+                theme={preferences.theme}
+                fontScale={preferences.fontScale}
+                mermaidTheme={resolveMermaidTheme(preferences.theme)}
+                onMermaidError={handleMermaidError}
+                onSave={() => saveSession()}
+                isLargeDocument={isLargeDocument}
+                autoPreviewPaused={autoPreviewPaused}
+                onRefreshPreview={renderPreviewNow}
+                readOnly={!session.writable}
+                showLineNumbers={preferences.showLineNumbers}
+                typewriterMode={typewriterMode}
+                currentFilePath={session.absolutePath || undefined}
+                onOpenLightbox={(media) => setLightboxMedia(media)}
+                onEditorViewReady={(view) => {
+                  editorViewRef.current = view;
+                }}
+                navLockUntilRef={navLockUntilRef}
+                wikiLinkTargets={wikiLinkTargets}
+                onWikiLinkClick={handleWikiLinkClick}
+                backlinksCount={currentLinkedReferences.length}
+                onOpenBacklinks={() => {
+                  setSidebarTab("backlinks");
+                  setSidebarOpen(true);
+                }}
+              />
+            ) : (
+              <main className="empty-reader" ref={readerRef}>
+                <div className="empty-reader-card">
+                  <h1 className="empty-reader-title">选择或新建 Markdown 文档</h1>
+                  <p className="empty-reader-desc">
+                    体验现代化本地优先的 Markdown 阅读与极客编辑。支持双向同步滚动、选择联动高亮、多级大纲与原子物理落盘。
+                  </p>
+                  <div className="empty-actions-grid">
+                    {window.bookMDDesktop ? (
+                      <button type="button" className="empty-action-card" onClick={createNewFile}>
+                        <FilePlus2 size={22} className="about-icon text-orange" />
+                        <span>新建 Markdown</span>
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="empty-action-card"
+                      onClick={() => {
+                        document.querySelector<HTMLInputElement>("input[type='file']")?.click();
+                      }}
+                    >
+                      <FileText size={22} className="about-icon text-blue" />
+                      <span>打开单文件</span>
                     </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="empty-action-card"
-                    onClick={() => {
-                      document.querySelector<HTMLInputElement>("input[type='file']")?.click();
-                    }}
-                  >
-                    <FileText size={22} className="about-icon text-blue" />
-                    <span>打开单文件</span>
-                  </button>
-                  {window.bookMDDesktop ? (
-                    <button type="button" className="empty-action-card" onClick={openMarkdownDirectory}>
-                      <FolderOpen size={22} className="about-icon text-purple" />
-                      <span>打开文档目录</span>
-                    </button>
-                  ) : null}
+                    {window.bookMDDesktop ? (
+                      <button type="button" className="empty-action-card" onClick={openMarkdownDirectory}>
+                        <FolderOpen size={22} className="about-icon text-purple" />
+                        <span>打开文档目录</span>
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            </main>
-          )}
+              </main>
+            );
+
+            if (isGraphPaneOpen) {
+              return (
+                <GraphWorkspaceLayout
+                  graphData={graphData}
+                  currentDocId={currentActiveId}
+                  theme={preferences.theme}
+                  onSelectNode={handleJumpToBacklink}
+                  onCloseGraph={handleCloseGraphPane}
+                >
+                  {innerWorkspace}
+                </GraphWorkspaceLayout>
+              );
+            }
+
+            return innerWorkspace;
+          })()}
         </section>
       </div>
 
@@ -2433,16 +2482,6 @@ export function App() {
       <AboutDialog
         isOpen={aboutOpen}
         onClose={() => setAboutOpen(false)}
-      />
-
-      {/* Global Knowledge Graph Dialog */}
-      <GlobalGraphDialog
-        isOpen={globalGraphOpen}
-        onClose={handleCloseGlobalGraph}
-        graphData={graphData}
-        currentDocId={currentActiveId}
-        theme={preferences.theme}
-        onSelectNode={handleJumpToBacklink}
       />
 
       {notice ? (

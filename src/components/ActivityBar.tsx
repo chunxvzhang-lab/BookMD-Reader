@@ -39,6 +39,7 @@ type ActivityBarProps = {
   isDirty?: boolean;
   backlinksCount?: number;
   onOpenGlobalGraph?: () => void;
+  isGraphOpen?: boolean;
 };
 
 export function ActivityBar({
@@ -59,6 +60,7 @@ export function ActivityBar({
   isDirty = false,
   backlinksCount = 0,
   onOpenGlobalGraph,
+  isGraphOpen = false,
 }: ActivityBarProps) {
   return (
     <nav className="activity-bar" aria-label="快捷工具栏">
@@ -181,9 +183,9 @@ export function ActivityBar({
         {onOpenGlobalGraph && (
           <button
             type="button"
-            className="activity-btn"
+            className={`activity-btn ${isGraphOpen ? "active" : ""}`}
             onClick={onOpenGlobalGraph}
-            data-tooltip="知识网络全景图谱"
+            data-tooltip="知识网络全景图谱 (Ctrl+G)"
             aria-label="知识网络全景图谱"
           >
             <Network size={18} style={{ color: "#38bdf8" }} />

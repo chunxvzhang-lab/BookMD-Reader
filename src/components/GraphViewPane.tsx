@@ -3,13 +3,15 @@ import cytoscape, { type Core } from "cytoscape";
 import {
   Crosshair,
   Filter,
-  Layers,
+  Maximize2,
+  Minimize2,
   Network,
   RotateCcw,
   Search,
   X,
   ZoomIn,
   ZoomOut,
+  ExternalLink,
 } from "lucide-react";
 import type { ThemeMode } from "../core/types";
 import {
@@ -19,13 +21,14 @@ import {
   type GraphData,
 } from "../services/graphService";
 
-type GlobalGraphDialogProps = {
-  isOpen: boolean;
-  onClose: () => void;
+export type GraphViewPaneProps = {
   graphData: GraphData;
   currentDocId?: string | null;
   theme: ThemeMode;
   onSelectNode: (docId: string) => void;
+  onClose?: () => void;
+  isMaximized?: boolean;
+  onToggleMaximize?: () => void;
 };
 
 /**
@@ -65,20 +68,22 @@ function findCurrentNode(cy: Core | null, targetId?: string | null) {
   return null;
 }
 
-export function GlobalGraphDialog({
-  isOpen,
-  onClose,
+export function GraphViewPane({
   graphData,
   currentDocId,
   theme,
   onSelectNode,
-}: GlobalGraphDialogProps) {
+  onClose,
+  isMaximized = false,
+  onToggleMaximize,
+}: GraphViewPaneProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [hideIsolates, setHideIsolates] = useState(true);
   const [typeFilter, setTypeFilter] = useState<"all" | "chapter" | "space">("all");
+  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [selectedNode, setSelectedNode] = useState<{
     id: string;
     label: string;
@@ -121,20 +126,14 @@ export function GlobalGraphDialog({
     });
   }, [graphData, hideIsolates, searchQuery, typeFilter]);
 
-  // Handle ESC key and Spacebar panning mode
+  // Handle Spacebar panning mode inside graph pane
   useEffect(() => {
-    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
       if (e.code === "Space" && !e.repeat) {
         const target = e.target as HTMLElement;
         if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
           return;
         }
-        e.preventDefault();
         setIsSpacePanning(true);
       }
     };
@@ -151,41 +150,37 @@ export function GlobalGraphDialog({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [isOpen, onClose]);
+  }, []);
 
-  // Stable refs for callbacks so parent re-renders don't trigger Cytoscape recreation
   const onSelectNodeRef = useRef(onSelectNode);
   onSelectNodeRef.current = onSelectNode;
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
 
   // Cytoscape initialization & re-render
   useEffect(() => {
-    if (!isOpen || !containerRef.current) return;
+    if (!containerRef.current) return;
 
     const isDark = theme === "twitter" || (theme === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
     const isEink = theme === "eink";
 
-    const currentBg = isEink ? "#000000" : isDark ? "#38bdf8" : "#0284c7";
-    const currentBorder = isEink ? "#000000" : isDark ? "#bae6fd" : "#7dd3fc";
-    const normalBg = isEink ? "#444444" : isDark ? "#334155" : "#94a3b8";
-    const normalBorder = isEink ? "#000000" : isDark ? "#64748b" : "#cbd5e1";
-    const spaceBg = isEink ? "#777777" : "#f59e0b";
-    const edgeColor = isEink ? "rgba(0, 0, 0, 0.45)" : isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(100, 116, 139, 0.25)";
+    // Obsidian style colors: clean solid nodes without outer border circles
+    const currentBg = isEink ? "#000000" : isDark ? "#8b5cf6" : "#7c3aed"; // Obsidian vivid purple for active node
+    const normalBg = isEink ? "#444444" : isDark ? "#64748b" : "#94a3b8"; // Slate grey for regular notes
+    const spaceBg = isEink ? "#777777" : "#f59e0b"; // Warm amber for space notes
+    const edgeColor = isEink ? "rgba(0, 0, 0, 0.4)" : isDark ? "rgba(148, 163, 184, 0.22)" : "rgba(100, 116, 139, 0.2)";
     const nodeTextColor = isEink ? "#000000" : isDark ? "#f8fafc" : "#0f172a";
-    const textOutlineColor = isEink ? "#ffffff" : isDark ? "#060911" : "#ffffff";
+    const textOutlineColor = isEink ? "#ffffff" : isDark ? "#0b0f19" : "#ffffff";
 
-    // 1. Compute 2D organic force-directed positions in < 3ms (no 1D stacking, no collision)
+    // 1. Compute 2D organic force-directed positions in < 3ms
     const positions = computeOrganicGraphPositions(filteredData);
     const elements = toCytoscapeElements(filteredData);
 
     const cy = cytoscape({
       container: containerRef.current,
       elements,
-      wheelSensitivity: 4.8, // Snappy & natural zoom (previously 0.22 was ~22x too slow on mouse/trackpad)
+      wheelSensitivity: 4.8,
       minZoom: 0.1,
       maxZoom: 5.0,
-      textureOnViewport: false, // Direct 2D canvas draw: 60fps buttery smooth for knowledge graphs
+      textureOnViewport: false,
       motionBlur: false,
       pixelRatio: "auto",
       boxSelectionEnabled: false,
@@ -195,45 +190,46 @@ export function GlobalGraphDialog({
           selector: "node",
           style: {
             label: "data(label)",
-            "font-size": "11.5px",
+            "font-size": "11px",
             "font-family": "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-            "font-weight": 600,
+            "font-weight": 500,
             color: nodeTextColor,
             "text-valign": "bottom",
-            "text-margin-y": 6,
-            "text-max-width": "125px",
+            "text-margin-y": 5,
+            "text-max-width": "120px",
             "text-wrap": "wrap",
             "text-outline-color": textOutlineColor,
-            "text-outline-width": 2.5,
-            "text-outline-opacity": 1,
+            "text-outline-width": 2,
+            "text-outline-opacity": 0.9,
             width: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 28 : Math.min(32, Math.max(16, 16 + inDeg * 3));
+              return ele.data("isCurrent") ? 26 : Math.min(30, Math.max(14, 14 + inDeg * 2.8));
             },
             height: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 28 : Math.min(32, Math.max(16, 16 + inDeg * 3));
+              return ele.data("isCurrent") ? 26 : Math.min(30, Math.max(14, 14 + inDeg * 2.8));
             },
             "background-color": (ele: any) => {
               if (ele.data("isCurrent")) return currentBg;
               if (ele.data("type") === "space") return spaceBg;
               return normalBg;
             },
+            // Obsidian clean aesthetic: NO circle borders, NO circle selection ring!
             "border-width": 0,
             "border-opacity": 0,
-            "active-bg-opacity": 0,
-            "overlay-opacity": 0,
+            "active-bg-opacity": 0, // Eliminate Cytoscape tap gray circle
+            "overlay-opacity": 0,   // Eliminate Cytoscape tap overlay
           },
         },
         {
           selector: "edge",
           style: {
-            width: 1.5,
+            width: 1.2,
             "line-color": edgeColor,
             "target-arrow-color": edgeColor,
             "target-arrow-shape": "triangle",
             "curve-style": "bezier",
-            "arrow-scale": 0.7,
+            "arrow-scale": 0.65,
             "line-style": isEink ? "dashed" : "solid",
             "overlay-opacity": 0,
           },
@@ -241,11 +237,13 @@ export function GlobalGraphDialog({
         {
           selector: ".highlighted",
           style: {
+            // Edges become vivid and prominent
             "line-color": isEink ? "#000000" : "#818cf8",
             "target-arrow-color": isEink ? "#000000" : "#818cf8",
-            width: 2.2,
+            width: 2.0,
             opacity: 1,
             "z-index": 999,
+            // Keep node clean: NO circle border added
             "border-width": 0,
           },
         },
@@ -289,34 +287,12 @@ export function GlobalGraphDialog({
       }
     });
 
-    // Node tap & double tap logic
-    let lastTapTime = 0;
-    let lastTapNodeId = "";
+    // Node tap logic: clicking a node immediately loads it in the left editor!
     let activeSelectedId: string | null = null;
 
     cy.on("tap", "node", (evt) => {
       const node = evt.target;
       const nodeId = node.data("id");
-      const currentTime = Date.now();
-
-      // Double-click detection (320ms window)
-      if (currentTime - lastTapTime < 320 && lastTapNodeId === nodeId) {
-        onSelectNodeRef.current(nodeId);
-        onCloseRef.current();
-        return;
-      }
-      lastTapTime = currentTime;
-      lastTapNodeId = nodeId;
-
-      // Single-click toggle unselect if clicking the already selected node
-      if (activeSelectedId === nodeId) {
-        activeSelectedId = null;
-        setSelectedNode(null);
-        cy.batch(() => {
-          cy.elements().removeClass("highlighted dimmed");
-        });
-        return;
-      }
 
       activeSelectedId = nodeId;
       setSelectedNode({
@@ -329,13 +305,16 @@ export function GlobalGraphDialog({
         isCurrent: Boolean(node.data("isCurrent")),
       });
 
-      // Highlight neighborhood
+      // Highlight neighborhood cleanly
       cy.batch(() => {
         cy.elements().removeClass("highlighted dimmed");
         const neighborhood = node.neighborhood().add(node);
         neighborhood.addClass("highlighted");
         cy.elements().difference(neighborhood).addClass("dimmed");
       });
+
+      // Immediately navigate/open note in the adjacent document workspace!
+      onSelectNodeRef.current(nodeId);
     });
 
     // Click background: clear selection and highlights
@@ -349,7 +328,7 @@ export function GlobalGraphDialog({
       }
     });
 
-    // Throttled zoom event via requestAnimationFrame to avoid UI thread thrashing
+    // Throttled zoom event via requestAnimationFrame
     let zoomRafId: number | null = null;
     cy.on("zoom", () => {
       if (zoomRafId !== null) return;
@@ -389,25 +368,9 @@ export function GlobalGraphDialog({
     setZoomPercent(100);
     setZoomInputValue("100%");
 
-    // Initial resize after modal animation settles
-    const initialResizeTimer = setTimeout(() => {
-      if (cyRef.current) {
-        cyRef.current.resize();
-        cyRef.current.zoom(1.0);
-        const cur = findCurrentNode(cyRef.current, currentDocId);
-        if (cur && cur.length > 0) {
-          cyRef.current.center(cur);
-        } else {
-          cyRef.current.center();
-        }
-        setZoomPercent(100);
-        setZoomInputValue("100%");
-      }
-    }, 60);
-
-    // Observe container size changes (e.g. window resize or display scaling)
+    // ResizeObserver to re-center or fit when pane width changes
     let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+    if (containerRef.current && typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(() => {
         if (cyRef.current) {
           cyRef.current.resize();
@@ -420,21 +383,17 @@ export function GlobalGraphDialog({
       if (zoomRafId !== null) {
         window.cancelAnimationFrame(zoomRafId);
       }
-      clearTimeout(initialResizeTimer);
       if (ro) {
         ro.disconnect();
       }
-      // Free Canvas & GPU resources immediately
       cy.destroy();
       cyRef.current = null;
     };
-  }, [isOpen, filteredData, theme, currentDocId, isSpacePanning]);
-
-  if (!isOpen) return null;
+  }, [filteredData, theme, currentDocId, isSpacePanning]);
 
   const handleResetFit = () => {
     if (cyRef.current) {
-      cyRef.current.fit(undefined, 40);
+      cyRef.current.fit(undefined, 30);
     }
   };
 
@@ -444,7 +403,7 @@ export function GlobalGraphDialog({
     cy.stop();
 
     const currentZ = cy.zoom();
-    const targetZ = Math.min(2.5, Math.max(currentZ, 1.05));
+    const targetZ = Math.min(2.5, Math.max(currentZ, 1.0));
 
     cy.animate({
       center: { eles: targetNode },
@@ -481,7 +440,6 @@ export function GlobalGraphDialog({
     const cy = cyRef.current;
     let targetNode = findCurrentNode(cy, currentDocId);
 
-    // If node is currently filtered out (e.g. by hideIsolates or search), reset filter first
     if (!targetNode || targetNode.length === 0) {
       if (hideIsolates) setHideIsolates(false);
       if (searchQuery) setSearchQuery("");
@@ -523,49 +481,124 @@ export function GlobalGraphDialog({
   };
 
   return (
-    <div className="global-graph-overlay" onClick={onClose}>
-      <div
-        className="global-graph-dialog"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="知识拓扑全景图谱"
-      >
-        {/* Modal Header */}
-        <div className="global-graph-header">
-          <div className="global-graph-title-group">
-            <Network size={20} className="text-cyan" />
-            <h2 className="global-graph-title">知识网络全景图谱</h2>
-            <div className="global-graph-badges">
-              <span className="graph-stat-badge">
-                {filteredData.nodes.length} 节点
-              </span>
-              <span className="graph-stat-badge">
-                {filteredData.edges.length} 条关联
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="global-graph-close-btn"
-            onClick={onClose}
-            aria-label="关闭图谱"
-          >
-            <X size={18} />
-          </button>
+    <div className="graph-view-pane" role="region" aria-label="知识网络图谱分栏">
+      {/* Pane Header (Obsidian style) */}
+      <div className="graph-pane-header">
+        <div className="graph-pane-title-group">
+          <Network size={15} className="graph-pane-icon text-cyan" />
+          <span className="graph-pane-title">Graph view · 知识网络</span>
+          <span className="graph-stat-badge">{filteredData.nodes.length} 节点</span>
+          <span className="graph-stat-badge">{filteredData.edges.length} 关联</span>
         </div>
 
-        {/* Toolbar Controls */}
-        <div className="global-graph-toolbar">
-          <div className="graph-search-box">
-            <Search size={14} className="graph-search-icon" />
+        {/* Action Controls */}
+        <div className="graph-pane-actions">
+          {/* Filter toggle */}
+          <button
+            type="button"
+            className={`graph-action-btn ${showFilterDrawer ? "is-active" : ""}`}
+            onClick={() => setShowFilterDrawer(!showFilterDrawer)}
+            title="过滤与筛选"
+          >
+            <Filter size={13} />
+          </button>
+
+          {/* Focus current node */}
+          <button
+            type="button"
+            className="graph-action-btn"
+            onClick={handleFocusActive}
+            title="聚焦当前文档"
+          >
+            <Crosshair size={13} />
+          </button>
+
+          {/* Zoom controls */}
+          <div className="graph-zoom-group">
+            <button
+              type="button"
+              className="graph-action-btn"
+              onClick={handleZoomIn}
+              title="放大"
+            >
+              <ZoomIn size={13} />
+            </button>
             <input
               type="text"
-              className="graph-search-input"
-              placeholder="搜索节点名称..."
+              className="graph-zoom-input"
+              value={zoomInputValue}
+              onChange={(e) => setZoomInputValue(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onBlur={handleApplyZoomInput}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleApplyZoomInput();
+                  (e.target as HTMLInputElement).blur();
+                } else if (e.key === "Escape") {
+                  setZoomInputValue(`${zoomPercent}%`);
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              title="输入百分比缩放 (10%~500%)"
+              aria-label="图谱缩放百分比"
+            />
+            <button
+              type="button"
+              className="graph-action-btn"
+              onClick={handleZoomOut}
+              title="缩小"
+            >
+              <ZoomOut size={13} />
+            </button>
+            <button
+              type="button"
+              className="graph-action-btn"
+              onClick={handleResetFit}
+              title="自适应全景居中"
+            >
+              <RotateCcw size={13} />
+            </button>
+          </div>
+
+          {/* Maximize / Restore Toggle */}
+          {onToggleMaximize && (
+            <button
+              type="button"
+              className="graph-action-btn"
+              onClick={onToggleMaximize}
+              title={isMaximized ? "还原分栏对照" : "最大化图谱"}
+            >
+              {isMaximized ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+            </button>
+          )}
+
+          {/* Close pane */}
+          {onClose && (
+            <button
+              type="button"
+              className="graph-pane-close-btn"
+              onClick={onClose}
+              title="收起图谱分栏"
+              aria-label="收起图谱分栏"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Collapsible Filter Bar */}
+      {showFilterDrawer && (
+        <div className="graph-filter-drawer">
+          <div className="graph-filter-search">
+            <Search size={13} className="text-muted" />
+            <input
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索图谱节点..."
+              className="graph-search-input"
             />
             {searchQuery && (
               <button
@@ -577,145 +610,82 @@ export function GlobalGraphDialog({
               </button>
             )}
           </div>
-
-          <div className="graph-filters">
+          <div className="graph-filter-options">
             <button
               type="button"
-              className={`graph-toggle-btn ${hideIsolates ? "is-active" : ""}`}
-              onClick={() => setHideIsolates((prev) => !prev)}
-              title="隐藏 0 入度与 0 出度的孤岛节点"
+              className={`graph-filter-pill ${hideIsolates ? "is-active" : ""}`}
+              onClick={() => setHideIsolates(!hideIsolates)}
             >
-              <Filter size={13} />
-              <span>隐藏孤岛节点</span>
-            </button>
-
-            <div className="graph-type-selector">
-              <Layers size={13} />
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as any)}
-                className="graph-select"
-                aria-label="筛选文档类型"
-              >
-                <option value="all">全部类型</option>
-                <option value="chapter">仅正文章节</option>
-                <option value="space">仅闪念 Space</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="graph-toolbar-actions">
-            {(Boolean(currentDocId) || graphData.nodes.some((n) => n.isCurrent)) && (
-              <button
-                type="button"
-                className="graph-action-btn focus-btn"
-                onClick={handleFocusActive}
-                title="镜头平滑聚焦至当前文档"
-              >
-                <Crosshair size={13} />
-                <span>聚焦当前</span>
-              </button>
-            )}
-            <button
-              type="button"
-              className="graph-action-btn"
-              onClick={handleZoomIn}
-              title="放大"
-            >
-              <ZoomIn size={14} />
-            </button>
-            <div className="graph-zoom-input-wrapper" title="可手动输入缩放比例 (10% - 500%)，回车或失焦生效">
-              <input
-                type="text"
-                className="graph-zoom-input"
-                value={zoomInputValue}
-                onChange={(e) => setZoomInputValue(e.target.value)}
-                onFocus={(e) => e.target.select()}
-                onBlur={handleApplyZoomInput}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleApplyZoomInput();
-                    (e.target as HTMLInputElement).blur();
-                  } else if (e.key === "Escape") {
-                    setZoomInputValue(`${zoomPercent}%`);
-                    (e.target as HTMLInputElement).blur();
-                  }
-                }}
-                aria-label="图谱缩放百分比"
-              />
-            </div>
-            <button
-              type="button"
-              className="graph-action-btn"
-              onClick={handleZoomOut}
-              title="缩小"
-            >
-              <ZoomOut size={14} />
+              隐藏孤岛节点
             </button>
             <button
               type="button"
-              className="graph-action-btn"
-              onClick={handleResetFit}
-              title="自适应居中全景"
+              className={`graph-filter-pill ${typeFilter === "all" ? "is-active" : ""}`}
+              onClick={() => setTypeFilter("all")}
             >
-              <RotateCcw size={14} />
+              全部
+            </button>
+            <button
+              type="button"
+              className={`graph-filter-pill ${typeFilter === "chapter" ? "is-active" : ""}`}
+              onClick={() => setTypeFilter("chapter")}
+            >
+              知识库文档
+            </button>
+            <button
+              type="button"
+              className={`graph-filter-pill ${typeFilter === "space" ? "is-active" : ""}`}
+              onClick={() => setTypeFilter("space")}
+            >
+              闪念 Space
             </button>
           </div>
         </div>
+      )}
 
-        {/* Canvas Body */}
-        <div className={`global-graph-canvas-wrapper ${isSpacePanning ? "space-panning" : ""}`}>
-          <div className="global-graph-canvas" ref={containerRef} />
+      {/* Graph Canvas Container */}
+      <div className={`graph-pane-canvas-wrapper ${isSpacePanning ? "space-panning" : ""}`}>
+        <div className="graph-pane-canvas" ref={containerRef} />
 
-          {/* Selected Node Details Card (Bottom-Left) */}
-          {selectedNode && (
-            <div className="graph-node-inspector">
-              <div className="inspector-header">
-                <span className="inspector-type">
-                  {selectedNode.type === "space" ? "⚡ 闪念笔记" : "📄 文档章节"}
-                </span>
-                {selectedNode.isCurrent && (
-                  <span className="inspector-current-tag">当前阅读</span>
-                )}
-              </div>
-              <h3 className="inspector-title">{selectedNode.label}</h3>
-              {selectedNode.path && (
-                <div className="inspector-path">{selectedNode.path}</div>
-              )}
-              <div className="inspector-stats">
-                <span>被引用 (入度): <strong>{selectedNode.inDegree}</strong></span>
-                <span>正向引用 (出度): <strong>{selectedNode.outDegree}</strong></span>
-              </div>
+        {/* Selected Node Details Card (Bottom-Left) */}
+        {selectedNode && (
+          <div className="graph-pane-inspector">
+            <div className="inspector-header">
+              <span className={`node-type-badge type-${selectedNode.type}`}>
+                {selectedNode.type === "space" ? "闪念 Space" : "文档"}
+              </span>
+              <span className="inspector-title" title={selectedNode.label}>
+                {selectedNode.label}
+              </span>
               <button
                 type="button"
-                className="inspector-open-btn"
-                onClick={() => {
-                  onSelectNode(selectedNode.id);
-                  onClose();
-                }}
+                className="inspector-close-btn"
+                onClick={() => setSelectedNode(null)}
+                title="关闭详情卡片"
               >
-                打开文档进行编辑 ➔
+                <X size={12} />
               </button>
             </div>
-          )}
-
-          {/* Help legend (Bottom-Right) */}
-          <div className="graph-legend">
-            <div className="legend-item">
-              <span className="legend-dot dot-current" /> 当前文档
+            <div className="inspector-body">
+              <div className="inspector-metric">
+                <span className="metric-label">被引用 (In):</span>
+                <span className="metric-value">{selectedNode.inDegree}</span>
+              </div>
+              <div className="inspector-metric">
+                <span className="metric-label">引出 (Out):</span>
+                <span className="metric-value">{selectedNode.outDegree}</span>
+              </div>
             </div>
-            <div className="legend-item">
-              <span className="legend-dot dot-chapter" /> 文档章节
-            </div>
-            <div className="legend-item">
-              <span className="legend-dot dot-space" /> 闪念 Space
-            </div>
-            <div className="legend-item hint-text">
-              提示：双击节点直接打开
-            </div>
+            <button
+              type="button"
+              className="inspector-jump-btn"
+              onClick={() => onSelectNodeRef.current(selectedNode.id)}
+            >
+              <ExternalLink size={12} />
+              <span>在左侧打开文档</span>
+            </button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

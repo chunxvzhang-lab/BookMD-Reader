@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { Network } from "lucide-react";
 
 export type TabItem = {
   id: string;
@@ -19,6 +20,8 @@ type TabBarProps = {
   onOpenDualSplit?: (tabId: string) => void;
   onCloseDualSplit?: () => void;
   onDetachTab?: (tabId: string) => void;
+  isGraphPaneOpen?: boolean;
+  onToggleGraphPane?: () => void;
 };
 
 type ContextMenuState = {
@@ -39,6 +42,8 @@ export const TabBar = memo(function TabBar({
   onOpenDualSplit,
   onCloseDualSplit,
   onDetachTab,
+  isGraphPaneOpen,
+  onToggleGraphPane,
 }: TabBarProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
   const tabListRef = useRef<HTMLDivElement | null>(null);
@@ -121,8 +126,19 @@ export const TabBar = memo(function TabBar({
         })}
       </div>
 
-      {dualSplitTabId && onCloseDualSplit && (
-        <div className="tab-bar-split-actions">
+      <div className="tab-bar-right-actions">
+        {onToggleGraphPane && (
+          <button
+            type="button"
+            className={`tab-graph-toggle-btn ${isGraphPaneOpen ? "is-active" : ""}`}
+            onClick={onToggleGraphPane}
+            title={isGraphPaneOpen ? "收起知识网络图谱分栏 (Ctrl+G)" : "在右侧打开知识网络图谱 (Ctrl+G)"}
+          >
+            <Network size={13} style={{ color: isGraphPaneOpen ? "#38bdf8" : undefined }} />
+            <span>知识图谱</span>
+          </button>
+        )}
+        {dualSplitTabId && onCloseDualSplit && (
           <button
             type="button"
             className="tab-exit-split-btn"
@@ -131,8 +147,8 @@ export const TabBar = memo(function TabBar({
           >
             ✕ 退出分屏
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {contextMenu?.visible ? (
         <div

@@ -87,8 +87,10 @@ export function LocalGraphView({
               if (ele.data("type") === "space") return spaceBg;
               return normalBg;
             },
-            "border-width": (ele: any) => (ele.data("isCurrent") ? 3 : 1.5),
-            "border-color": (ele: any) => (ele.data("isCurrent") ? currentBorder : normalBorder),
+            "border-width": 0,
+            "border-opacity": 0,
+            "active-bg-opacity": 0,
+            "overlay-opacity": 0,
           },
         },
         {
