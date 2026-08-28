@@ -15,11 +15,10 @@ import {
   Maximize2,
   Minimize2,
   Zap,
+  GitFork,
 } from "lucide-react";
 import appLogo from "../assets/icon.png";
-import type { EditorViewMode, ThemeMode } from "../core/types";
-
-type SidebarTab = "toc" | "bookmarks" | "search" | "space";
+import type { EditorViewMode, ThemeMode, SidebarTab } from "../core/types";
 
 type ActivityBarProps = {
   directoryOpen: boolean;
@@ -37,6 +36,7 @@ type ActivityBarProps = {
   onOpenDirectory?: () => void;
   onOpenAbout?: () => void;
   isDirty?: boolean;
+  backlinksCount?: number;
 };
 
 export function ActivityBar({
@@ -55,6 +55,7 @@ export function ActivityBar({
   onOpenDirectory,
   onOpenAbout,
   isDirty = false,
+  backlinksCount = 0,
 }: ActivityBarProps) {
   return (
     <nav className="activity-bar" aria-label="快捷工具栏">
@@ -116,6 +117,19 @@ export function ActivityBar({
           aria-label="闪念时间线看板"
         >
           <Zap size={18} style={{ color: "#f59e0b" }} />
+        </button>
+
+        <button
+          type="button"
+          className={`activity-btn ${sidebarOpen && activeSidebarTab === "backlinks" ? "active" : ""}`}
+          onClick={() => onSelectSidebarTab("backlinks")}
+          data-tooltip="反向链接与引用"
+          aria-label="反向链接与引用"
+        >
+          <GitFork size={18} style={{ color: "#38bdf8" }} />
+          {backlinksCount > 0 && (
+            <span className="activity-badge">{backlinksCount}</span>
+          )}
         </button>
       </div>
 

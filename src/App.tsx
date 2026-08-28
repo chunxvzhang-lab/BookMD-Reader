@@ -3,10 +3,20 @@ import { BookOpen, FilePlus2, FileText, FolderOpen } from "lucide-react";
 import { AboutDialog } from "./components/AboutDialog";
 import { ActivityBar } from "./components/ActivityBar";
 import { BookmarkPanel } from "./components/BookmarkPanel";
+import { BacklinksPanel } from "./components/BacklinksPanel";
 import { ChapterList } from "./components/ChapterList";
 import { DocumentWorkspace } from "./components/DocumentWorkspace";
 import { DualDocumentWorkspace } from "./components/DualDocumentWorkspace";
 import type { WikiLinkTarget } from "./components/EditorPane";
+import {
+  createBacklinkIndex,
+  updateDocumentInIndex,
+  getLinkedReferences,
+  getUnlinkedMentions,
+  convertUnlinkedMentionInText,
+  type BacklinkIndexData,
+  type UnlinkedMention,
+} from "./services/backlinkIndex";
 import { FileConflictDialog } from "./components/FileConflictDialog";
 import { MediaLightbox, type LightboxMedia } from "./components/MediaLightbox";
 import { SearchPanel } from "./components/SearchPanel";
@@ -1754,6 +1764,123 @@ export function App() {
     [manifest, selectChapter]
   );
 
+  // Backlink Index & Mentions
+  const [backlinkIndex, setBacklinkIndex] = useState<BacklinkIndexData>(() =>
+    createBacklinkIndex([])
+  );
+
+  // Background full index build on manifest change
+  useEffect(() => {
+    if (!manifest?.chapters?.length) return;
+    let active = true;
+
+    const buildIndex = async () => {
+      const docs: { id: string; title: string; path?: string; content: string }[] = [];
+      for (const ch of manifest.chapters) {
+        if (!active) return;
+        let content = "";
+        if (session?.chapterId === ch.id) {
+          content = session.source;
+        } else if (ch.absolutePath && window.bookMDDesktop?.readMarkdownFile) {
+          try {
+            const res = await window.bookMDDesktop.readMarkdownFile(ch.absolutePath);
+            content = res?.markdown || "";
+          } catch {}
+        }
+        docs.push({
+          id: ch.id,
+          title: ch.title,
+          path: ch.src,
+          content,
+        });
+      }
+      if (active) {
+        setBacklinkIndex(createBacklinkIndex(docs));
+      }
+    };
+
+    buildIndex();
+    return () => {
+      active = false;
+    };
+  }, [manifest?.chapters]);
+
+  // Real-time incremental update when current session content changes
+  useEffect(() => {
+    if (!session) return;
+    updateDocumentInIndex(
+      backlinkIndex,
+      session.chapterId,
+      activeChapter?.title || session.fileName,
+      session.source,
+      session.absolutePath || session.fileName
+    );
+    setBacklinkIndex({ ...backlinkIndex });
+  }, [session?.source, session?.chapterId]);
+
+  const currentDocTitle = activeChapter?.title || session?.fileName?.replace(/\.md$/i, "") || "";
+  const currentLinkedReferences = useMemo(() => {
+    if (!currentDocTitle) return [];
+    return getLinkedReferences(backlinkIndex, currentDocTitle, session?.fileName);
+  }, [backlinkIndex, currentDocTitle, session?.fileName]);
+
+  const currentUnlinkedMentions = useMemo(() => {
+    if (!currentDocTitle || !session?.chapterId) return [];
+    return getUnlinkedMentions(backlinkIndex, session.chapterId, currentDocTitle);
+  }, [backlinkIndex, currentDocTitle, session?.chapterId]);
+
+  const handleJumpToBacklink = useCallback(
+    (sourceId: string, line?: number) => {
+      selectChapter(sourceId);
+      if (line && editorViewRef.current) {
+        window.setTimeout(() => {
+          const view = editorViewRef.current;
+          if (view) {
+            try {
+              const lineObj = view.state.doc.line(Math.min(line, view.state.doc.lines));
+              view.dispatch({
+                selection: { anchor: lineObj.from },
+                scrollIntoView: true,
+              });
+            } catch {}
+          }
+        }, 120);
+      }
+    },
+    [selectChapter]
+  );
+
+  const handleConvertMention = useCallback(
+    async (mention: UnlinkedMention) => {
+      if (session && session.chapterId === mention.sourceId) {
+        const updated = convertUnlinkedMentionInText(session.source, mention.line, mention.mentionText);
+        updateSource(updated);
+        setNotice(`已将第 ${mention.line} 行的「${mention.mentionText}」转换为双向链接`);
+        return;
+      }
+
+      const targetCh = manifest?.chapters.find((c) => c.id === mention.sourceId);
+      if (targetCh?.absolutePath && window.bookMDDesktop?.saveMarkdownFile && window.bookMDDesktop?.readMarkdownFile) {
+        try {
+          const fileRes = await window.bookMDDesktop.readMarkdownFile(targetCh.absolutePath);
+          if (fileRes?.markdown) {
+            const updated = convertUnlinkedMentionInText(fileRes.markdown, mention.line, mention.mentionText);
+            await window.bookMDDesktop.saveMarkdownFile({
+              absolutePath: targetCh.absolutePath,
+              content: updated,
+            });
+            updateDocumentInIndex(backlinkIndex, mention.sourceId, mention.sourceTitle, updated, targetCh.src);
+            setBacklinkIndex({ ...backlinkIndex });
+            setNotice(`已将文档「${mention.sourceTitle}」中的「${mention.mentionText}」转换为双向链接`);
+          }
+        } catch (err: any) {
+          setNotice(err?.message || "转换双链失败");
+        }
+      }
+    },
+    [session, manifest?.chapters, updateSource, backlinkIndex]
+  );
+
   return (
     <div
       className={`app-shell theme-${preferences.theme} ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}${directoryOpen ? "" : " directory-closed"}${manifest ? "" : " empty-source"}${isFullscreen ? " is-fullscreen" : ""}${isDualSplitMode ? " is-dual-split-mode" : ""}`}
@@ -1775,6 +1902,7 @@ export function App() {
           onOpenDirectory={window.bookMDDesktop ? openMarkdownDirectory : undefined}
           onOpenAbout={() => setAboutOpen(true)}
           isDirty={isDirty}
+          backlinksCount={currentLinkedReferences.length}
         />
       )}
 
@@ -1927,6 +2055,18 @@ export function App() {
                   />
                 </section>
               ) : null}
+              {sidebarTab === "backlinks" ? (
+                <section id="backlinks-panel" role="tabpanel" aria-labelledby="backlinks-tab">
+                  <BacklinksPanel
+                    currentTitle={currentDocTitle}
+                    currentPath={session?.absolutePath || session?.fileName}
+                    linkedReferences={currentLinkedReferences}
+                    unlinkedMentions={currentUnlinkedMentions}
+                    onJumpToSource={handleJumpToBacklink}
+                    onConvertMention={handleConvertMention}
+                  />
+                </section>
+              ) : null}
             </aside>
             <div
               className={`layout-resizer ${resizingType === "sidebar" ? "is-active" : ""}`}
@@ -1984,6 +2124,11 @@ export function App() {
               onCloseSecondary={handleCloseDualSplit}
               wikiLinkTargets={wikiLinkTargets}
               onWikiLinkClick={handleWikiLinkClick}
+              backlinksCount={currentLinkedReferences.length}
+              onOpenBacklinks={() => {
+                setSidebarTab("backlinks");
+                setSidebarOpen(true);
+              }}
             />
           ) : session ? (
             <DocumentWorkspace
@@ -2011,6 +2156,11 @@ export function App() {
               navLockUntilRef={navLockUntilRef}
               wikiLinkTargets={wikiLinkTargets}
               onWikiLinkClick={handleWikiLinkClick}
+              backlinksCount={currentLinkedReferences.length}
+              onOpenBacklinks={() => {
+                setSidebarTab("backlinks");
+                setSidebarOpen(true);
+              }}
             />
           ) : (
             <main className="empty-reader" ref={readerRef}>
@@ -2108,6 +2258,7 @@ const tabLabels: Record<SidebarTab, string> = {
   bookmarks: "书签",
   search: "搜索",
   space: "闪念 Space",
+  backlinks: "反向链接",
 };
 
 function resolveMermaidTheme(theme: ThemeMode): MermaidTheme {

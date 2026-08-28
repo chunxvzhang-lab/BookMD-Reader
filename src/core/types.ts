@@ -1,4 +1,4 @@
-export type SidebarTab = "toc" | "bookmarks" | "search" | "space";
+export type SidebarTab = "toc" | "bookmarks" | "search" | "space" | "backlinks";
 export type ThemeMode = "system" | "light" | "twitter" | "eink";
 export type EditorViewMode = "read" | "split" | "source";
 

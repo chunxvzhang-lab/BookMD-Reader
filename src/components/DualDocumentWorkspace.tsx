@@ -33,6 +33,8 @@ type DualDocumentWorkspaceProps = {
   onEditorViewReady?: (view: any) => void;
   wikiLinkTargets?: WikiLinkTarget[];
   onWikiLinkClick?: (target: string) => void;
+  backlinksCount?: number;
+  onOpenBacklinks?: () => void;
 
   // Secondary (Right) Document
   secondaryTitle: string;
@@ -64,6 +66,8 @@ export function DualDocumentWorkspace({
   onEditorViewReady,
   wikiLinkTargets,
   onWikiLinkClick,
+  backlinksCount,
+  onOpenBacklinks,
 
   secondaryTitle,
   secondaryRenderedChapter,
@@ -164,6 +168,8 @@ export function DualDocumentWorkspace({
             onEditorViewReady={onEditorViewReady}
             wikiLinkTargets={wikiLinkTargets}
             onWikiLinkClick={onWikiLinkClick}
+            backlinksCount={backlinksCount}
+            onOpenBacklinks={onOpenBacklinks}
           />
         </div>
       </div>

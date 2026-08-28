@@ -34,6 +34,8 @@ type DocumentWorkspaceProps = {
   navLockUntilRef?: React.MutableRefObject<number>;
   wikiLinkTargets?: WikiLinkTarget[];
   onWikiLinkClick?: (target: string) => void;
+  backlinksCount?: number;
+  onOpenBacklinks?: () => void;
 };
 
 export function DocumentWorkspace({
@@ -59,6 +61,8 @@ export function DocumentWorkspace({
   navLockUntilRef,
   wikiLinkTargets,
   onWikiLinkClick,
+  backlinksCount,
+  onOpenBacklinks,
 }: DocumentWorkspaceProps) {
   const [splitRatio, setSplitRatio] = useState(() => {
     try {
@@ -249,6 +253,8 @@ export function DocumentWorkspace({
             onOpenLightbox={onOpenLightbox}
             wikiLinkTargets={wikiLinkTargets}
             onWikiLinkClick={onWikiLinkClick}
+            backlinksCount={backlinksCount}
+            onOpenBacklinks={onOpenBacklinks}
           />
         </div>
       )}

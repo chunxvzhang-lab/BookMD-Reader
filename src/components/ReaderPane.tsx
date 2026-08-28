@@ -1,4 +1,5 @@
 import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { GitFork } from "lucide-react";
 import type { RenderedChapter } from "../core/types";
 import { renderMermaid, type MermaidTheme } from "../services/mermaid";
 import type { LightboxMedia } from "./MediaLightbox";
@@ -15,6 +16,8 @@ type ReaderPaneProps = {
   onOpenLightbox?: (media: LightboxMedia) => void;
   wikiLinkTargets?: WikiLinkTarget[];
   onWikiLinkClick?: (target: string) => void;
+  backlinksCount?: number;
+  onOpenBacklinks?: () => void;
 };
 
 export const ReaderPane = memo(function ReaderPane({
@@ -28,6 +31,8 @@ export const ReaderPane = memo(function ReaderPane({
   onOpenLightbox,
   wikiLinkTargets,
   onWikiLinkClick,
+  backlinksCount,
+  onOpenBacklinks,
 }: ReaderPaneProps) {
   const articleRef = useRef<HTMLElement | null>(null);
   const [hoverPopover, setHoverPopover] = useState<{
@@ -257,6 +262,17 @@ export const ReaderPane = memo(function ReaderPane({
         onMouseOut={handleMouseOut}
         dangerouslySetInnerHTML={articleHtml}
       />
+      {backlinksCount !== undefined && backlinksCount > 0 && onOpenBacklinks ? (
+        <div
+          className="article-backlinks-footer"
+          onClick={onOpenBacklinks}
+          title="在侧边栏打开反向链接面板"
+        >
+          <GitFork size={14} className="text-cyan" />
+          <span>本文已被引用 <strong>{backlinksCount}</strong> 次</span>
+          <span className="article-backlinks-action">在侧栏查看 ➔</span>
+        </div>
+      ) : null}
       {hoverPopover && (
         <div
           className="wikilink-preview-popover"
