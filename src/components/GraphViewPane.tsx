@@ -190,7 +190,8 @@ export function GraphViewPane({
       motionBlur: false,
       pixelRatio: "auto",
       boxSelectionEnabled: false,
-      autounselectify: false,
+      // 完全禁用 Cytoscape 内建选中态（选中态会触发默认 :selected 样式与选中反馈绘制）
+      autounselectify: true,
       style: [
         {
           selector: "node",
@@ -207,14 +208,13 @@ export function GraphViewPane({
             "text-outline-color": textOutlineColor,
             "text-outline-width": 2,
             "text-outline-opacity": 0.9,
-            shape: "ellipse",
-            width: (ele: any) => {
-              const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 22 : Math.min(22, Math.max(10, 10 + inDeg * 2.5));
-            },
+            // 竖线（Vertical Bar）节点：宽度固定为细条，高度随被引用权重增长
+            shape: "round-rectangle",
+            "corner-radius": 1,
+            width: (ele: any) => (ele.data("isCurrent") ? 4 : 3),
             height: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 22 : Math.min(22, Math.max(10, 10 + inDeg * 2.5));
+              return ele.data("isCurrent") ? 26 : Math.min(26, Math.max(12, 12 + inDeg * 2.5));
             },
             "background-color": (ele: any) => {
               if (ele.data("isCurrent")) return currentBg;
@@ -246,16 +246,50 @@ export function GraphViewPane({
           },
         },
         {
-          selector: ".highlighted",
+          // 高亮规则必须只作用于边：此前 .highlighted 未限定 group，
+          // 导致 width:2 泄漏到节点上，点击后节点被压成 2px 宽的异形（视觉上出现突兀形状）
+          selector: "edge.highlighted",
           style: {
-            // Edges become vivid and prominent
             "line-color": isEink ? "#000000" : "#818cf8",
             "target-arrow-color": isEink ? "#000000" : "#818cf8",
             width: 2.0,
             opacity: 1,
             "z-index": 999,
-            // Keep node clean: NO circle border added
+          },
+        },
+        {
+          // 节点高亮只做“提亮/置顶”，绝不改动几何尺寸，保证竖线形态稳定
+          selector: "node.highlighted",
+          style: {
+            opacity: 1,
+            "background-opacity": 1,
             "border-width": 0,
+            "z-index": 999,
+          },
+        },
+        {
+          // 彻底关闭按下/激活态的一切附加绘制（overlay 圆晕、active-bg 灰圆、underlay）
+          selector: ":active",
+          style: {
+            "overlay-opacity": 0,
+            "overlay-padding": 0,
+            "overlay-color": "transparent",
+            "active-bg-opacity": 0,
+            "active-bg-size": 0,
+            "underlay-opacity": 0,
+            "underlay-padding": 0,
+          },
+        },
+        {
+          // 兜底：即便未来开启选中，也不绘制任何选中描边/光环
+          selector: ":selected",
+          style: {
+            "overlay-opacity": 0,
+            "overlay-padding": 0,
+            "active-bg-opacity": 0,
+            "active-bg-size": 0,
+            "border-width": 0,
+            "border-opacity": 0,
           },
         },
         {
@@ -353,10 +387,12 @@ export function GraphViewPane({
       });
     });
 
-    // Defer initial zoom/center to rAF so the flex split pane has settled
-    // (avoids the "vertical line" rendering caused by 0-width container on first paint)
-    window.requestAnimationFrame(() => {
+    // Use setTimeout(0) instead of rAF: setTimeout fires AFTER layout+paint,
+    // guaranteeing the flex split pane has its real width when we call cy.center/fit.
+    // (rAF fires before paint and may still see 0-width container)
+    const initTimerId = setTimeout(() => {
       if (!cyRef.current) return;
+      cyRef.current.resize(); // Sync internal canvas dimensions with real container size
       const liveTarget = findCurrentNode(cyRef.current, currentDocIdRef.current);
       cyRef.current.zoom(1.0);
       if (liveTarget && liveTarget.length > 0) {
@@ -381,7 +417,7 @@ export function GraphViewPane({
       }
       setZoomPercent(100);
       setZoomInputValue("100%");
-    });
+    }, 0);
 
     // ResizeObserver: re-fit on first meaningful width to fix zero-width init
     let initialFitDone = false;
@@ -409,6 +445,7 @@ export function GraphViewPane({
       if (zoomRafId !== null) {
         window.cancelAnimationFrame(zoomRafId);
       }
+      clearTimeout(initTimerId);
       if (ro) {
         ro.disconnect();
       }

@@ -7465,7 +7465,9 @@ body:has(.flash-capsule-overlay) {
 .graph-pane-canvas-wrapper {
   flex: 1;
   width: 100%;
-  height: calc(100% - 36px);
+  /* 高度完全交给 flex 计算：写死 calc(100% - 36px) 会在筛选栏展开/窗口变矮时
+     让画布区超出分栏底部，被 .graph-view-pane 的 overflow:hidden 裁掉，
+     表现为底部提示卡片下方被遮挡 */
   position: relative;
   overflow: hidden;
   background: var(--bg);
@@ -7476,6 +7478,18 @@ body:has(.flash-capsule-overlay) {
   height: 100%;
   position: absolute;
   inset: 0;
+}
+
+/* 关闭画布上的焦点环与移动端点击高亮，避免点击图谱区域时出现额外轮廓/圆形 */
+.graph-pane-canvas,
+.graph-pane-canvas:focus,
+.graph-pane-canvas:focus-visible,
+.graph-pane-canvas:active,
+.graph-pane-canvas > div,
+.graph-pane-canvas canvas {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .graph-pane-canvas-wrapper.space-panning {
@@ -7545,10 +7559,10 @@ body:has(.flash-capsule-overlay) {
 /* Inspector Card (Bottom-Left) */
 .graph-pane-inspector {
   position: absolute;
-  bottom: 52px;
+  bottom: 16px;
   left: 16px;
   width: 220px;
-  max-height: calc(100% - 100px);
+  max-height: calc(100% - 32px);
   overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--border);
