@@ -188,11 +188,21 @@ export function GraphViewPane({
       maxZoom: 5.0,
       textureOnViewport: false,
       motionBlur: false,
-      pixelRatio: 1,   // Fix: "auto" causes canvas DPR mismatch on Windows → nodes squished to lines
+      pixelRatio: "auto", // 高清视网膜渲染：跟随系统 DPR，消除文字与节点模糊
       boxSelectionEnabled: false,
       // 完全禁用 Cytoscape 内建选中态（选中态会触发默认 :selected 样式与选中反馈绘制）
       autounselectify: true,
       style: [
+        {
+          // 彻底关闭画布核心区（空白区域）在点击时的任何圆形阴影/点击反馈光圈
+          selector: "core",
+          style: {
+            "active-bg-opacity": 0,
+            "active-bg-size": 0,
+            "selection-box-opacity": 0,
+            "outside-texture-bg-opacity": 0,
+          },
+        },
         {
           selector: "node",
           style: {
@@ -680,15 +690,18 @@ export function GraphViewPane({
 
           {/* Close pane */}
           {onClose && (
-            <button
-              type="button"
-              className="graph-pane-close-btn"
-              onClick={onClose}
-              title="收起图谱分栏"
-              aria-label="收起图谱分栏"
-            >
-              <X size={14} />
-            </button>
+            <>
+              <div className="graph-pane-divider" />
+              <button
+                type="button"
+                className="graph-pane-close-btn"
+                onClick={onClose}
+                title="收起图谱分栏"
+                aria-label="收起图谱分栏"
+              >
+                <X size={14} />
+              </button>
+            </>
           )}
         </div>
       </div>

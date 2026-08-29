@@ -65,6 +65,15 @@ export function LocalGraphView({
       autounselectify: true,
       style: [
         {
+          selector: "core",
+          style: {
+            "active-bg-opacity": 0,
+            "active-bg-size": 0,
+            "selection-box-opacity": 0,
+            "outside-texture-bg-opacity": 0,
+          },
+        },
+        {
           selector: "node",
           style: {
             label: "data(label)",

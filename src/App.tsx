@@ -108,33 +108,15 @@ export function App() {
   const [preferences, setPreferences] = useState(preferencesRef.current);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [isGraphPaneOpen, setIsGraphPaneOpen] = useState(() => {
-    try {
-      return localStorage.getItem("knowspace.layout.graphPaneOpen") === "true";
-    } catch {
-      return false;
-    }
-  });
+  // 软件启动时默认不自动打开知识图谱（保持纯净文档视图，需时由用户主动开启）
+  const [isGraphPaneOpen, setIsGraphPaneOpen] = useState(false);
 
   const handleToggleGraphPane = useCallback(() => {
-    setIsGraphPaneOpen((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("knowspace.layout.graphPaneOpen", String(next));
-      } catch {
-        // ignore
-      }
-      return next;
-    });
+    setIsGraphPaneOpen((prev) => !prev);
   }, []);
 
   const handleCloseGraphPane = useCallback(() => {
     setIsGraphPaneOpen(false);
-    try {
-      localStorage.setItem("knowspace.layout.graphPaneOpen", "false");
-    } catch {
-      // ignore
-    }
   }, []);
 
   const [directoryWidth, setDirectoryWidth] = useState(() => {

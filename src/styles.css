@@ -7443,23 +7443,100 @@ body:has(.flash-capsule-overlay) {
   flex-shrink: 0;
 }
 
+.graph-pane-actions .graph-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.graph-pane-actions .graph-action-btn:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.06));
+  color: var(--text);
+  border-color: var(--border-hover, var(--border));
+}
+
+.graph-pane-actions .graph-action-btn.is-active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: var(--accent, #0284c7);
+}
+
+.graph-zoom-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 26px;
+}
+
+.graph-zoom-group .graph-zoom-input {
+  width: 48px;
+  height: 26px;
+  line-height: 24px;
+  padding: 0 4px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.graph-zoom-group .graph-zoom-input:hover {
+  border-color: var(--accent, #38bdf8);
+}
+
+.graph-zoom-group .graph-zoom-input:focus {
+  background: var(--surface);
+  border-color: var(--accent, #38bdf8);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.graph-pane-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
 .graph-pane-close-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   color: var(--text-muted);
   cursor: pointer;
+  box-sizing: border-box;
   transition: all 0.15s ease;
 }
 
 .graph-pane-close-btn:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.35);
 }
 
 .graph-pane-canvas-wrapper {
