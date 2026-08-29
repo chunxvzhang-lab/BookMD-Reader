@@ -7559,7 +7559,7 @@ body:has(.flash-capsule-overlay) {
 /* Inspector Card — positioned relative to graph-view-pane, outside overflow:hidden canvas */
 .graph-pane-inspector {
   position: absolute;
-  bottom: 16px;
+  bottom: 48px;
   left: 16px;
   width: 220px;
   max-height: 200px;

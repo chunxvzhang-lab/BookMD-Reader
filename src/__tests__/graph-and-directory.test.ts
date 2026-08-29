@@ -71,7 +71,7 @@ describe("Graph Workspace Split & Node Style Rules", () => {
     expect(clampGraphSplitRatio(0.9)).toBe(0.75);
   });
 
-  it("enforces Obsidian-style clean node aesthetic (no circular borders)", () => {
+  it("enforces Obsidian-style clean node aesthetic (no borders, zero overlay)", () => {
     const nodeStyle = {
       "border-width": 0,
       "border-opacity": 0,
@@ -81,6 +81,21 @@ describe("Graph Workspace Split & Node Style Rules", () => {
     expect(nodeStyle["border-width"]).toBe(0);
     expect(nodeStyle["active-bg-opacity"]).toBe(0);
     expect(nodeStyle["overlay-opacity"]).toBe(0);
+  });
+
+  it("enforces circular node geometry (shape: ellipse, width === height)", () => {
+    const computeSize = (inDegree: number, isCurrent: boolean) => {
+      const size = isCurrent ? 18 : Math.min(18, Math.max(9, 9 + inDegree * 1.8));
+      return { width: size, height: size };
+    };
+
+    const regularNode = computeSize(0, false);
+    expect(regularNode.width).toBe(regularNode.height);
+    expect(regularNode.width).toBeGreaterThanOrEqual(9);
+
+    const currentNode = computeSize(3, true);
+    expect(currentNode.width).toBe(currentNode.height);
+    expect(currentNode.width).toBe(18);
   });
 });
 

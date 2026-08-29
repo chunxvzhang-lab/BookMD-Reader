@@ -208,24 +208,26 @@ export function GraphViewPane({
             "text-outline-color": textOutlineColor,
             "text-outline-width": 2,
             "text-outline-opacity": 0.9,
-            // 竖线（Vertical Bar）节点：宽度固定为细条，高度随被引用权重增长
-            shape: "round-rectangle",
-            "corner-radius": 1,
-            width: (ele: any) => (ele.data("isCurrent") ? 4 : 3),
+            // 节点必须为标准圆形（Ellipse），尺寸随引用权重适度缩放
+            shape: "ellipse",
+            width: (ele: any) => {
+              const inDeg = ele.data("inDegree") || 0;
+              return ele.data("isCurrent") ? 18 : Math.min(18, Math.max(9, 9 + inDeg * 1.8));
+            },
             height: (ele: any) => {
               const inDeg = ele.data("inDegree") || 0;
-              return ele.data("isCurrent") ? 26 : Math.min(26, Math.max(12, 12 + inDeg * 2.5));
+              return ele.data("isCurrent") ? 18 : Math.min(18, Math.max(9, 9 + inDeg * 1.8));
             },
             "background-color": (ele: any) => {
               if (ele.data("isCurrent")) return currentBg;
               if (ele.data("type") === "space") return spaceBg;
               return normalBg;
             },
-            // Obsidian clean aesthetic: NO circle borders, NO circle selection ring!
+            // Obsidian 极简无边框无选中环风格
             "border-width": 0,
             "border-opacity": 0,
             "border-style": "solid",
-            // Disable ALL overlay/active effects on the node
+            // 彻底禁用节点上的 overlay 与 active-bg 遮罩
             "overlay-opacity": 0,
             "overlay-padding": 0,
             "active-bg-opacity": 0,
@@ -258,7 +260,7 @@ export function GraphViewPane({
           },
         },
         {
-          // 节点高亮只做“提亮/置顶”，绝不改动几何尺寸，保证竖线形态稳定
+          // 节点高亮只做“提亮/置顶”，不改动几何尺寸，保证圆形节点形态稳定
           selector: "node.highlighted",
           style: {
             opacity: 1,
@@ -394,9 +396,19 @@ export function GraphViewPane({
       if (!cyRef.current) return;
       cyRef.current.resize(); // Sync internal canvas dimensions with real container size
       const liveTarget = findCurrentNode(cyRef.current, currentDocIdRef.current);
-      cyRef.current.zoom(1.0);
+
+      // 根据窗口自适应缩放图谱节点，使所有节点完整适配视口
+      cyRef.current.fit(undefined, 36);
+      if (cyRef.current.zoom() > 1.05) {
+        cyRef.current.zoom(1.0);
+        if (liveTarget && liveTarget.length > 0) {
+          cyRef.current.center(liveTarget);
+        } else {
+          cyRef.current.center();
+        }
+      }
+
       if (liveTarget && liveTarget.length > 0) {
-        cyRef.current.center(liveTarget);
         setSelectedNode({
           id: liveTarget.data("id"),
           label: liveTarget.data("label"),
@@ -412,11 +424,11 @@ export function GraphViewPane({
           neighborhood.addClass("highlighted");
           cyRef.current!.elements().difference(neighborhood).addClass("dimmed");
         });
-      } else {
-        cyRef.current.fit(undefined, 40);
       }
-      setZoomPercent(100);
-      setZoomInputValue("100%");
+
+      const z = Math.round(cyRef.current.zoom() * 100);
+      setZoomPercent(z);
+      setZoomInputValue(`${z}%`);
     }, 0);
 
     // ResizeObserver: re-fit on first meaningful width to fix zero-width init
@@ -426,16 +438,22 @@ export function GraphViewPane({
       ro = new ResizeObserver(() => {
         if (!cyRef.current) return;
         cyRef.current.resize();
-        // On the first time we get a real width (>50px), re-fit properly
+        // 首次获得有效宽度时，根据当前窗口比例自适应适配图谱
         if (!initialFitDone && cyRef.current.width() > 50) {
           initialFitDone = true;
-          cyRef.current.zoom(1.0);
-          const target = findCurrentNode(cyRef.current, currentDocIdRef.current);
-          if (target && target.length > 0) {
-            cyRef.current.center(target);
-          } else {
-            cyRef.current.fit(undefined, 40);
+          cyRef.current.fit(undefined, 36);
+          if (cyRef.current.zoom() > 1.05) {
+            cyRef.current.zoom(1.0);
+            const target = findCurrentNode(cyRef.current, currentDocIdRef.current);
+            if (target && target.length > 0) {
+              cyRef.current.center(target);
+            } else {
+              cyRef.current.center();
+            }
           }
+          const z = Math.round(cyRef.current.zoom() * 100);
+          setZoomPercent(z);
+          setZoomInputValue(`${z}%`);
         }
       });
       ro.observe(containerRef.current);
@@ -473,7 +491,14 @@ export function GraphViewPane({
 
   const handleResetFit = () => {
     if (cyRef.current) {
-      cyRef.current.fit(undefined, 30);
+      cyRef.current.fit(undefined, 36);
+      if (cyRef.current.zoom() > 1.05) {
+        cyRef.current.zoom(1.0);
+        cyRef.current.center();
+      }
+      const z = Math.round(cyRef.current.zoom() * 100);
+      setZoomPercent(z);
+      setZoomInputValue(`${z}%`);
     }
   };
 
