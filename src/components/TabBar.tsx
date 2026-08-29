@@ -134,7 +134,7 @@ export const TabBar = memo(function TabBar({
             onClick={onToggleGraphPane}
             title={isGraphPaneOpen ? "收起知识网络图谱分栏 (Ctrl+G)" : "在右侧打开知识网络图谱 (Ctrl+G)"}
           >
-            <Network size={13} style={{ color: isGraphPaneOpen ? "#38bdf8" : undefined }} />
+            <Network size={13} style={{ color: "#38bdf8" }} />
             <span>知识图谱</span>
           </button>
         )}

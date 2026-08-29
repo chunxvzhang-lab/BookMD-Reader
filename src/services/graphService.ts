@@ -66,8 +66,39 @@ export function buildGraphDataFromIndex(
     return false;
   };
 
+  // 节点去重与别名映射：根据 id、规范化标题或路径定位已存在的规范节点
+  const getExistingCanonicalId = (id: string, path?: string, title?: string): string | null => {
+    if (nodesMap.has(id)) return id;
+    const norm = (title || "").trim().toLowerCase().replace(/\.md$/i, "");
+    if (norm && normTitleToId.has(norm)) {
+      return normTitleToId.get(norm)!;
+    }
+    if (path) {
+      const p = path.trim().toLowerCase().replace(/\\/g, "/");
+      const filename = p.split("/").pop()?.replace(/\.md$/i, "");
+      if (filename && normTitleToId.has(filename)) {
+        return normTitleToId.get(filename)!;
+      }
+      for (const [existingId, node] of nodesMap.entries()) {
+        if (node.path) {
+          const np = node.path.trim().toLowerCase().replace(/\\/g, "/");
+          if (np === p || p.endsWith(np) || np.endsWith(p)) {
+            return existingId;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
   if (manifest?.chapters) {
     for (const ch of manifest.chapters) {
+      const existingId = getExistingCanonicalId(ch.id, ch.src, ch.title);
+      if (existingId) {
+        normTitleToId.set(ch.id, existingId);
+        continue;
+      }
+
       const norm = ch.title.trim().toLowerCase().replace(/\.md$/i, "");
       const isSpace = Boolean(
         (ch.src && (ch.src.toLowerCase().startsWith("space/") || ch.src.toLowerCase().startsWith("space\\"))) ||
@@ -84,8 +115,9 @@ export function buildGraphDataFromIndex(
         normTitle: norm,
       };
       nodesMap.set(ch.id, node);
+      normTitleToId.set(ch.id, ch.id);
       normTitleToId.set(norm, ch.id);
-      const filenameNorm = (ch.src.split("/").pop() || "").toLowerCase().replace(/\.md$/i, "");
+      const filenameNorm = (ch.src?.split(/[\\/]/).pop() || "").toLowerCase().replace(/\.md$/i, "");
       if (filenameNorm) {
         normTitleToId.set(filenameNorm, ch.id);
       }
@@ -93,50 +125,63 @@ export function buildGraphDataFromIndex(
   }
 
   for (const [docId, doc] of index.documents.entries()) {
-    if (!nodesMap.has(docId)) {
-      const isSpace = Boolean(
-        (doc.path && (doc.path.toLowerCase().includes("space/") || doc.path.toLowerCase().includes("space\\"))) ||
-        doc.path?.includes(".space") ||
-        docId.startsWith("space-")
-      );
+    const existingId = getExistingCanonicalId(docId, doc.path, doc.title);
+    if (existingId) {
+      // 文档已存在，将 docId 与标题别名指向已有规范节点，避免生成重复节点
+      normTitleToId.set(docId, existingId);
       const norm = doc.title.trim().toLowerCase().replace(/\.md$/i, "");
-      const node: GraphNodeData = {
-        id: docId,
-        label: doc.title,
-        path: doc.path,
-        type: isSpace ? "space" : "chapter",
-        inDegree: 0,
-        outDegree: 0,
-        isCurrent: isMatchCurrent(docId, doc.path, doc.title),
-        normTitle: norm,
-      };
-      nodesMap.set(docId, node);
-      normTitleToId.set(norm, docId);
+      if (norm) normTitleToId.set(norm, existingId);
+      if (isMatchCurrent(docId, doc.path, doc.title)) {
+        const existingNode = nodesMap.get(existingId);
+        if (existingNode) existingNode.isCurrent = true;
+      }
+      continue;
     }
+
+    const isSpace = Boolean(
+      (doc.path && (doc.path.toLowerCase().includes("space/") || doc.path.toLowerCase().includes("space\\"))) ||
+      doc.path?.includes(".space") ||
+      docId.startsWith("space-")
+    );
+    const norm = doc.title.trim().toLowerCase().replace(/\.md$/i, "");
+    const node: GraphNodeData = {
+      id: docId,
+      label: doc.title,
+      path: doc.path,
+      type: isSpace ? "space" : "chapter",
+      inDegree: 0,
+      outDegree: 0,
+      isCurrent: isMatchCurrent(docId, doc.path, doc.title),
+      normTitle: norm,
+    };
+    nodesMap.set(docId, node);
+    normTitleToId.set(docId, docId);
+    normTitleToId.set(norm, docId);
   }
 
   const edges: GraphEdgeData[] = [];
   const edgeSet = new Set<string>();
 
   for (const [sourceId, targets] of index.forwardLinks.entries()) {
-    const sourceNode = nodesMap.get(sourceId);
+    const canonicalSourceId = normTitleToId.get(sourceId) || sourceId;
+    const sourceNode = nodesMap.get(canonicalSourceId);
     if (!sourceNode) continue;
 
     for (const targetNorm of targets) {
-      const targetId = normTitleToId.get(targetNorm);
-      if (!targetId || targetId === sourceId) continue;
+      const canonicalTargetId = normTitleToId.get(targetNorm);
+      if (!canonicalTargetId || canonicalTargetId === canonicalSourceId) continue;
 
-      const edgeKey = `${sourceId}->${targetId}`;
+      const edgeKey = `${canonicalSourceId}->${canonicalTargetId}`;
       if (!edgeSet.has(edgeKey)) {
         edgeSet.add(edgeKey);
         edges.push({
           id: edgeKey,
-          source: sourceId,
-          target: targetId,
+          source: canonicalSourceId,
+          target: canonicalTargetId,
         });
 
         sourceNode.outDegree += 1;
-        const targetNode = nodesMap.get(targetId);
+        const targetNode = nodesMap.get(canonicalTargetId);
         if (targetNode) {
           targetNode.inDegree += 1;
         }

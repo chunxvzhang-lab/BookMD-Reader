@@ -204,4 +204,32 @@ describe("graphService", () => {
     const graphByUri = buildGraphDataFromIndex(manifest, index, "file:c%3A%2Fdocs%2Fguide.md");
     expect(graphByUri.nodes.find((n) => n.id === "chap-guide")?.isCurrent).toBe(true);
   });
+
+  it("deduplicates identical documents across manifest chapters and index documents", () => {
+    const manifest: BookManifest = {
+      id: "book-dup",
+      title: "Dup Book",
+      chapters: [
+        { id: "chapter-0", title: "USER_MANUAL", src: "USER_MANUAL.md" },
+      ],
+    };
+    const index = createBacklinkIndex();
+    // Simulate user editing where document is indexed under a different docId like 'uploaded'
+    updateDocumentInIndex(
+      index,
+      "uploaded",
+      "USER_MANUAL",
+      "Content of user manual",
+      "USER_MANUAL.md"
+    );
+
+    const graph = buildGraphDataFromIndex(manifest, index, "USER_MANUAL");
+    // MUST have exactly 1 node for USER_MANUAL, NEVER duplicate nodes
+    const manualNodes = graph.nodes.filter(
+      (n) => n.label === "USER_MANUAL" || n.normTitle === "user_manual"
+    );
+    expect(manualNodes.length).toBe(1);
+    expect(graph.nodes.length).toBe(1);
+    expect(manualNodes[0].isCurrent).toBe(true);
+  });
 });
