@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
-    tag = "v1.8.0"
-    title = "KnowSpace v1.8.0 - 知识网络全景拓扑图谱、双向链接网络、全局双链重构与 60FPS 极速渲染"
+    tag = "v1.9.0"
+    title = "KnowSpace v1.9.0 - 实时双向思维导图、块级原子互联、卡片内联嵌入与 MSI 安装包"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -75,48 +75,35 @@ def main():
             time.sleep(2)
 
     # 3. Create Release Body
-    body_md = """# 🚀 KnowSpace v1.8.0
+    body_md = """# 🚀 KnowSpace v1.9.0
 
 **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次 **v1.8.0** 迎来重磅里程碑更新——**「知识网络全景拓扑图谱与双向链接系统 (Knowledge Graph & Bi-directional Links)」** 正式上线！彻底打破孤岛式文档记录模式，将碎片速记与知识文档升维为互联互通的个人立体数字大脑！
+本次 **v1.9.0** 带来首要重磅版本更新——**「结构认知、实时双向思维导图与块级原子互联体系 (Mind Map & Block-level Links)」** 全新发布！从宏观章节大纲到微观段落原子，为知识创作者构建高密度的结构化认知网络！
 
 ---
 
-### ✨ v1.8.0 核心更新亮点
+### ✨ v1.9.0 核心更新亮点
 
-1. **🌐 60FPS 极速全景拓扑图谱 (Global Knowledge Graph)**：
-   - 全面移除沉重的 GPU 离屏纹理快照机制（`textureOnViewport: false`），采用**原生 2D Canvas 直接绘制管线**；
-   - 鼠标滚轮缩放与双指平移漫游全面接入 **RAF 动画帧级事件节流**，杜绝每秒数十次 React 重渲染，大中小图谱均达到 60FPS+ 的丝滑操作质感；
-   - **默认 100% 缩放与居中**：打开图谱时初始视口固定为标准 100% 并聚焦当前文档，工具栏支持手动输入 `10%` ~ `500%` 精确数值微调。
+1. **🧠 Markdown 实时双向思维导图 (Mind Map View)**：
+   - **第四维度视图无缝切换**：顶部与左下角视图控制栏新增「**脑图**」模式，支持全局快捷键 **`Ctrl + M`** 在编辑视图与思维导图之间秒级自由切换；
+   - **多叉树层级排版引擎**：毫秒级将 Markdown 的 H1~H6 大纲层级转化为带有自然配色分支与平滑三次贝塞尔曲线的知识导图；
+   - **双向平滑定位与微光脉冲**：点击脑图中任意小节节点，界面即刻返回分屏/阅读视图并平滑滚动到正文对应小节，目标段落伴随 **1.8 秒专属青色微光脉冲（Cyan Glow Pulse）**；
+   - **轻量高性能 SVG 画布**：支持鼠标滚轮缩放（25%~250%）、鼠标按住拖拽漫游、单节点展开收起（`[+]` / `[−]`）；
+   - **矢量与高清导出**：导图工具栏支持一键将当前导图导出为无损矢量 **SVG** 或超清 **PNG** 图像。
 
-2. **🌌 自研 2.2ms 黄金螺旋 2D 有机力导向分布算法 (`computeOrganicGraphPositions`)**：
-   - 彻底告别原 CoSE 遇到孤岛节点排成单列垂直“摩天大楼”或文字重叠遮挡的缺陷；
-   - 采用 **黄金角自然发散 + 库仑电荷排斥 + 虎克弹簧引力 + 95px 防穿透最小安全间距**；
-   - 耗时仅 **2.2 毫秒** 瞬间计算就绪，关联紧密的文档自然聚集成星系簇，孤岛与闪念笔记疏密得当、四面环绕发散，节点文字绝对防重叠碰撞。
+2. **⚓ 块级原子互联体系 (Block-level Linking & Anchors)**：
+   - **块指纹标记 (`^block-id`)**：在任何段落、公式或列表末尾添加 ` ^block-id`（如 ` ^core-summary`），阅读引擎自动转化为可交互的块级徽章 `[^core-summary]`；
+   - **一键复制块语法**：在正文中点击块徽章，瞬间将 `[[#^block-id]]` 复制到剪贴板，并伴随 `✓ 已复制块引用` 动画提示；
+   - **精准块级跳转 (`[[doc#^block]]` & `[[#^block]]`)**：渲染为专属的锚点双链（带 `⚓` 标识），点击跨文档或本文档块链接，秒级精准穿梭至对应段落并触发微光脉冲；
+   - **块级内联卡片嵌入 (Transclusion `![[doc#^block]]`)**：支持类似 Obsidian 的卡片内嵌语法，在正文中无缝渲染优雅的引用卡片，右上角带有出处溯源链接。
 
-3. **🎯 镜头平滑聚焦当前文档与发光波纹动效 (`Crosshair Focus`)**：
-   - 深度重构多层级智能解析器（`findCurrentNode`），无论文件来自本地绝对路径、URL 编码路径还是未编目闪念，实现 100% 精准定位；
-   - 采用 **三次贝塞尔缓动（`ease-in-out-cubic`, 350ms）** 镜头平滑推近，并激发 **1.5 秒专属天蓝脉冲波纹（Pulse Glow）**；
-   - 遇孤岛节点过滤或关键字搜索时自动解禁召回，确保视线随时精准锁定当前编辑文档。
+3. **⚡ CodeMirror 块级语法实时联想补全**：
+   - 在源码编辑中键入 `[[#^` 或 `[[文档#^` 时，自动解析并弹窗展示候选块的前 40 字符摘要，支持回车一键补全。
 
-4. **🔗 双向链接语法与实时联想补全 (`[[Wikilink]]`)**：
-   - 在编辑器中键入 `[[` 即可毫秒级弹出工作区文档智能补全建议卡片；
-   - 按住 `Ctrl` 键点击正文中任意双链，秒级跨文档平滑跳转并定位至对应目标章节；
-   - 在闪念胶囊速记微窗中同样支持 `[[` 实时补全与链接插入。
-
-5. **🔄 全局智能无损重构 (Link Rename Propagation)**：
-   - 在目录树中重命名任何文档或修改标题时，系统自动扫描并更新全局所有引用该文档的 `[[旧标题]]` 为 `[[新标题]]`；
-   - 配备冲突防回滚机制，保障知识网络永久连通不失效。
-
-6. **🗂️ 侧边栏反向链接与未链接提及面板 (Backlinks & Mentions)**：
-   - **已链接引用 (Linked References)**：清晰列出当前文档被哪些笔记引用，附带行号与上下文摘要；
-   - **未链接提及 (Unlinked Mentions)**：智能挖掘正文中提到当前文档标题但尚未建立链接的段落，支持一键无损转化为标准双链。
-
-7. **⚡ 闪念 Space 纯净看板与独立展示**：
-   - 界面文案统一去冗余，净化为沉稳克制的「**闪念 Space**」；
-   - 大纲侧栏平时隐藏碎片化的分钟级闪念文件，通过快捷栏打开时以专属看板模式独立呈现，保持知识库目录树整洁清晰。
+4. **🌐 知识图谱与拓扑网络进一步稳固**：
+   - 规范化节点去重与防抖更新，知识图谱与侧边栏按键色调统一保持灵动天蓝。
 
 ---
 
@@ -124,7 +111,7 @@ def main():
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`KnowSpace-1.8.0.msi`** | Windows 企业级标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
+| **`KnowSpace-1.9.0.msi`** | Windows 标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
 | **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 免安装解压即用，解压后双击 `KnowSpace.exe` 即可运行 |
 
 ---
@@ -176,9 +163,9 @@ def main():
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.8.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.8.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.8.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.9.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.9.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.9.0.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
@@ -190,7 +177,7 @@ def main():
     assets_to_upload = [
         (
             msi_path,
-            "KnowSpace-1.8.0.msi",
+            "KnowSpace-1.9.0.msi",
             "application/x-msi"
         ),
         (

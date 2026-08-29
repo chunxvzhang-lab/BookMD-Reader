@@ -15,8 +15,8 @@ async function main() {
   console.log("1. Ensuring dist is built...");
   await assertExists(path.join(root, "dist", "index.html"), "dist is missing. Run npm run build first.");
 
-  console.log("2. Building unpacked application via electron-builder...");
-  await execPromise("npx electron-builder --win dir", { cwd: root });
+  console.log("2. Building MSI installer and unpacked application via electron-builder...");
+  await execPromise("npx electron-builder --win msi dir", { cwd: root });
 
   console.log("3. Copying unpacked binaries into release/KnowSpace-win-x64...");
   await fs.mkdir(releaseRoot, { recursive: true });

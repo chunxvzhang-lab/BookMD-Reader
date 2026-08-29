@@ -10,7 +10,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.8.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.8.0" />
+  <img src="https://img.shields.io/badge/Version-v1.9.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.9.0" />
+  <img src="https://img.shields.io/badge/Mind_Map-Ctrl%2BM-00BA7C?style=flat-square" alt="Mind Map" />
+  <img src="https://img.shields.io/badge/Block_Links-%5Eblock--id-8B5CF6?style=flat-square" alt="Block Links" />
   <img src="https://img.shields.io/badge/Knowledge_Graph-60FPS-00BA7C?style=flat-square" alt="Knowledge Graph" />
   <img src="https://img.shields.io/badge/Flash_Notes-Alt%2BSpace-F59E0B?style=flat-square" alt="Flash Notes" />
   <img src="https://img.shields.io/badge/Theme-E--ink%20Paper%20%7C%20Geek%20Dark-1D9BF0?style=flat-square" alt="Themes" />
@@ -42,6 +44,8 @@
 
 ## 🏛️ 核心能力体系
 
+- **🧠 Mind Map View（双向思维导图）**：Markdown 大纲一键转化为交互式多叉树脑图（`Ctrl+M`），节点双向定位正文微光脉冲、子树折叠收缩、鼠标滚轮漫游缩放与矢量 SVG/PNG 高清导出。
+- **⚓ Block-Level Linking & Embedding（块级原子互联）**：`^block-id` 段落指纹标记、`[[doc#^block]]` 块引用跳转与 `![[doc#^block]]` 块级卡片内联嵌入，配合 CodeMirror 极速块补全。
 - **🌐 Graph & Backlinks（知识图谱与双链）**：60FPS 极速全景拓扑图谱、2.2ms 黄金螺旋 2D 有机力导向布局、[[Wikilink]] 实时补全与全局级联重构。
 - **⚡ Flash Capsule（闪念胶囊）**：全局热键秒级呼出毛玻璃微窗，随叫随到，原子归档落盘至 `Inbox/` 收集箱。
 - **📖 Reader（阅读）**：纯净沉浸的 Markdown 排版阅读引擎，支持正文源码行号自动映射与双侧联动高亮。
@@ -198,7 +202,7 @@
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`KnowSpace-1.8.0.msi`
+- **文件**：`KnowSpace-1.9.0.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版
