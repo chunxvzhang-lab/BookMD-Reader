@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
   ListTree,
@@ -87,6 +87,7 @@ export const MindmapView = memo(function MindmapView({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const lastEmittedSourceRef = useRef<string>("");
 
   // Initialize tree from source or headings
@@ -119,6 +120,34 @@ export const MindmapView = memo(function MindmapView({
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>("");
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
+  const [menuPos, setMenuPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
+
+  // Safe boundary calculation for context menu to prevent bottom/right clipping
+  useLayoutEffect(() => {
+    if (!contextMenu) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const cWidth = container.clientWidth;
+    const cHeight = container.clientHeight;
+    const menuEl = menuRef.current;
+    const mWidth = menuEl?.offsetWidth || 252;
+    const mHeight = menuEl?.offsetHeight || 410;
+
+    let left = contextMenu.x;
+    let top = contextMenu.y;
+
+    // Prevent overflowing right boundary
+    if (left + mWidth > cWidth - 16) {
+      left = Math.max(16, cWidth - mWidth - 16);
+    }
+    // Prevent overflowing bottom boundary
+    if (top + mHeight > cHeight - 16) {
+      top = Math.max(16, cHeight - mHeight - 16);
+    }
+
+    setMenuPos({ left: Math.round(left), top: Math.round(top) });
+  }, [contextMenu]);
 
   // Undo / Redo history stacks (retained for keyboard shortcuts Ctrl+Z / Ctrl+Y)
   const undoStackRef = useRef<MindmapNode[]>([]);
@@ -329,7 +358,6 @@ export const MindmapView = memo(function MindmapView({
   // Global Mindmap Keydown shortcuts
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // If currently editing text in the overlay input, let input handle its own keys
       if (editingNodeId) {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -639,29 +667,6 @@ export const MindmapView = memo(function MindmapView({
                   <CornerDownRight size={14} />
                   <span>子主题</span>
                 </button>
-                <button
-                  type="button"
-                  className="mindmap-tool-btn text-btn"
-                  onClick={() => startEditing()}
-                  title="重命名主题文字 (F2 / 双击)"
-                >
-                  <Edit3 size={14} />
-                  <span>重命名</span>
-                </button>
-                <button
-                  type="button"
-                  className="mindmap-tool-btn text-btn delete-btn"
-                  onClick={() => handleDeleteNode()}
-                  disabled={
-                    !selectedNodeId ||
-                    selectedNodeId === tree.id ||
-                    selectedNodeId === "root-mindmap-node"
-                  }
-                  title="删除选中主题 (Delete)"
-                >
-                  <Trash2 size={14} />
-                  <span>删除</span>
-                </button>
               </div>
 
               <div className="mindmap-toolbar-divider" />
@@ -675,7 +680,7 @@ export const MindmapView = memo(function MindmapView({
                     const containerRect = containerRef.current?.getBoundingClientRect();
                     setContextMenu({
                       x: rect.left - (containerRect?.left ?? 0),
-                      y: rect.bottom - (containerRect?.top ?? 0) + 4,
+                      y: rect.bottom - (containerRect?.top ?? 0) + 6,
                       nodeId: selectedNodeId || tree.id,
                     });
                   }}
@@ -904,45 +909,18 @@ export const MindmapView = memo(function MindmapView({
                     />
                   )}
 
-                  {/* Level Tag / Icon Indicator */}
-                  {!isRoot && (
-                    <rect
-                      x={6}
-                      y={(node.height - 18) / 2}
-                      width={22}
-                      height={18}
-                      rx={3}
-                      ry={3}
-                      fill={color}
-                      fillOpacity={0.18}
-                      stroke={color}
-                      strokeWidth={0.8}
-                    />
-                  )}
-                  {!isRoot && (
-                    <text
-                      x={17}
-                      y={node.height / 2}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      className="mindmap-node-level-text"
-                      fill={color}
-                    >
-                      H{node.level}
-                    </text>
-                  )}
-
-                  {/* Node Label Text */}
+                  {/* Node Label Text - Exactly Centered inside Card */}
                   <text
-                    x={isRoot ? 16 : 34}
+                    x={node.width / 2}
                     y={node.height / 2}
+                    textAnchor="middle"
                     dominantBaseline="central"
                     className={`mindmap-node-title-text ${isRoot ? "root-title" : ""}`}
                   >
                     {node.text}
                   </text>
 
-                  {/* Children Collapse/Expand Toggle Button */}
+                  {/* Children Collapse/Expand Toggle Button (+ / - geometrically centered via SVG vector lines) */}
                   {node.hasChildren && (
                     <g
                       className="mindmap-collapse-btn"
@@ -952,22 +930,39 @@ export const MindmapView = memo(function MindmapView({
                       <circle
                         r={7}
                         className="mindmap-collapse-circle"
+                        fill="var(--surface)"
                         stroke={color}
                         strokeWidth={1.2}
                       />
-                      <text
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        className="mindmap-collapse-symbol"
-                        fill={color}
-                      >
-                        {node.collapsed ? "+" : "−"}
-                      </text>
+                      {/* Horizontal bar of minus / plus - guaranteed centered at y=0 */}
+                      <line
+                        x1={-3.2}
+                        y1={0}
+                        x2={3.2}
+                        y2={0}
+                        stroke={color}
+                        strokeWidth={1.4}
+                        strokeLinecap="round"
+                        pointerEvents="none"
+                      />
+                      {/* Vertical bar of plus when collapsed - guaranteed centered at x=0 */}
+                      {node.collapsed && (
+                        <line
+                          x1={0}
+                          y1={-3.2}
+                          x2={0}
+                          y2={3.2}
+                          stroke={color}
+                          strokeWidth={1.4}
+                          strokeLinecap="round"
+                          pointerEvents="none"
+                        />
+                      )}
                       <title>{node.collapsed ? "展开子分支" : "折叠子分支"}</title>
                     </g>
                   )}
 
-                  {/* Quick Add Subtopic Button on Hover/Selection (Positioned cleanly, zero jitter) */}
+                  {/* Quick Add Subtopic Button on Hover/Selection (+ geometrically centered via SVG vector lines) */}
                   {editable && (isHovered || isSelected) && (
                     <g
                       className="mindmap-node-add-btn"
@@ -979,14 +974,27 @@ export const MindmapView = memo(function MindmapView({
                       }}
                     >
                       <circle r={7.5} className="mindmap-add-circle" fill="#38bdf8" />
-                      <text
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        className="mindmap-add-symbol"
-                        fill="#ffffff"
-                      >
-                        +
-                      </text>
+                      {/* Cross lines of plus - guaranteed centered at (0, 0) */}
+                      <line
+                        x1={-3.2}
+                        y1={0}
+                        x2={3.2}
+                        y2={0}
+                        stroke="#ffffff"
+                        strokeWidth={1.6}
+                        strokeLinecap="round"
+                        pointerEvents="none"
+                      />
+                      <line
+                        x1={0}
+                        y1={-3.2}
+                        x2={0}
+                        y2={3.2}
+                        stroke="#ffffff"
+                        strokeWidth={1.6}
+                        strokeLinecap="round"
+                        pointerEvents="none"
+                      />
                       <title>添加子主题 (Tab)</title>
                     </g>
                   )}
@@ -1010,6 +1018,7 @@ export const MindmapView = memo(function MindmapView({
             width: Math.max(120, editingNode.width * transform.scale),
             height: Math.max(30, editingNode.height * transform.scale),
             fontSize: `${Math.max(11, Math.round(13 * transform.scale))}px`,
+            textAlign: "center",
           }}
           value={editingText}
           onChange={(e) => setEditingText(e.target.value)}
@@ -1029,10 +1038,11 @@ export const MindmapView = memo(function MindmapView({
       {/* Right Click Appearance Customization Context Menu */}
       {contextMenu && (
         <div
+          ref={menuRef}
           className="mindmap-context-menu"
           style={{
-            left: Math.min(contextMenu.x, (containerRef.current?.clientWidth || 800) - 240),
-            top: Math.min(contextMenu.y, (containerRef.current?.clientHeight || 600) - 370),
+            left: menuPos.left,
+            top: menuPos.top,
           }}
           onClick={(e) => e.stopPropagation()}
         >

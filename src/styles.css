@@ -7912,7 +7912,8 @@ body:has(.flash-capsule-overlay) {
   font-size: 12.5px;
   font-weight: 500;
   fill: var(--text);
-  dominant-baseline: middle;
+  text-anchor: middle;
+  dominant-baseline: central;
   pointer-events: none;
   font-family: inherit;
 }
@@ -7921,31 +7922,22 @@ body:has(.flash-capsule-overlay) {
   font-size: 14px;
   font-weight: 700;
   fill: #38bdf8;
-}
-
-.mindmap-node-level-text {
-  font-size: 10px;
-  font-weight: 700;
-  dominant-baseline: middle;
-  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: central;
 }
 
 .mindmap-collapse-btn {
   cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.mindmap-collapse-btn:hover {
-  transform: scale(1.2);
 }
 
 .mindmap-collapse-circle {
   fill: var(--surface);
-  transition: fill 0.15s ease;
+  transition: fill 0.15s ease, filter 0.15s ease;
 }
 
 .mindmap-collapse-btn:hover .mindmap-collapse-circle {
   fill: var(--surface-2);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.18));
 }
 
 .mindmap-collapse-symbol {
@@ -8034,6 +8026,9 @@ body:has(.flash-capsule-overlay) {
 .mindmap-context-menu {
   position: absolute;
   width: 250px;
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: color-mix(in srgb, var(--surface) 96%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
