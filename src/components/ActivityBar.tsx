@@ -220,6 +220,14 @@ export function ActivityBar({
           >
             <Code2 size={16} />
           </button>
+          <button
+            type="button"
+            className={`activity-btn mini ${viewMode === "mindmap" ? "active" : ""}`}
+            onClick={() => onViewModeChange("mindmap")}
+            data-tooltip="思维导图模式 (Ctrl+M)"
+          >
+            <ListTree size={16} />
+          </button>
         </div>
 
         {onToggleFullscreen && (

@@ -22,6 +22,7 @@ import {
 import { buildGraphDataFromIndex } from "./services/graphService";
 import { FileConflictDialog } from "./components/FileConflictDialog";
 import { MediaLightbox, type LightboxMedia } from "./components/MediaLightbox";
+import { MindmapView } from "./components/MindmapView";
 import { SearchPanel } from "./components/SearchPanel";
 import { SpaceTimelinePanel } from "./components/SpaceTimelinePanel";
 import { StatusBar } from "./components/StatusBar";
@@ -324,9 +325,13 @@ export function App() {
       // 1. If Reader pane is present (read or split mode), scroll preview accurately and scoped
       const container = readerRef.current;
       if (container) {
+        const cleanBlockId = headingId.replace(/^[#^]+/, "");
         let target =
           container.querySelector<HTMLElement>(`[data-heading-id="${CSS.escape(headingId)}"]`) ||
-          container.querySelector<HTMLElement>(`#${CSS.escape(headingId)}`);
+          container.querySelector<HTMLElement>(`#${CSS.escape(headingId)}`) ||
+          container.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(cleanBlockId)}"]`) ||
+          container.querySelector<HTMLElement>(`[id="^${CSS.escape(cleanBlockId)}"]`) ||
+          container.querySelector<HTMLElement>(`#${CSS.escape(cleanBlockId)}`);
 
         if (!target) {
           const headingsInDom = Array.from(container.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6"));
@@ -356,23 +361,44 @@ export function App() {
             top: Math.max(0, targetTop - 24),
             behavior,
           });
+
+          // Focus pulse glow animation on target element
+          target.classList.add("jump-target-pulse");
+          window.setTimeout(() => {
+            target?.classList.remove("jump-target-pulse");
+          }, 1800);
         }
       }
 
-      // 2. If Editor pane is present (source or split mode), scroll editor directly to heading line
+      // 2. If Editor pane is present (source or split mode), scroll editor directly to heading or block line
       const editor = editorViewRef.current;
-      if (editor && session?.source && heading) {
-        const lineNum = findHeadingLineInSource(session.source, heading);
-        if (lineNum > 0) {
-          const totalLines = editor.state.doc.lines;
-          const safeLineNum = Math.min(Math.max(1, lineNum), totalLines);
-          const line = editor.state.doc.line(safeLineNum);
-          editor.dispatch({
-            selection: { anchor: line.from, head: line.from },
-            effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 40 }),
-          });
-          if (viewMode === "source") {
-            editor.focus();
+      if (editor && session?.source) {
+        if (headingId.startsWith("^") || headingId.includes("^")) {
+          const cleanBlockId = headingId.replace(/^[#^]+/, "");
+          const content = editor.state.doc.toString();
+          const idx = content.indexOf(`^${cleanBlockId}`);
+          if (idx !== -1) {
+            editor.dispatch({
+              selection: { anchor: idx, head: idx },
+              effects: EditorView.scrollIntoView(idx, { y: "center", yMargin: 40 }),
+            });
+            if (viewMode === "source") {
+              editor.focus();
+            }
+          }
+        } else if (heading) {
+          const lineNum = findHeadingLineInSource(session.source, heading);
+          if (lineNum > 0) {
+            const totalLines = editor.state.doc.lines;
+            const safeLineNum = Math.min(Math.max(1, lineNum), totalLines);
+            const line = editor.state.doc.line(safeLineNum);
+            editor.dispatch({
+              selection: { anchor: line.from, head: line.from },
+              effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 40 }),
+            });
+            if (viewMode === "source") {
+              editor.focus();
+            }
           }
         }
       }
@@ -1630,6 +1656,10 @@ export function App() {
         event.preventDefault();
         handleToggleGraphPane();
       }
+      if (event.ctrlKey && event.key.toLowerCase() === "m") {
+        event.preventDefault();
+        setViewMode((m) => (m === "mindmap" ? "split" : "mindmap"));
+      }
       if (event.ctrlKey && event.key === "\\") {
         event.preventDefault();
         setDirectoryOpen((open) => !open);
@@ -1712,7 +1742,13 @@ export function App() {
       if (!target.trim()) return;
       const [docPart, anchorPart] = target.split("#");
       const cleanTarget = (docPart || "").trim().replace(/\.md$/i, "");
-      if (!cleanTarget) return;
+      if (!cleanTarget) {
+        if (anchorPart) {
+          jumpToHeading(anchorPart.trim());
+          setNotice(`已跳转至锚点/块引用：#${anchorPart.trim()}`);
+        }
+        return;
+      }
 
       // 1. Search in current workspace chapters
       if (manifest?.chapters && manifest.chapters.length > 0) {
@@ -2336,6 +2372,19 @@ export function App() {
                   setSidebarTab("backlinks");
                   setSidebarOpen(true);
                 }}
+              />
+            ) : viewMode === "mindmap" && session ? (
+              <MindmapView
+                title={activeChapter?.title ?? session?.fileName ?? "知识思维导图"}
+                headings={renderedChapter?.headings ?? []}
+                theme={preferences.theme}
+                onJumpToHeading={(headingId, _line) => {
+                  setViewMode("split");
+                  window.setTimeout(() => {
+                    jumpToHeading(headingId);
+                  }, 80);
+                }}
+                onClose={() => setViewMode("split")}
               />
             ) : session ? (
               <DocumentWorkspace

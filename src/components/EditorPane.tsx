@@ -362,21 +362,63 @@ export function EditorPane({
     const initialCursorPos = 0;
 
     const wikiLinkCompletionSource = (context: CompletionContext): CompletionResult | null => {
-      const word = context.matchBefore(/\[\[([^\]\n|]*)/);
-      if (!word || !word.text.startsWith("[[")) return null;
+      const word = context.matchBefore(/(!?\[\[)([^\]\n|]*)/);
+      if (!word) return null;
 
-      const query = word.text.slice(2).trim().toLowerCase();
+      const prefix = word.text.startsWith("![[") ? "![[" : "[[";
+      const rawQuery = word.text.slice(prefix.length).trim();
+      const queryLower = rawQuery.toLowerCase();
+
+      // Autocomplete for block references [[#^... or [[doc#^...
+      if (rawQuery.includes("#^")) {
+        const [docPart, blockQuery] = rawQuery.split("#^");
+        const blockClean = (blockQuery || "").toLowerCase();
+        const docText = context.state.doc.toString();
+        const blockMatches: { id: string; snippet: string }[] = [];
+        const lines = docText.split(/\r?\n/);
+        for (let i = 0; i < lines.length; i++) {
+          const m = lines[i].match(/\s\^([a-zA-Z0-9_-]+)$/);
+          if (m) {
+            const blockId = m[1];
+            if (!blockClean || blockId.toLowerCase().includes(blockClean)) {
+              const snippet = lines[i].replace(/\s\^([a-zA-Z0-9_-]+)$/, "").trim();
+              blockMatches.push({ id: blockId, snippet: snippet.slice(0, 40) });
+            }
+          }
+        }
+
+        if (blockMatches.length > 0) {
+          return {
+            from: word.from + prefix.length,
+            options: blockMatches.map((b) => ({
+              label: (docPart ? `${docPart}#^` : "#^") + b.id,
+              detail: b.snippet,
+              type: "keyword",
+              apply: (view: EditorView, completion: any, from: number, to: number) => {
+                const docAfter = view.state.sliceDoc(to, to + 2);
+                const needsClosing = docAfter !== "]]";
+                const insert = completion.label + (needsClosing ? "]]" : "");
+                view.dispatch({
+                  changes: { from, to, insert },
+                  selection: { anchor: from + insert.length },
+                });
+              },
+            })),
+            filter: false,
+          };
+        }
+      }
+
       const targets = wikiLinkTargetsRef.current;
-
       const matched = targets.filter((t) => {
-        if (!query) return true;
+        if (!queryLower) return true;
         const titleLower = t.title.toLowerCase();
         const pathLower = (t.relativePath || "").toLowerCase();
-        return titleLower.includes(query) || pathLower.includes(query);
+        return titleLower.includes(queryLower) || pathLower.includes(queryLower);
       });
 
       return {
-        from: word.from + 2,
+        from: word.from + prefix.length,
         options: matched.map((t) => ({
           label: t.title,
           detail: t.relativePath || undefined,

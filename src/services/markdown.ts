@@ -132,6 +132,7 @@ const markdown: MarkdownIt = new MarkdownIt({
 })
   .use(sourceLineMappingPlugin)
   .use(mathPlugin)
+  .use(blockAnchorPlugin)
   .use(wikiLinkPlugin)
   .use(taskLists, { enabled: true, label: true })
   .use(frontMatterPlugin, (frontMatter: string) => {
@@ -158,6 +159,8 @@ export async function renderMarkdown(source: string, baseUrl = window.location.h
       "data-source-line-end",
       "data-wikilink-target",
       "data-wikilink-label",
+      "data-block-id",
+      "data-embed-target",
       "decoding",
       "encoding",
       "fetchpriority",
@@ -778,16 +781,60 @@ function compactWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function blockAnchorPlugin(md: MarkdownIt): void {
+  const blockRegex = /\s\^([a-zA-Z0-9_-]+)$/;
+  md.core.ruler.push("block_anchor", (state) => {
+    for (const blockToken of state.tokens) {
+      if (blockToken.type === "inline" && blockToken.children && blockToken.children.length > 0) {
+        const lastChild = blockToken.children[blockToken.children.length - 1];
+        if (lastChild && lastChild.type === "text" && blockRegex.test(lastChild.content)) {
+          const match = lastChild.content.match(blockRegex);
+          if (match) {
+            const blockId = match[1];
+            // Remove the ^blockId from visible text
+            lastChild.content = lastChild.content.replace(blockRegex, "").trimEnd();
+
+            // Push anchor token
+            const anchorToken = new (state.Token as any)("block_anchor", "span", 0);
+            anchorToken.attrs = [
+              ["id", `^${blockId}`],
+              ["class", "block-anchor"],
+              ["data-block-id", blockId],
+              ["title", `块引用指纹: ^${blockId} (点击复制块引用)`],
+            ];
+            anchorToken.meta = { blockId };
+            blockToken.children.push(anchorToken);
+          }
+        }
+      }
+    }
+  });
+
+  md.renderer.rules.block_anchor = (tokens, idx) => {
+    const token = tokens[idx];
+    const blockId = token.meta?.blockId || token.attrGet("data-block-id") || "";
+    return `<span id="^${blockId}" class="block-anchor" data-block-id="${blockId}" title="块引用指纹: ^${blockId}"><span class="block-anchor-symbol">^</span><span class="block-anchor-id">${blockId}</span></span>`;
+  };
+}
+
 function wikiLinkPlugin(md: MarkdownIt): void {
   md.inline.ruler.before("link", "wikilink", (state: any, silent: boolean) => {
+    let isEmbed = false;
+    let start = state.pos;
     if (
-      state.src.charCodeAt(state.pos) !== 0x5b /* [ */ ||
-      state.src.charCodeAt(state.pos + 1) !== 0x5b /* [ */
+      state.src.charCodeAt(start) === 0x21 /* ! */ &&
+      state.src.charCodeAt(start + 1) === 0x5b /* [ */ &&
+      state.src.charCodeAt(start + 2) === 0x5b /* [ */
+    ) {
+      isEmbed = true;
+      start += 1;
+    } else if (
+      state.src.charCodeAt(start) !== 0x5b /* [ */ ||
+      state.src.charCodeAt(start + 1) !== 0x5b /* [ */
     ) {
       return false;
     }
 
-    const start = state.pos;
     const max = state.posMax;
     const close = state.src.indexOf("]]", start + 2);
     if (close === -1 || close > max) return false;
@@ -804,14 +851,16 @@ function wikiLinkPlugin(md: MarkdownIt): void {
         label = raw.slice(pipeIdx + 1).trim() || target;
       }
 
-      const token = state.push("wikilink", "a", 0);
+      const isBlockRef = target.includes("#^");
+      const token = state.push(isEmbed ? "wikilink_embed" : "wikilink", isEmbed ? "div" : "a", 0);
       token.attrs = [
-        ["class", "wikilink"],
+        ["class", isEmbed ? "wikilink-embed-card" : isBlockRef ? "wikilink wikilink-block" : "wikilink"],
         ["href", `#wikilink:${encodeURIComponent(target)}`],
         ["data-wikilink-target", target],
         ["data-wikilink-label", label],
       ];
       token.content = label;
+      token.meta = { isBlockRef, isEmbed };
     }
 
     state.pos = close + 2;
@@ -822,10 +871,27 @@ function wikiLinkPlugin(md: MarkdownIt): void {
     const token = tokens[index];
     const target = token.attrGet("data-wikilink-target") || "";
     const label = token.attrGet("data-wikilink-label") || target;
+    const isBlockRef = token.meta?.isBlockRef || target.includes("#^");
     const escapedTarget = md.utils.escapeHtml(target);
     const escapedLabel = md.utils.escapeHtml(label);
     const encodedTarget = encodeURIComponent(target);
+
+    if (isBlockRef) {
+      return `<a class="wikilink wikilink-block" href="#wikilink:${encodedTarget}" data-wikilink-target="${escapedTarget}" data-wikilink-label="${escapedLabel}" title="跳转至块引用: ${escapedTarget}"><span class="wikilink-bracket">[[</span><span class="wikilink-block-symbol">⚓ </span><span class="wikilink-text">${escapedLabel}</span><span class="wikilink-bracket">]]</span></a>`;
+    }
+
     return `<a class="wikilink" href="#wikilink:${encodedTarget}" data-wikilink-target="${escapedTarget}" data-wikilink-label="${escapedLabel}" title="跳转至: ${escapedTarget}"><span class="wikilink-bracket">[[</span><span class="wikilink-text">${escapedLabel}</span><span class="wikilink-bracket">]]</span></a>`;
+  };
+
+  md.renderer.rules.wikilink_embed = (tokens, index) => {
+    const token = tokens[index];
+    const target = token.attrGet("data-wikilink-target") || "";
+    const label = token.attrGet("data-wikilink-label") || target;
+    const escapedTarget = md.utils.escapeHtml(target);
+    const escapedLabel = md.utils.escapeHtml(label);
+    const encodedTarget = encodeURIComponent(target);
+
+    return `<div class="wikilink-embed-card" data-embed-target="${escapedTarget}"><div class="embed-header"><span class="embed-tag">🔗 块级内联引用</span><a class="embed-source-link" href="#wikilink:${encodedTarget}" data-wikilink-target="${escapedTarget}" title="跳转至原出处">${escapedTarget}</a></div><div class="embed-content">${escapedLabel}</div></div>`;
   };
 }
 

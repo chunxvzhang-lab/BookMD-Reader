@@ -1,4 +1,4 @@
-import { BookOpen, Columns, Code2 } from "lucide-react";
+import { BookOpen, Columns, Code2, ListTree } from "lucide-react";
 import type { EditorViewMode } from "../core/types";
 
 type ViewModeControlProps = {
@@ -42,6 +42,17 @@ export function ViewModeControl({ mode, onChange, disabled = false }: ViewModeCo
       >
         <Code2 size={15} />
         <span>源码</span>
+      </button>
+      <button
+        type="button"
+        className={`view-mode-btn ${mode === "mindmap" ? "active text-cyan" : ""}`}
+        onClick={() => onChange("mindmap")}
+        disabled={disabled}
+        title="思维导图模式 (Ctrl+M)"
+        aria-pressed={mode === "mindmap"}
+      >
+        <ListTree size={15} />
+        <span>脑图</span>
       </button>
     </div>
   );

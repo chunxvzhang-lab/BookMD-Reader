@@ -103,8 +103,8 @@ export const ReaderPane = memo(function ReaderPane({
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      // 0. Check if clicking a WikiLink
-      const wikiLink = target.closest<HTMLAnchorElement>("a.wikilink");
+      // 0. Check if clicking a WikiLink or an Embedded Link
+      const wikiLink = target.closest<HTMLAnchorElement>("a.wikilink, a.embed-source-link");
       if (wikiLink) {
         e.preventDefault();
         e.stopPropagation();
@@ -112,6 +112,25 @@ export const ReaderPane = memo(function ReaderPane({
         if (wikilinkTarget && onWikiLinkClick) {
           setHoverPopover(null);
           onWikiLinkClick(wikilinkTarget);
+        }
+        return;
+      }
+
+      // 0.5. Check if clicking a block anchor to copy block reference
+      const blockAnchor = target.closest<HTMLElement>(".block-anchor");
+      if (blockAnchor) {
+        e.preventDefault();
+        e.stopPropagation();
+        const blockId = blockAnchor.getAttribute("data-block-id");
+        if (blockId) {
+          const refText = `[[#^${blockId}]]`;
+          navigator.clipboard.writeText(refText).then(() => {
+            const orig = blockAnchor.innerHTML;
+            blockAnchor.innerHTML = `<span class="block-anchor-symbol">✓</span><span class="block-anchor-id">已复制块引用</span>`;
+            setTimeout(() => {
+              blockAnchor.innerHTML = orig;
+            }, 1600);
+          });
         }
         return;
       }

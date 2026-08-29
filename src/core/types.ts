@@ -1,6 +1,15 @@
 export type SidebarTab = "toc" | "bookmarks" | "search" | "space" | "backlinks";
 export type ThemeMode = "system" | "light" | "twitter" | "eink";
-export type EditorViewMode = "read" | "split" | "source";
+export type EditorViewMode = "read" | "split" | "source" | "mindmap";
+
+export type MindmapNode = {
+  id: string;
+  text: string;
+  level: number;
+  line?: number;
+  children: MindmapNode[];
+  collapsed?: boolean;
+};
 
 export type DiskVersion = {
   size: number;

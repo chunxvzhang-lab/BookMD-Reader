@@ -30,6 +30,7 @@ export function StatusBar({
     read: "阅读视图",
     split: "分屏协作",
     source: "源码编辑",
+    mindmap: "思维导图",
   };
 
   return (
