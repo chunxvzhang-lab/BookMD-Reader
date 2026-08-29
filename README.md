@@ -173,16 +173,28 @@
 ### 9. 🧠 XMind 级交互思维导图与块级互联 (Mind Map & Block-Level Linking)
 *结构化思维重构，将单线性文本升维为动态树状与原子块网。*
 
-- **✨ XMind 快捷键高能交互**：
-  - `Tab` / `Insert`：为当前选中的节点快速创建**子主题**并进入就地编辑。
+- **✨ XMind 快捷键高能全键盘交互**：
+  - `Tab` / `Insert`：为当前选中的节点快速创建**子主题**并立即进入就地重命名。
   - `Enter`：创建**同级主题**，灵感连绵不绝。
-  - `Delete` / `Backspace`：删除选中分支，根节点安全保护。
-  - `F2` / `Space` / 双击：就地悬浮快速重命名，支持完整中文输入法。
+  - `Delete` / `Backspace`：删除选中分支，根节点享有防误删安全保护。
+  - `F2` / `Space` / 双击：就地呼出悬浮输入框修改文字，完美支持中文输入法（IME）。
   - `方向键 (↑ ↓ ← →)`：在父子层级与同级兄弟分支之间流畅跳动导航。
-  - `Ctrl + Z` / `Ctrl + Y`：完整的历史状态撤销与重做。
-- **📝 双向无损 Markdown 规范序列化**：导图实时双向序列化为自然易读的 Markdown 缩进层级列表（`# 中心主题`、`- 分支主题`），任何第三方编辑器或 Git 均可纯净查看。
-- **➕ 新建思维导图**：目录树顶部与空白首页直设「新建思维导图」入口，一键生成专用 `.mindmap.md` 脑图文件。
-- **🎨 交互视觉与高清导出**：色彩分支自动映射、折叠/展开动画、选区脉冲光环、鼠标滚轮平滑缩放与一键导出矢量 SVG / 高清 PNG。
+  - `Ctrl + Z` / `Ctrl + Y`：完整的树结构历史快照堆栈，改动随心撤销与重做。
+- **🎨 节点与连线右键外观深度定制 (Right-Click Customization)**：
+  - **节点右键菜单**：在任意脑图节点（包括中心主题）上右键单击，秒级呼出半透明毛玻璃外观定制面板。
+  - **8 色节点色彩主题**：天蓝、翡翠绿、珊瑚橙、罗兰紫、玫瑰粉、琥珀黄、石墨灰等或跟随分支色。
+  - **4 种节点形状切换**：圆角胶囊 (`capsule`)、圆角矩形 (`rounded`)、纯直角矩形 (`rect`)、极简下划线 (`underline`)。
+  - **3 种分支连接线形态**：平滑贝塞尔曲线 (`bezier`)、90° 直角阶梯折线 (`step`)、笔直直线 (`straight`)。
+  - **连接线颜色定制**：可为特定分支流出的连线独立指定色彩或自动继承。
+  - **标准行内注释持久化**：所有样式以标准 Markdown 注释（如 `<!-- style: color=#10b981,shape=capsule,lineStyle=step -->`）保真保存，在第三方编辑器和 Git 中零侵入、纯净透明。
+- **🎛️ 极简精炼工具栏与排版**：
+  - **单行工整排版**：所有按键统一施加不换行保护与标准边距，彻底杜绝文字上下分割折行；
+  - **功能聚焦**：精简移除冗余缩放与 SVG 导出按键，专注核心脑图编辑与一键导出高清 PNG 图片（画布保留鼠标滚轮平滑缩放与拖拽漫游）。
+- **⚡ 节点加号与折叠按钮排版优化**：
+  - **消除物理重合**：折叠按钮与悬浮加号按钮坐标动态分离，杜绝重叠；
+  - **消除乱闪**：采用确定性稳定路径 ID 与内部更新防回流校验，添加子节点毫秒级平滑响应，杜绝全树重绘闪烁。
+- **➕ 新建思维导图**：目录树顶部与空白首页直设「新建思维导图」入口，一键生成专用 `.mindmap.md` 脑图文件并立即进入编辑。
+- **📝 双向无损 Markdown 规范序列化**：导图实时双向序列化为自然易读的标准 Markdown 缩进层级列表（`# 中心主题`、`- 分支主题`），任何第三方编辑器均可顺畅阅读。
 - **⚓ 块级原子互联与嵌入**：
   - `^block-id`：段落末尾键入即可生成专属块指纹锚点，点击一键复制引用链接。
   - `[[doc#^block]]`：精准跳转至特定文档的目标段落并触发发光指示。
@@ -260,12 +272,17 @@
 
 ### Key Features
 
-- **⚡ Flash Capsule & Space Timeline Hub**:
-  - *Global Hotkey Quick Access*: Press `Alt + Space` anywhere to pop up a frosted-glass micro-window to capture thoughts and todos. Automatically hides on blur.
-  - *Pin Window & Persistent Templates*: Pin the capsule to keep it on top while researching. Built-in template drawer preserves recurring prompts and notes that are never wiped on archive.
-  - *Minute-Level Space Storage*: Saves timestamped notes to `Space/YYYY-MM-DD_HHmm.md`, auto-appending within the same minute.
-  - *Timeline & Interactive Todos*: Grouped by Today, Yesterday, and Older in the ActivityBar. Check off `- [ ]` / `- [x]` todos directly inside the hub with atomic writebacks to source markdown files.
-  - *Merge into Document*: Quick actions to append or insert notes as blockquotes into the active editor document.
+- **🧠 Interactive Mind Map & Block Links (`Ctrl + M`)**:
+  - *Full Keyboard Flow*: `Tab` (add subtopic), `Enter` (add sibling), `Delete` (remove topic), `F2` / Double-Click (in-place rename with Chinese IME support), Arrow Keys (smooth navigation), `Ctrl+Z` / `Ctrl+Y` (undo / redo).
+  - *Right-Click Appearance Customization*: Right-click any node to customize node colors (8 harmonic palettes), node shapes (capsule, rounded, sharp rect, minimalist underline), connector line styles (bezier curves, orthogonal step lines, straight lines), and branch line colors.
+  - *Two-way Markdown Synchronization*: Losslessly serializes into clean standard hierarchical lists with inline metadata comments (`<!-- style: ... -->`), universally compatible with third-party Markdown editors and Git.
+  - *New Mindmap Creation*: Quick actions on directory tree header and empty reader state to create dedicated `.mindmap.md` files.
+  - *Block-Level Atomic Linking*: Paragraph-level fingerprinting (`^block-id`), direct jumping (`[[doc#^block]]`), and elegant embed cards (`![[doc#^block]]`).
+- **🌐 60FPS Knowledge Graph & Bi-directional Links (`Ctrl + G`)**:
+  - *Ultra-Smooth Canvas Engine*: 60FPS native 2D Canvas rendering pipeline with RAF throttling for hundreds of notes.
+  - *Golden Spiral 2D Organic Force-Directed Layout*: Self-developed 2.2ms physics simulation that groups related notes into galaxies and smoothly orbits isolated notes without vertical stacking.
+  - *WikiLink Suggestions*: Typing `[[` pops up instant document autocomplete suggestions.
+  - *Global Cascading Refactor*: Renaming any document dynamically updates all references throughout the entire workspace.
 - **✍️ Modern Editor & Direct Image Paste**:
   - *Clipboard Image Paste (`Ctrl + V`)*: Paste screenshots or images directly into CodeMirror 6. Auto-saves timestamped image files into local `assets/` directory and inserts markdown syntax with instant live preview.
   - *Image Drop*: Drag-and-drop image files from desktop directly into editor.
