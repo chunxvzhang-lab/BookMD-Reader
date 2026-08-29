@@ -2,15 +2,13 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
   ListTree,
-  X,
   PlusCircle,
   CornerDownRight,
   Edit3,
   Trash2,
-  Undo2,
-  Redo2,
   Palette,
   Check,
+  X,
 } from "lucide-react";
 import type { Heading, ThemeMode, MindmapNodeShape, MindmapLineStyle } from "../core/types";
 import {
@@ -122,16 +120,9 @@ export const MindmapView = memo(function MindmapView({
   const [editingText, setEditingText] = useState<string>("");
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
 
-  // Undo / Redo history stacks
+  // Undo / Redo history stacks (retained for keyboard shortcuts Ctrl+Z / Ctrl+Y)
   const undoStackRef = useRef<MindmapNode[]>([]);
   const redoStackRef = useRef<MindmapNode[]>([]);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-
-  const updateHistoryStatus = useCallback(() => {
-    setCanUndo(undoStackRef.current.length > 0);
-    setCanRedo(redoStackRef.current.length > 0);
-  }, []);
 
   // Pan & Zoom transform state
   const [transform, setTransform] = useState({ x: 60, y: 80, scale: 1 });
@@ -158,9 +149,9 @@ export const MindmapView = memo(function MindmapView({
 
     if (lWidth === 0 || lHeight === 0) return;
 
-    const scaleX = (cWidth - 120) / lWidth;
-    const scaleY = (cHeight - 120) / lHeight;
-    const newScale = Math.max(0.35, Math.min(1.2, Math.min(scaleX, scaleY)));
+    const scaleX = (cWidth - 140) / lWidth;
+    const scaleY = (cHeight - 140) / lHeight;
+    const newScale = Math.max(0.4, Math.min(1.15, Math.min(scaleX, scaleY)));
 
     const newX = (cWidth - lWidth * newScale) / 2 - minX * newScale;
     const newY = (cHeight - lHeight * newScale) / 2 - minY * newScale;
@@ -181,7 +172,6 @@ export const MindmapView = memo(function MindmapView({
     (nextTree: MindmapNode) => {
       undoStackRef.current.push(tree);
       redoStackRef.current = [];
-      updateHistoryStatus();
       setTree(nextTree);
 
       if (onSourceChange) {
@@ -190,36 +180,34 @@ export const MindmapView = memo(function MindmapView({
         onSourceChange(md);
       }
     },
-    [tree, onSourceChange, updateHistoryStatus]
+    [tree, onSourceChange]
   );
 
   const handleUndo = useCallback(() => {
     if (undoStackRef.current.length === 0) return;
     const prev = undoStackRef.current.pop()!;
     redoStackRef.current.push(tree);
-    updateHistoryStatus();
     setTree(prev);
     if (onSourceChange) {
       const md = mindmapTreeToMarkdown(prev);
       lastEmittedSourceRef.current = md;
       onSourceChange(md);
     }
-  }, [tree, onSourceChange, updateHistoryStatus]);
+  }, [tree, onSourceChange]);
 
   const handleRedo = useCallback(() => {
     if (redoStackRef.current.length === 0) return;
     const next = redoStackRef.current.pop()!;
     undoStackRef.current.push(tree);
-    updateHistoryStatus();
     setTree(next);
     if (onSourceChange) {
       const md = mindmapTreeToMarkdown(next);
       lastEmittedSourceRef.current = md;
       onSourceChange(md);
     }
-  }, [tree, onSourceChange, updateHistoryStatus]);
+  }, [tree, onSourceChange]);
 
-  // XMind Interactive Actions
+  // Interactive Topic Actions
   const handleAddChild = useCallback(
     (parentId?: string) => {
       if (!editable) return;
@@ -617,7 +605,7 @@ export const MindmapView = memo(function MindmapView({
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
     >
-      {/* Top Floating Clean Control Bar */}
+      {/* Top Floating Clean & Spacious Control Bar */}
       <header className="mindmap-toolbar">
         <div className="mindmap-toolbar-left">
           <span className="mindmap-toolbar-title" title={tree.text || title}>
@@ -639,7 +627,7 @@ export const MindmapView = memo(function MindmapView({
                   onClick={() => handleAddSibling()}
                   title="添加同级主题 (Enter)"
                 >
-                  <PlusCircle size={13} />
+                  <PlusCircle size={14} />
                   <span>同级主题</span>
                 </button>
                 <button
@@ -648,7 +636,7 @@ export const MindmapView = memo(function MindmapView({
                   onClick={() => handleAddChild()}
                   title="添加子主题 (Tab)"
                 >
-                  <CornerDownRight size={13} />
+                  <CornerDownRight size={14} />
                   <span>子主题</span>
                 </button>
                 <button
@@ -657,7 +645,7 @@ export const MindmapView = memo(function MindmapView({
                   onClick={() => startEditing()}
                   title="重命名主题文字 (F2 / 双击)"
                 >
-                  <Edit3 size={13} />
+                  <Edit3 size={14} />
                   <span>重命名</span>
                 </button>
                 <button
@@ -671,31 +659,8 @@ export const MindmapView = memo(function MindmapView({
                   }
                   title="删除选中主题 (Delete)"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={14} />
                   <span>删除</span>
-                </button>
-              </div>
-
-              <div className="mindmap-toolbar-divider" />
-
-              <div className="mindmap-toolbar-btn-group">
-                <button
-                  type="button"
-                  className="mindmap-tool-btn"
-                  onClick={handleUndo}
-                  disabled={!canUndo}
-                  title="撤销 (Ctrl+Z)"
-                >
-                  <Undo2 size={13} />
-                </button>
-                <button
-                  type="button"
-                  className="mindmap-tool-btn"
-                  onClick={handleRedo}
-                  disabled={!canRedo}
-                  title="重做 (Ctrl+Y)"
-                >
-                  <Redo2 size={13} />
                 </button>
               </div>
 
@@ -716,7 +681,7 @@ export const MindmapView = memo(function MindmapView({
                   }}
                   title="自定义节点颜色、形状及连线风格 (也可在节点上右键)"
                 >
-                  <Palette size={13} className="text-cyan" />
+                  <Palette size={14} className="text-cyan" />
                   <span>外观样式</span>
                 </button>
               </div>
@@ -732,7 +697,7 @@ export const MindmapView = memo(function MindmapView({
               onClick={handleCollapseToLevel2}
               title="仅保留 1~2 级主题"
             >
-              折叠至2级
+              <span>折叠至2级</span>
             </button>
             <button
               type="button"
@@ -740,7 +705,7 @@ export const MindmapView = memo(function MindmapView({
               onClick={handleExpandAll}
               title="展开所有分支"
             >
-              全部展开
+              <span>全部展开</span>
             </button>
           </div>
         </div>
@@ -748,26 +713,13 @@ export const MindmapView = memo(function MindmapView({
         <div className="mindmap-toolbar-right">
           <button
             type="button"
-            className="mindmap-tool-btn text-btn"
+            className="mindmap-tool-btn text-btn export-btn"
             onClick={handleExportPng}
             title="导出高清 PNG 图片"
           >
-            <Download size={13} />
+            <Download size={14} />
             <span>导出 PNG</span>
           </button>
-          {onClose && (
-            <>
-              <div className="mindmap-toolbar-divider" />
-              <button
-                type="button"
-                className="mindmap-tool-btn close-btn"
-                onClick={onClose}
-                title="返回编辑/阅读模式 (Esc)"
-              >
-                <X size={15} />
-              </button>
-            </>
-          )}
         </div>
       </header>
 
@@ -970,8 +922,9 @@ export const MindmapView = memo(function MindmapView({
                   {!isRoot && (
                     <text
                       x={17}
-                      y={node.height / 2 + 3.5}
+                      y={node.height / 2}
                       textAnchor="middle"
+                      dominantBaseline="central"
                       className="mindmap-node-level-text"
                       fill={color}
                     >
@@ -982,7 +935,8 @@ export const MindmapView = memo(function MindmapView({
                   {/* Node Label Text */}
                   <text
                     x={isRoot ? 16 : 34}
-                    y={node.height / 2 + 4}
+                    y={node.height / 2}
+                    dominantBaseline="central"
                     className={`mindmap-node-title-text ${isRoot ? "root-title" : ""}`}
                   >
                     {node.text}
@@ -1003,7 +957,7 @@ export const MindmapView = memo(function MindmapView({
                       />
                       <text
                         textAnchor="middle"
-                        dy={3}
+                        dominantBaseline="central"
                         className="mindmap-collapse-symbol"
                         fill={color}
                       >
@@ -1013,7 +967,7 @@ export const MindmapView = memo(function MindmapView({
                     </g>
                   )}
 
-                  {/* Quick Add Subtopic Button on Hover/Selection (Separated cleanly without overlap) */}
+                  {/* Quick Add Subtopic Button on Hover/Selection (Positioned cleanly, zero jitter) */}
                   {editable && (isHovered || isSelected) && (
                     <g
                       className="mindmap-node-add-btn"
@@ -1024,10 +978,10 @@ export const MindmapView = memo(function MindmapView({
                         handleAddChild(node.id);
                       }}
                     >
-                      <circle r={7} className="mindmap-add-circle" fill="#38bdf8" />
+                      <circle r={7.5} className="mindmap-add-circle" fill="#38bdf8" />
                       <text
                         textAnchor="middle"
-                        dy={3.2}
+                        dominantBaseline="central"
                         className="mindmap-add-symbol"
                         fill="#ffffff"
                       >
