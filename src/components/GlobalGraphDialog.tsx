@@ -187,7 +187,7 @@ export function GlobalGraphDialog({
       maxZoom: 5.0,
       textureOnViewport: false, // Direct 2D canvas draw: 60fps buttery smooth for knowledge graphs
       motionBlur: false,
-      pixelRatio: "auto",
+      pixelRatio: 1,   // Fix: "auto" causes DPR mismatch → nodes squished to lines
       boxSelectionEnabled: false,
       autounselectify: false,
       style: [

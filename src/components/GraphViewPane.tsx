@@ -188,7 +188,7 @@ export function GraphViewPane({
       maxZoom: 5.0,
       textureOnViewport: false,
       motionBlur: false,
-      pixelRatio: "auto",
+      pixelRatio: 1,   // Fix: "auto" causes canvas DPR mismatch on Windows → nodes squished to lines
       boxSelectionEnabled: false,
       // 完全禁用 Cytoscape 内建选中态（选中态会触发默认 :selected 样式与选中反馈绘制）
       autounselectify: true,
@@ -726,47 +726,47 @@ export function GraphViewPane({
       {/* Graph Canvas Container */}
       <div className={`graph-pane-canvas-wrapper ${isSpacePanning ? "space-panning" : ""}`}>
         <div className="graph-pane-canvas" ref={containerRef} />
+      </div>
 
-        {/* Selected Node Details Card (Bottom-Left) */}
-        {selectedNode && (
-          <div className="graph-pane-inspector">
-            <div className="inspector-header">
-              <span className={`node-type-badge type-${selectedNode.type}`}>
-                {selectedNode.type === "space" ? "闪念 Space" : "文档"}
-              </span>
-              <span className="inspector-title" title={selectedNode.label}>
-                {selectedNode.label}
-              </span>
-              <button
-                type="button"
-                className="inspector-close-btn"
-                onClick={() => setSelectedNode(null)}
-                title="关闭详情卡片"
-              >
-                <X size={12} />
-              </button>
-            </div>
-            <div className="inspector-body">
-              <div className="inspector-metric">
-                <span className="metric-label">被引用 (In):</span>
-                <span className="metric-value">{selectedNode.inDegree}</span>
-              </div>
-              <div className="inspector-metric">
-                <span className="metric-label">引出 (Out):</span>
-                <span className="metric-value">{selectedNode.outDegree}</span>
-              </div>
-            </div>
+      {/* Selected Node Details Card — outside canvas-wrapper so overflow:hidden doesn't clip it */}
+      {selectedNode && (
+        <div className="graph-pane-inspector">
+          <div className="inspector-header">
+            <span className={`node-type-badge type-${selectedNode.type}`}>
+              {selectedNode.type === "space" ? "闪念 Space" : "文档"}
+            </span>
+            <span className="inspector-title" title={selectedNode.label}>
+              {selectedNode.label}
+            </span>
             <button
               type="button"
-              className="inspector-jump-btn"
-              onClick={() => onSelectNodeRef.current(selectedNode.id)}
+              className="inspector-close-btn"
+              onClick={() => setSelectedNode(null)}
+              title="关闭详情卡片"
             >
-              <ExternalLink size={12} />
-              <span>在左侧打开文档</span>
+              <X size={12} />
             </button>
           </div>
-        )}
-      </div>
+          <div className="inspector-body">
+            <div className="inspector-metric">
+              <span className="metric-label">被引用 (In):</span>
+              <span className="metric-value">{selectedNode.inDegree}</span>
+            </div>
+            <div className="inspector-metric">
+              <span className="metric-label">引出 (Out):</span>
+              <span className="metric-value">{selectedNode.outDegree}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="inspector-jump-btn"
+            onClick={() => onSelectNodeRef.current(selectedNode.id)}
+          >
+            <ExternalLink size={12} />
+            <span>在左侧打开文档</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

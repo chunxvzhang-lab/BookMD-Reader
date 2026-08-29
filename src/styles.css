@@ -7556,13 +7556,13 @@ body:has(.flash-capsule-overlay) {
   border-color: var(--accent);
 }
 
-/* Inspector Card (Bottom-Left) */
+/* Inspector Card — positioned relative to graph-view-pane, outside overflow:hidden canvas */
 .graph-pane-inspector {
   position: absolute;
   bottom: 16px;
   left: 16px;
   width: 220px;
-  max-height: calc(100% - 32px);
+  max-height: 200px;
   overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -7572,7 +7572,7 @@ body:has(.flash-capsule-overlay) {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 100;
+  z-index: 200;
   animation: fadeIn 0.15s ease-out;
 }
 
