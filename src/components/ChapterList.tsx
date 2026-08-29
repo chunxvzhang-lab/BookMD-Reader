@@ -66,7 +66,7 @@ export function ChapterList({
               type="button"
               className="tree-action-btn"
               onClick={onNewMindmap}
-              title="新建思维导图 (XMind 交互模式)"
+              title="新建思维导图 (交互模式)"
               aria-label="新建思维导图"
             >
               <ListTree size={13} />
