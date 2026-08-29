@@ -9,6 +9,7 @@ import {
   Palette,
   Check,
   X,
+  CheckSquare,
 } from "lucide-react";
 import type { Heading, ThemeMode, MindmapNodeShape, MindmapLineStyle } from "../core/types";
 import {
@@ -115,8 +116,8 @@ export const MindmapView = memo(function MindmapView({
     }
   }, [source, title]);
 
-  // Selected node, inline editing, and context menu states
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(tree.id);
+  // Selected node(s), inline editing, and context menu states
+  const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set([tree.id]));
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>("");
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
@@ -131,8 +132,8 @@ export const MindmapView = memo(function MindmapView({
     const cWidth = container.clientWidth;
     const cHeight = container.clientHeight;
     const menuEl = menuRef.current;
-    const mWidth = menuEl?.offsetWidth || 252;
-    const mHeight = menuEl?.offsetHeight || 410;
+    const mWidth = menuEl?.offsetWidth || 248;
+    const mHeight = menuEl?.offsetHeight || 340;
 
     let left = contextMenu.x;
     let top = contextMenu.y;
@@ -141,13 +142,23 @@ export const MindmapView = memo(function MindmapView({
     if (left + mWidth > cWidth - 16) {
       left = Math.max(16, cWidth - mWidth - 16);
     }
-    // Prevent overflowing bottom boundary
+    // Prevent overflowing bottom boundary: flip upwards if near bottom
     if (top + mHeight > cHeight - 16) {
-      top = Math.max(16, cHeight - mHeight - 16);
+      top = Math.max(16, contextMenu.y - mHeight);
+      if (top + mHeight > cHeight - 16) {
+        top = Math.max(16, cHeight - mHeight - 16);
+      }
     }
 
     setMenuPos({ left: Math.round(left), top: Math.round(top) });
   }, [contextMenu]);
+
+  // Primary single selected node for actions
+  const primarySelectedId = useMemo(() => {
+    if (selectedNodeIds.size === 0) return null;
+    const arr = Array.from(selectedNodeIds);
+    return arr[arr.length - 1];
+  }, [selectedNodeIds]);
 
   // Undo / Redo history stacks (retained for keyboard shortcuts Ctrl+Z / Ctrl+Y)
   const undoStackRef = useRef<MindmapNode[]>([]);
@@ -166,6 +177,12 @@ export const MindmapView = memo(function MindmapView({
   const layout = useMemo(() => {
     return layoutMindmap(tree, collapsedIds);
   }, [tree, collapsedIds]);
+
+  // Select all nodes handler
+  const handleSelectAll = useCallback(() => {
+    if (!layout || layout.nodes.length === 0) return;
+    setSelectedNodeIds(new Set(layout.nodes.map((n) => n.id)));
+  }, [layout]);
 
   // Fit to screen helper
   const handleFitToScreen = useCallback(() => {
@@ -240,7 +257,7 @@ export const MindmapView = memo(function MindmapView({
   const handleAddChild = useCallback(
     (parentId?: string) => {
       if (!editable) return;
-      const targetId = parentId || selectedNodeId || tree.id;
+      const targetId = parentId || primarySelectedId || tree.id;
       // Uncollapse if collapsed
       if (collapsedIds.has(targetId)) {
         setCollapsedIds((prev) => {
@@ -251,55 +268,65 @@ export const MindmapView = memo(function MindmapView({
       }
       const { nextTree, newNodeId } = addChildNode(tree, targetId, "新建子主题");
       applyTreeChange(nextTree);
-      setSelectedNodeId(newNodeId);
+      setSelectedNodeIds(new Set([newNodeId]));
       setEditingNodeId(newNodeId);
       setEditingText("新建子主题");
       setContextMenu(null);
     },
-    [editable, selectedNodeId, tree, collapsedIds, applyTreeChange]
+    [editable, primarySelectedId, tree, collapsedIds, applyTreeChange]
   );
 
   const handleAddSibling = useCallback(
     (targetId?: string) => {
       if (!editable) return;
-      const id = targetId || selectedNodeId || tree.id;
+      const id = targetId || primarySelectedId || tree.id;
       const { nextTree, newNodeId } = addSiblingNode(tree, id, "新建同级主题");
       applyTreeChange(nextTree);
-      setSelectedNodeId(newNodeId);
+      setSelectedNodeIds(new Set([newNodeId]));
       setEditingNodeId(newNodeId);
       setEditingText("新建同级主题");
       setContextMenu(null);
     },
-    [editable, selectedNodeId, tree, applyTreeChange]
+    [editable, primarySelectedId, tree, applyTreeChange]
   );
 
   const handleDeleteNode = useCallback(
     (nodeId?: string) => {
       if (!editable) return;
-      const id = nodeId || selectedNodeId;
-      if (!id || id === tree.id || id === "root-mindmap-node") return;
-      const { nextTree, fallbackSelectedId } = deleteNode(tree, id);
-      applyTreeChange(nextTree);
-      setSelectedNodeId(fallbackSelectedId);
+      const targetIds = nodeId ? [nodeId] : Array.from(selectedNodeIds);
+      if (targetIds.length === 0) return;
+
+      let currTree = tree;
+      let lastFallback: string | null = tree.id;
+
+      for (const id of targetIds) {
+        if (id === tree.id || id === "root-mindmap-node") continue;
+        const { nextTree, fallbackSelectedId } = deleteNode(currTree, id);
+        currTree = nextTree;
+        lastFallback = fallbackSelectedId;
+      }
+
+      applyTreeChange(currTree);
+      setSelectedNodeIds(lastFallback ? new Set([lastFallback]) : new Set());
       setEditingNodeId(null);
       setContextMenu(null);
     },
-    [editable, selectedNodeId, tree, applyTreeChange]
+    [editable, selectedNodeIds, tree, applyTreeChange]
   );
 
   const startEditing = useCallback(
     (nodeId?: string) => {
       if (!editable) return;
-      const id = nodeId || selectedNodeId || tree.id;
+      const id = nodeId || primarySelectedId || tree.id;
       const node = findNode(tree, id);
       if (node) {
-        setSelectedNodeId(id);
+        setSelectedNodeIds(new Set([id]));
         setEditingNodeId(id);
         setEditingText(node.text);
         setContextMenu(null);
       }
     },
-    [editable, selectedNodeId, tree]
+    [editable, primarySelectedId, tree]
   );
 
   const handleCommitEdit = useCallback(() => {
@@ -335,24 +362,24 @@ export const MindmapView = memo(function MindmapView({
   // Keyboard navigation
   const handleNavigate = useCallback(
     (direction: "up" | "down" | "left" | "right") => {
-      const currId = selectedNodeId || tree.id;
+      const currId = primarySelectedId || tree.id;
       if (direction === "left") {
         const parent = findParent(tree, currId);
-        if (parent) setSelectedNodeId(parent.id);
+        if (parent) setSelectedNodeIds(new Set([parent.id]));
       } else if (direction === "right") {
         const curr = findNode(tree, currId);
         if (curr?.children && curr.children.length > 0) {
-          setSelectedNodeId(curr.children[0].id);
+          setSelectedNodeIds(new Set([curr.children[0].id]));
         }
       } else if (direction === "up") {
         const prev = findSibling(tree, currId, -1);
-        if (prev) setSelectedNodeId(prev.id);
+        if (prev) setSelectedNodeIds(new Set([prev.id]));
       } else if (direction === "down") {
         const next = findSibling(tree, currId, 1);
-        if (next) setSelectedNodeId(next.id);
+        if (next) setSelectedNodeIds(new Set([next.id]));
       }
     },
-    [selectedNodeId, tree]
+    [primarySelectedId, tree]
   );
 
   // Global Mindmap Keydown shortcuts
@@ -365,6 +392,31 @@ export const MindmapView = memo(function MindmapView({
         } else if (e.key === "Escape") {
           e.preventDefault();
           handleCancelEdit();
+        }
+        return;
+      }
+
+      // Ctrl+A Select All
+      if (e.ctrlKey && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        handleSelectAll();
+        return;
+      }
+
+      // Escape deselects nodes or closes context menu
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (contextMenu) {
+          setContextMenu(null);
+          return;
+        }
+        if (selectedNodeIds.size > 0) {
+          setSelectedNodeIds(new Set());
+          return;
+        }
+        if (onClose) {
+          onClose();
+          return;
         }
         return;
       }
@@ -431,11 +483,6 @@ export const MindmapView = memo(function MindmapView({
         handleNavigate("right");
         return;
       }
-      if (e.key === "Escape" && onClose) {
-        e.preventDefault();
-        onClose();
-        return;
-      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -443,6 +490,8 @@ export const MindmapView = memo(function MindmapView({
   }, [
     editingNodeId,
     contextMenu,
+    selectedNodeIds,
+    handleSelectAll,
     handleCommitEdit,
     handleCancelEdit,
     handleUndo,
@@ -463,7 +512,7 @@ export const MindmapView = memo(function MindmapView({
     }
   }, [editingNodeId]);
 
-  // Pan interaction handlers
+  // Pan interaction handlers & blank canvas click deselect
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
     const target = e.target as HTMLElement | SVGElement;
@@ -475,13 +524,15 @@ export const MindmapView = memo(function MindmapView({
     ) {
       return;
     }
-    // Clicking canvas background deselects or commits edit
+    // Clicking blank canvas background commits edit, closes menu, and cancels selection!
     if (editingNodeId) {
       handleCommitEdit();
     }
     if (contextMenu) {
       setContextMenu(null);
     }
+    setSelectedNodeIds(new Set());
+
     setIsDragging(true);
     dragStartRef.current = {
       x: e.clientX,
@@ -560,24 +611,59 @@ export const MindmapView = memo(function MindmapView({
     setCollapsedIds(toCollapse);
   }, [layout.nodes]);
 
-  // Export as PNG
+  // Export as PNG (100% Transparent Background, correct node & text fills, zero black blocks)
   const handleExportPng = useCallback(() => {
     const svgEl = svgRef.current;
     if (!svgEl || !layout) return;
 
-    const { width, height, minX, minY } = layout.bounds;
-    const serializer = new XMLSerializer();
-    const clone = svgEl.cloneNode(true) as SVGSVGElement;
+    const pad = 40;
+    const { width: lWidth, height: lHeight, minX, minY } = layout.bounds;
+    const exportWidth = lWidth + pad * 2;
+    const exportHeight = lHeight + pad * 2;
+    const exportMinX = minX - pad;
+    const exportMinY = minY - pad;
 
-    clone.setAttribute("viewBox", `${minX} ${minY} ${width} ${height}`);
-    clone.setAttribute("width", `${width}`);
-    clone.setAttribute("height", `${height}`);
+    const clone = svgEl.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute("viewBox", `${exportMinX} ${exportMinY} ${exportWidth} ${exportHeight}`);
+    clone.setAttribute("width", `${exportWidth}`);
+    clone.setAttribute("height", `${exportHeight}`);
 
     const g = clone.querySelector("g.mindmap-viewport");
     if (g) {
       g.removeAttribute("transform");
     }
 
+    // Strip out interactive-only elements: selection rings and add buttons
+    clone.querySelectorAll(".mindmap-node-selection-ring").forEach((el) => el.remove());
+    clone.querySelectorAll(".mindmap-node-add-btn").forEach((el) => el.remove());
+
+    // Resolve theme colors for standalone SVG serialization
+    const isDark = theme === "twitter" || (theme === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+    const nodeBg = isDark ? "#1e293b" : "#ffffff";
+    const textFill = isDark ? "#f8fafc" : "#0f172a";
+    const rootTextFill = "#38bdf8";
+
+    // Set explicit inline fill and stroke on rects, texts, and circles
+    clone.querySelectorAll("rect.mindmap-node-rect").forEach((rect) => {
+      rect.setAttribute("fill", nodeBg);
+    });
+    clone.querySelectorAll("rect.mindmap-node-rect-underline").forEach((rect) => {
+      rect.setAttribute("fill", "transparent");
+    });
+    clone.querySelectorAll("circle.mindmap-collapse-circle").forEach((circle) => {
+      circle.setAttribute("fill", nodeBg);
+    });
+    clone.querySelectorAll("text.mindmap-node-title-text").forEach((textEl) => {
+      const isRootText = textEl.classList.contains("root-title");
+      textEl.setAttribute("fill", isRootText ? rootTextFill : textFill);
+      textEl.setAttribute("font-family", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif");
+      textEl.setAttribute("font-size", isRootText ? "14px" : "12.5px");
+      textEl.setAttribute("font-weight", isRootText ? "700" : "500");
+      textEl.setAttribute("text-anchor", "middle");
+      textEl.setAttribute("dominant-baseline", "central");
+    });
+
+    const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(clone);
     const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -587,15 +673,15 @@ export const MindmapView = memo(function MindmapView({
     img.onload = () => {
       const canvas = document.createElement("canvas");
       const dpr = window.devicePixelRatio || 2;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+      canvas.width = exportWidth * dpr;
+      canvas.height = exportHeight * dpr;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
       ctx.scale(dpr, dpr);
-      ctx.fillStyle = theme === "twitter" ? "#0f172a" : theme === "eink" ? "#f8f6f0" : "#ffffff";
-      ctx.fillRect(0, 0, width, height);
-      ctx.drawImage(img, 0, 0, width, height);
+      // Transparent background: clearRect without any fillRect
+      ctx.clearRect(0, 0, exportWidth, exportHeight);
+      ctx.drawImage(img, 0, 0, exportWidth, exportHeight);
 
       canvas.toBlob((pngBlob) => {
         if (!pngBlob) return;
@@ -642,6 +728,11 @@ export const MindmapView = memo(function MindmapView({
             <span className="mindmap-node-count-badge">
               {layout.nodes.length} 节点
             </span>
+            {selectedNodeIds.size > 1 && (
+              <span className="mindmap-node-count-badge text-cyan">
+                已选 {selectedNodeIds.size} 项
+              </span>
+            )}
           </span>
         </div>
 
@@ -681,7 +772,7 @@ export const MindmapView = memo(function MindmapView({
                     setContextMenu({
                       x: rect.left - (containerRect?.left ?? 0),
                       y: rect.bottom - (containerRect?.top ?? 0) + 6,
-                      nodeId: selectedNodeId || tree.id,
+                      nodeId: primarySelectedId || tree.id,
                     });
                   }}
                   title="自定义节点颜色、形状及连线风格 (也可在节点上右键)"
@@ -696,6 +787,15 @@ export const MindmapView = memo(function MindmapView({
           )}
 
           <div className="mindmap-toolbar-btn-group">
+            <button
+              type="button"
+              className="mindmap-tool-btn text-btn"
+              onClick={handleSelectAll}
+              title="选中所有节点 (Ctrl+A)"
+            >
+              <CheckSquare size={13} />
+              <span>全选</span>
+            </button>
             <button
               type="button"
               className="mindmap-tool-btn text-btn"
@@ -720,7 +820,7 @@ export const MindmapView = memo(function MindmapView({
             type="button"
             className="mindmap-tool-btn text-btn export-btn"
             onClick={handleExportPng}
-            title="导出高清 PNG 图片"
+            title="导出高清透明背景 PNG 图片"
           >
             <Download size={14} />
             <span>导出 PNG</span>
@@ -754,8 +854,8 @@ export const MindmapView = memo(function MindmapView({
               const isHighlighted =
                 hoveredNodeId === edge.fromId ||
                 hoveredNodeId === edge.toId ||
-                selectedNodeId === edge.fromId ||
-                selectedNodeId === edge.toId;
+                selectedNodeIds.has(edge.fromId) ||
+                selectedNodeIds.has(edge.toId);
               return (
                 <path
                   key={`${edge.fromId}->${edge.toId}`}
@@ -780,7 +880,7 @@ export const MindmapView = memo(function MindmapView({
                   : BRANCH_COLORS[node.colorIndex % BRANCH_COLORS.length];
               const color = node.color || defaultColor;
               const isHovered = hoveredNodeId === node.id;
-              const isSelected = selectedNodeId === node.id;
+              const isSelected = selectedNodeIds.has(node.id);
               const isRoot = node.level === 0;
 
               return (
@@ -794,7 +894,16 @@ export const MindmapView = memo(function MindmapView({
                   onMouseLeave={() => setHoveredNodeId(null)}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedNodeId(node.id);
+                    if (e.shiftKey || e.ctrlKey) {
+                      setSelectedNodeIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(node.id)) next.delete(node.id);
+                        else next.add(node.id);
+                        return next;
+                      });
+                    } else {
+                      setSelectedNodeIds(new Set([node.id]));
+                    }
                     setContextMenu(null);
                   }}
                   onDoubleClick={(e) => {
@@ -808,7 +917,9 @@ export const MindmapView = memo(function MindmapView({
                   onContextMenu={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setSelectedNodeId(node.id);
+                    if (!selectedNodeIds.has(node.id)) {
+                      setSelectedNodeIds(new Set([node.id]));
+                    }
                     const containerRect = containerRef.current?.getBoundingClientRect();
                     const cX = containerRect ? e.clientX - containerRect.left : e.clientX;
                     const cY = containerRect ? e.clientY - containerRect.top : e.clientY;
@@ -930,7 +1041,6 @@ export const MindmapView = memo(function MindmapView({
                       <circle
                         r={7}
                         className="mindmap-collapse-circle"
-                        fill="var(--surface)"
                         stroke={color}
                         strokeWidth={1.2}
                       />

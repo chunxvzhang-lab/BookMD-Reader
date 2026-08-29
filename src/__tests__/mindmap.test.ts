@@ -284,5 +284,23 @@ describe("mindmapService", () => {
       expect(straightEdge?.d).toContain(" L ");
       expect(straightEdge?.d).not.toContain(" C ");
     });
+
+    it("verifies layout bounds have valid non-negative dimensions and padding", () => {
+      const tree = parseMarkdownToMindmapTree("# 认知框架\n\n- 知识节点 A\n  - 子节点 1\n  - 子节点 2\n- 知识节点 B\n");
+      const layout = layoutMindmap(tree);
+
+      expect(layout.nodes.length).toBe(5);
+      expect(layout.bounds.width).toBeGreaterThan(100);
+      expect(layout.bounds.height).toBeGreaterThan(60);
+
+      // Verify every node has width, height, and coordinates
+      for (const node of layout.nodes) {
+        expect(node.width).toBeGreaterThan(50);
+        expect(node.height).toBeGreaterThan(20);
+        expect(typeof node.x).toBe("number");
+        expect(typeof node.y).toBe("number");
+      }
+    });
   });
 });
+
