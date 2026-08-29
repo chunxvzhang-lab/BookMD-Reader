@@ -2,6 +2,9 @@ export type SidebarTab = "toc" | "bookmarks" | "search" | "space" | "backlinks";
 export type ThemeMode = "system" | "light" | "twitter" | "eink";
 export type EditorViewMode = "read" | "split" | "source" | "mindmap";
 
+export type MindmapNodeShape = "rounded" | "capsule" | "rect" | "underline";
+export type MindmapLineStyle = "bezier" | "step" | "straight";
+
 export type MindmapNode = {
   id: string;
   text: string;
@@ -9,6 +12,10 @@ export type MindmapNode = {
   line?: number;
   children: MindmapNode[];
   collapsed?: boolean;
+  color?: string;
+  shape?: MindmapNodeShape;
+  lineColor?: string;
+  lineStyle?: MindmapLineStyle;
 };
 
 export type DiskVersion = {

@@ -7747,17 +7747,17 @@ body:has(.flash-capsule-overlay) {
   top: 14px;
   left: 14px;
   right: 14px;
-  height: 38px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 0 14px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 9px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.09);
   z-index: 50;
 }
 
@@ -7766,6 +7766,7 @@ body:has(.flash-capsule-overlay) {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .mindmap-toolbar-title {
@@ -7777,38 +7778,41 @@ body:has(.flash-capsule-overlay) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 .mindmap-node-count-badge {
   font-size: 11px;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--text-muted);
   font-weight: 500;
   border: 1px solid var(--border);
+  white-space: nowrap;
 }
 
 .mindmap-toolbar-center {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .mindmap-toolbar-btn-group {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
 .mindmap-tool-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  height: 26px;
-  padding: 0 6px;
-  border-radius: 5px;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
@@ -7816,11 +7820,18 @@ body:has(.flash-capsule-overlay) {
   cursor: pointer;
   transition: all 0.15s ease;
   box-sizing: border-box;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.mindmap-tool-btn span {
+  white-space: nowrap;
 }
 
 .mindmap-tool-btn.text-btn {
-  padding: 0 8px;
-  font-size: 11.5px;
+  padding: 0 10px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -8004,6 +8015,190 @@ body:has(.flash-capsule-overlay) {
   z-index: 30;
   font-family: inherit;
   font-weight: 500;
+}
+
+/* Right-Click Context Menu for Mind Map */
+.mindmap-context-menu {
+  position: absolute;
+  width: 250px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  z-index: 60;
+  user-select: none;
+  animation: mindmap-menu-appear 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mindmap-menu-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.mindmap-ctx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mindmap-ctx-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 195px;
+}
+
+.mindmap-ctx-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.mindmap-ctx-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.mindmap-ctx-section {
+  margin-bottom: 10px;
+}
+
+.mindmap-ctx-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.mindmap-ctx-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.mindmap-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.mindmap-color-swatch:hover {
+  transform: scale(1.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.mindmap-color-swatch.is-active {
+  outline: 2px solid #38bdf8;
+  outline-offset: 1px;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+.mindmap-ctx-pills {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.mindmap-pill-btn {
+  flex: 1;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.mindmap-pill-btn:hover {
+  color: var(--text);
+}
+
+.mindmap-pill-btn.is-active {
+  background: var(--surface);
+  color: #38bdf8;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.mindmap-ctx-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+.mindmap-ctx-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mindmap-ctx-action-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  font-size: 11.5px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.mindmap-ctx-action-item:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.mindmap-ctx-action-item.is-delete:hover {
+  background: rgba(244, 63, 94, 0.12);
+  color: #f43f5e;
 }
 
 /* ==========================================================================

@@ -1,4 +1,9 @@
-import type { Heading, MindmapNode } from "../core/types";
+import type {
+  Heading,
+  MindmapNode,
+  MindmapNodeShape,
+  MindmapLineStyle,
+} from "../core/types";
 
 export interface MindmapLayoutNode {
   id: string;
@@ -13,6 +18,10 @@ export interface MindmapLayoutNode {
   hasChildren: boolean;
   collapsed: boolean;
   colorIndex: number;
+  color?: string;
+  shape?: MindmapNodeShape;
+  lineColor?: string;
+  lineStyle?: MindmapLineStyle;
 }
 
 export interface MindmapLayoutResult {
@@ -23,6 +32,8 @@ export interface MindmapLayoutResult {
     toId: string;
     d: string;
     colorIndex: number;
+    color?: string;
+    style?: MindmapLineStyle;
   }[];
   bounds: {
     minX: number;
@@ -78,6 +89,64 @@ export function buildMindmapTree(
 }
 
 /**
+ * Parses inline style annotations such as <!-- style: color=#10b981,shape=capsule,lineStyle=step -->
+ */
+export function parseStyleComment(line: string): {
+  cleanText: string;
+  color?: string;
+  shape?: MindmapNodeShape;
+  lineColor?: string;
+  lineStyle?: MindmapLineStyle;
+} {
+  const match = line.match(/\s*<!--\s*(?:mindmap|style):\s*([^>]+?)\s*-->/i);
+  if (!match) {
+    return { cleanText: line.trim() };
+  }
+  const cleanText = line.replace(match[0], "").trim();
+  const rawStyle = match[1];
+  const result: {
+    cleanText: string;
+    color?: string;
+    shape?: MindmapNodeShape;
+    lineColor?: string;
+    lineStyle?: MindmapLineStyle;
+  } = { cleanText };
+
+  const pairs = rawStyle.split(/[,;\s]+/).filter(Boolean);
+  for (const pair of pairs) {
+    const eqIdx = pair.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = pair.slice(0, eqIdx).trim().toLowerCase();
+    const val = pair.slice(eqIdx + 1).trim();
+    if (!key || !val) continue;
+
+    if (key === "color") {
+      result.color = val;
+    } else if (key === "shape" && ["rounded", "capsule", "rect", "underline"].includes(val)) {
+      result.shape = val as MindmapNodeShape;
+    } else if (key === "linecolor") {
+      result.lineColor = val;
+    } else if (key === "linestyle" && ["bezier", "step", "straight"].includes(val)) {
+      result.lineStyle = val as MindmapLineStyle;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Formats style properties into standard comment format.
+ */
+export function formatStyleComment(node: Partial<MindmapNode>): string {
+  const parts: string[] = [];
+  if (node.color) parts.push(`color=${node.color}`);
+  if (node.shape) parts.push(`shape=${node.shape}`);
+  if (node.lineColor) parts.push(`lineColor=${node.lineColor}`);
+  if (node.lineStyle) parts.push(`lineStyle=${node.lineStyle}`);
+  return parts.length > 0 ? ` <!-- style: ${parts.join(",")} -->` : "";
+}
+
+/**
  * Parses markdown content (both indented bullet lists and headings) into an interactive MindmapNode tree.
  */
 export function parseMarkdownToMindmapTree(
@@ -96,12 +165,15 @@ export function parseMarkdownToMindmapTree(
   const lines = source.split(/\r?\n/);
   let rootTitle = defaultTitle;
   let rootHeadingFound = false;
+  let rootStyle: ReturnType<typeof parseStyleComment> | null = null;
 
   // Step 1: Detect primary title (# ...)
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith("# ")) {
-      rootTitle = trimmed.slice(2).trim();
+      const parsed = parseStyleComment(trimmed.slice(2));
+      rootTitle = parsed.cleanText;
+      rootStyle = parsed;
       rootHeadingFound = true;
       break;
     }
@@ -112,6 +184,10 @@ export function parseMarkdownToMindmapTree(
     text: rootTitle || defaultTitle,
     level: 0,
     children: [],
+    color: rootStyle?.color,
+    shape: rootStyle?.shape,
+    lineColor: rootStyle?.lineColor,
+    lineStyle: rootStyle?.lineStyle,
   };
 
   // Step 2: Check if source contains indented list items (- item or * item)
@@ -120,20 +196,23 @@ export function parseMarkdownToMindmapTree(
 
   if (hasListItems) {
     // Parse hierarchical list items
-    const stack: { node: MindmapNode; indent: number }[] = [
-      { node: root, indent: -1 },
+    const stack: { node: MindmapNode; indent: number; path: string }[] = [
+      { node: root, indent: -1, path: "root" },
     ];
 
-    let counter = 1;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const match = line.match(listRegex);
       if (!match) continue;
 
       const indent = match[1].length;
-      let text = match[2].trim();
+      let rawText = match[2].trim();
       // Remove inline block markers like ^block-id
-      text = text.replace(/\s\^[a-zA-Z0-9_-]+$/, "").trim();
+      rawText = rawText.replace(/\s\^[a-zA-Z0-9_-]+$/, "").trim();
+      if (!rawText) continue;
+
+      const parsedStyle = parseStyleComment(rawText);
+      const text = parsedStyle.cleanText;
       if (!text) continue;
 
       // Pop until parent indent < current indent
@@ -141,16 +220,24 @@ export function parseMarkdownToMindmapTree(
         stack.pop();
       }
 
-      const parent = stack[stack.length - 1].node;
+      const parentItem = stack[stack.length - 1];
+      const parent = parentItem.node;
+      const childIdx = parent.children.length;
+      const currentPath = `${parentItem.path}-${childIdx}`;
+
       const newNode: MindmapNode = {
-        id: `node-${Date.now().toString(36)}-${counter++}`,
+        id: `node-${currentPath}`,
         text,
         level: stack.length,
         line: i + 1,
         children: [],
+        color: parsedStyle.color,
+        shape: parsedStyle.shape,
+        lineColor: parsedStyle.lineColor,
+        lineStyle: parsedStyle.lineStyle,
       };
       parent.children.push(newNode);
-      stack.push({ node: newNode, indent });
+      stack.push({ node: newNode, indent, path: currentPath });
     }
 
     return root;
@@ -158,13 +245,15 @@ export function parseMarkdownToMindmapTree(
 
   // Step 3: Fallback: parse Markdown headings (#, ##, ###)
   const headingRegex = /^(#{1,6})\s+(.+)$/;
-  const headings: { id: string; text: string; level: number; line: number }[] = [];
+  const headings: { id: string; text: string; level: number; line: number; style?: ReturnType<typeof parseStyleComment> }[] = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     const match = line.match(headingRegex);
     if (match) {
       const level = match[1].length;
-      const text = match[2].trim().replace(/\s\^[a-zA-Z0-9_-]+$/, "");
+      let rawText = match[2].trim().replace(/\s\^[a-zA-Z0-9_-]+$/, "");
+      const parsedStyle = parseStyleComment(rawText);
+      const text = parsedStyle.cleanText;
       if (level === 1 && text === rootTitle && rootHeadingFound && headings.length === 0) {
         continue;
       }
@@ -173,6 +262,7 @@ export function parseMarkdownToMindmapTree(
         text,
         level,
         line: i + 1,
+        style: parsedStyle,
       });
     }
   }
@@ -188,6 +278,10 @@ export function parseMarkdownToMindmapTree(
         level: h.level,
         line: h.line,
         children: [],
+        color: h.style?.color,
+        shape: h.style?.shape,
+        lineColor: h.style?.lineColor,
+        lineStyle: h.style?.lineStyle,
       };
       while (stack.length > 1 && stack[stack.length - 1].level >= h.level) {
         stack.pop();
@@ -206,13 +300,15 @@ export function parseMarkdownToMindmapTree(
  */
 export function mindmapTreeToMarkdown(tree: MindmapNode): string {
   const lines: string[] = [];
-  lines.push(`# ${tree.text.trim() || "中心主题"}`);
+  const rootStyleTag = formatStyleComment(tree);
+  lines.push(`# ${tree.text.trim() || "中心主题"}${rootStyleTag}`);
   lines.push("");
 
   function serializeChildren(nodes: MindmapNode[], indentLevel: number) {
     const indent = "  ".repeat(indentLevel);
     for (const node of nodes) {
-      lines.push(`${indent}- ${node.text.trim() || "分支主题"}`);
+      const styleTag = formatStyleComment(node);
+      lines.push(`${indent}- ${node.text.trim() || "分支主题"}${styleTag}`);
       if (node.children && node.children.length > 0) {
         serializeChildren(node.children, indentLevel + 1);
       }
@@ -449,6 +545,10 @@ export function layoutMindmap(
       hasChildren,
       collapsed: isCollapsed,
       colorIndex,
+      color: node.color,
+      shape: node.shape,
+      lineColor: node.lineColor,
+      lineStyle: node.lineStyle,
     };
     allNodes.push(layoutNode);
 
@@ -468,19 +568,32 @@ export function layoutMindmap(
         );
         layoutNode.children.push(childLayout);
 
-        // Generate smooth cubic bezier connector path
+        // Generate connector path according to lineStyle
         const fromX = startX + width;
         const fromY = nodeY + height / 2;
         const toX = childLayout.x;
         const toY = childLayout.y + childLayout.height / 2;
         const midX = (fromX + toX) / 2;
-        const d = `M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`;
+
+        const edgeLineStyle = child.lineStyle || node.lineStyle || "bezier";
+        const edgeColor = child.lineColor || node.lineColor;
+
+        let d = "";
+        if (edgeLineStyle === "straight") {
+          d = `M ${fromX} ${fromY} L ${toX} ${toY}`;
+        } else if (edgeLineStyle === "step") {
+          d = `M ${fromX} ${fromY} L ${midX} ${fromY} L ${midX} ${toY} L ${toX} ${toY}`;
+        } else {
+          d = `M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`;
+        }
 
         allEdges.push({
           fromId: node.id,
           toId: child.id,
           d,
           colorIndex: childColorIndex,
+          color: edgeColor,
+          style: edgeLineStyle,
         });
 
         currentChildTopY += measureSubtree(child) + SIBLING_GAP;
@@ -521,4 +634,25 @@ export function layoutMindmap(
     edges: allEdges,
     bounds,
   };
+}
+
+export function updateNodeStyle(
+  tree: MindmapNode,
+  nodeId: string,
+  styles: {
+    color?: string;
+    shape?: MindmapNodeShape;
+    lineColor?: string;
+    lineStyle?: MindmapLineStyle;
+  }
+): MindmapNode {
+  const nextTree = cloneTree(tree);
+  const node = findNode(nextTree, nodeId);
+  if (node) {
+    if ("color" in styles) node.color = styles.color || undefined;
+    if ("shape" in styles) node.shape = styles.shape || undefined;
+    if ("lineColor" in styles) node.lineColor = styles.lineColor || undefined;
+    if ("lineStyle" in styles) node.lineStyle = styles.lineStyle || undefined;
+  }
+  return nextTree;
 }

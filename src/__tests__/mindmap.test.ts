@@ -10,6 +10,9 @@ import {
   addSiblingNode,
   deleteNode,
   updateNodeText,
+  updateNodeStyle,
+  parseStyleComment,
+  formatStyleComment,
 } from "../services/mindmapService";
 
 describe("mindmapService", () => {
@@ -225,6 +228,61 @@ describe("mindmapService", () => {
 
       const updated = updateNodeText(root, task1.id, "任务 1 (已完成)");
       expect(updated.children[0].text).toBe("任务 1 (已完成)");
+    });
+
+    it("parses style comments from markdown nodes", () => {
+      const parsed = parseStyleComment("核心业务 <!-- style: color=#10b981,shape=capsule,lineStyle=step,lineColor=#38bdf8 -->");
+      expect(parsed.cleanText).toBe("核心业务");
+      expect(parsed.color).toBe("#10b981");
+      expect(parsed.shape).toBe("capsule");
+      expect(parsed.lineStyle).toBe("step");
+      expect(parsed.lineColor).toBe("#38bdf8");
+    });
+
+    it("updates node styles and serializes them into markdown", () => {
+      const root = parseMarkdownToMindmapTree("# 架构设计\n\n- 客户端\n  - 渲染器\n");
+      const clientNode = root.children[0];
+
+      const styledTree = updateNodeStyle(root, clientNode.id, {
+        color: "#10b981",
+        shape: "capsule",
+        lineStyle: "step",
+      });
+
+      const target = styledTree.children[0];
+      expect(target.color).toBe("#10b981");
+      expect(target.shape).toBe("capsule");
+      expect(target.lineStyle).toBe("step");
+
+      const serialized = mindmapTreeToMarkdown(styledTree);
+      expect(serialized).toContain("<!-- style: color=#10b981,shape=capsule,lineStyle=step -->");
+
+      // Re-parse and verify style properties are restored
+      const restoredTree = parseMarkdownToMindmapTree(serialized);
+      expect(restoredTree.children[0].text).toBe("客户端");
+      expect(restoredTree.children[0].color).toBe("#10b981");
+      expect(restoredTree.children[0].shape).toBe("capsule");
+      expect(restoredTree.children[0].lineStyle).toBe("step");
+    });
+
+    it("generates correct edge paths for different line styles", () => {
+      const tree = parseMarkdownToMindmapTree("# 根\n\n- 曲线分支 <!-- style: lineStyle=bezier -->\n- 折线分支 <!-- style: lineStyle=step -->\n- 直线分支 <!-- style: lineStyle=straight -->\n");
+      const layout = layoutMindmap(tree);
+
+      const bezierEdge = layout.edges.find((e) => e.style === "bezier");
+      const stepEdge = layout.edges.find((e) => e.style === "step");
+      const straightEdge = layout.edges.find((e) => e.style === "straight");
+
+      expect(bezierEdge).toBeDefined();
+      expect(bezierEdge?.d).toContain(" C ");
+
+      expect(stepEdge).toBeDefined();
+      expect(stepEdge?.d).toContain(" L ");
+      expect(stepEdge?.d).not.toContain(" C ");
+
+      expect(straightEdge).toBeDefined();
+      expect(straightEdge?.d).toContain(" L ");
+      expect(straightEdge?.d).not.toContain(" C ");
     });
   });
 });

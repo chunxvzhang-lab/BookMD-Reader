@@ -1,10 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Maximize2,
-  Minimize2,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
   Download,
   ListTree,
   X,
@@ -14,9 +9,10 @@ import {
   Trash2,
   Undo2,
   Redo2,
-  Plus,
+  Palette,
+  Check,
 } from "lucide-react";
-import type { Heading, ThemeMode } from "../core/types";
+import type { Heading, ThemeMode, MindmapNodeShape, MindmapLineStyle } from "../core/types";
 import {
   BRANCH_COLORS,
   buildMindmapTree,
@@ -27,6 +23,7 @@ import {
   addSiblingNode,
   deleteNode,
   updateNodeText,
+  updateNodeStyle,
   findNode,
   findParent,
   findSibling,
@@ -45,6 +42,40 @@ export type MindmapViewProps = {
   theme?: ThemeMode;
 };
 
+const PRESET_COLORS = [
+  { label: "默认", value: "" },
+  { label: "天蓝", value: "#38bdf8" },
+  { label: "翡翠绿", value: "#10b981" },
+  { label: "珊瑚橙", value: "#f97316" },
+  { label: "罗兰紫", value: "#a855f7" },
+  { label: "玫瑰粉", value: "#f43f5e" },
+  { label: "琥珀黄", value: "#f59e0b" },
+  { label: "石墨灰", value: "#64748b" },
+];
+
+const PRESET_SHAPES: { label: string; value: MindmapNodeShape }[] = [
+  { label: "胶囊", value: "capsule" },
+  { label: "圆角", value: "rounded" },
+  { label: "直角", value: "rect" },
+  { label: "下划线", value: "underline" },
+];
+
+const PRESET_LINE_STYLES: { label: string; value: MindmapLineStyle }[] = [
+  { label: "曲线", value: "bezier" },
+  { label: "折线", value: "step" },
+  { label: "直线", value: "straight" },
+];
+
+const PRESET_LINE_COLORS = [
+  { label: "继承", value: "" },
+  { label: "天蓝", value: "#38bdf8" },
+  { label: "翡翠绿", value: "#10b981" },
+  { label: "珊瑚橙", value: "#f97316" },
+  { label: "罗兰紫", value: "#a855f7" },
+  { label: "玫瑰粉", value: "#f43f5e" },
+  { label: "石墨灰", value: "#94a3b8" },
+];
+
 export const MindmapView = memo(function MindmapView({
   title,
   headings,
@@ -58,6 +89,7 @@ export const MindmapView = memo(function MindmapView({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
+  const lastEmittedSourceRef = useRef<string>("");
 
   // Initialize tree from source or headings
   const initialTree = useMemo(() => {
@@ -77,17 +109,18 @@ export const MindmapView = memo(function MindmapView({
 
   const [tree, setTree] = useState<MindmapNode>(initialTree);
 
-  // Keep tree in sync if external source changes
+  // Keep tree in sync if external source changes, but prevent feedback loop echo
   useEffect(() => {
-    if (source && source.trim()) {
+    if (source && source.trim() && source !== lastEmittedSourceRef.current) {
       setTree(parseMarkdownToMindmapTree(source, title));
     }
   }, [source, title]);
 
-  // Selected node and inline editing state
+  // Selected node, inline editing, and context menu states
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(tree.id);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>("");
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
 
   // Undo / Redo history stacks
   const undoStackRef = useRef<MindmapNode[]>([]);
@@ -153,6 +186,7 @@ export const MindmapView = memo(function MindmapView({
 
       if (onSourceChange) {
         const md = mindmapTreeToMarkdown(nextTree);
+        lastEmittedSourceRef.current = md;
         onSourceChange(md);
       }
     },
@@ -166,7 +200,9 @@ export const MindmapView = memo(function MindmapView({
     updateHistoryStatus();
     setTree(prev);
     if (onSourceChange) {
-      onSourceChange(mindmapTreeToMarkdown(prev));
+      const md = mindmapTreeToMarkdown(prev);
+      lastEmittedSourceRef.current = md;
+      onSourceChange(md);
     }
   }, [tree, onSourceChange, updateHistoryStatus]);
 
@@ -177,7 +213,9 @@ export const MindmapView = memo(function MindmapView({
     updateHistoryStatus();
     setTree(next);
     if (onSourceChange) {
-      onSourceChange(mindmapTreeToMarkdown(next));
+      const md = mindmapTreeToMarkdown(next);
+      lastEmittedSourceRef.current = md;
+      onSourceChange(md);
     }
   }, [tree, onSourceChange, updateHistoryStatus]);
 
@@ -199,6 +237,7 @@ export const MindmapView = memo(function MindmapView({
       setSelectedNodeId(newNodeId);
       setEditingNodeId(newNodeId);
       setEditingText("新建子主题");
+      setContextMenu(null);
     },
     [editable, selectedNodeId, tree, collapsedIds, applyTreeChange]
   );
@@ -212,6 +251,7 @@ export const MindmapView = memo(function MindmapView({
       setSelectedNodeId(newNodeId);
       setEditingNodeId(newNodeId);
       setEditingText("新建同级主题");
+      setContextMenu(null);
     },
     [editable, selectedNodeId, tree, applyTreeChange]
   );
@@ -225,6 +265,7 @@ export const MindmapView = memo(function MindmapView({
       applyTreeChange(nextTree);
       setSelectedNodeId(fallbackSelectedId);
       setEditingNodeId(null);
+      setContextMenu(null);
     },
     [editable, selectedNodeId, tree, applyTreeChange]
   );
@@ -238,6 +279,7 @@ export const MindmapView = memo(function MindmapView({
         setSelectedNodeId(id);
         setEditingNodeId(id);
         setEditingText(node.text);
+        setContextMenu(null);
       }
     },
     [editable, selectedNodeId, tree]
@@ -255,6 +297,23 @@ export const MindmapView = memo(function MindmapView({
   const handleCancelEdit = useCallback(() => {
     setEditingNodeId(null);
   }, []);
+
+  // Update Appearance Styles
+  const handleUpdateStyle = useCallback(
+    (
+      nodeId: string,
+      styles: {
+        color?: string;
+        shape?: MindmapNodeShape;
+        lineColor?: string;
+        lineStyle?: MindmapLineStyle;
+      }
+    ) => {
+      const nextTree = updateNodeStyle(tree, nodeId, styles);
+      applyTreeChange(nextTree);
+    },
+    [tree, applyTreeChange]
+  );
 
   // Keyboard navigation
   const handleNavigate = useCallback(
@@ -292,6 +351,14 @@ export const MindmapView = memo(function MindmapView({
           handleCancelEdit();
         }
         return;
+      }
+
+      if (contextMenu) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setContextMenu(null);
+          return;
+        }
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "z") {
@@ -359,6 +426,7 @@ export const MindmapView = memo(function MindmapView({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
     editingNodeId,
+    contextMenu,
     handleCommitEdit,
     handleCancelEdit,
     handleUndo,
@@ -386,13 +454,17 @@ export const MindmapView = memo(function MindmapView({
     if (
       target.closest(".mindmap-node-interactive") ||
       target.closest(".mindmap-toolbar") ||
-      target.closest(".mindmap-inline-edit-input")
+      target.closest(".mindmap-inline-edit-input") ||
+      target.closest(".mindmap-context-menu")
     ) {
       return;
     }
     // Clicking canvas background deselects or commits edit
     if (editingNodeId) {
       handleCommitEdit();
+    }
+    if (contextMenu) {
+      setContextMenu(null);
     }
     setIsDragging(true);
     dragStartRef.current = {
@@ -401,7 +473,7 @@ export const MindmapView = memo(function MindmapView({
       startTransformX: transform.x,
       startTransformY: transform.y,
     };
-  }, [transform.x, transform.y, editingNodeId, handleCommitEdit]);
+  }, [transform.x, transform.y, editingNodeId, contextMenu, handleCommitEdit]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
@@ -472,37 +544,6 @@ export const MindmapView = memo(function MindmapView({
     setCollapsedIds(toCollapse);
   }, [layout.nodes]);
 
-  // Export as SVG
-  const handleExportSvg = useCallback(() => {
-    const svgEl = svgRef.current;
-    if (!svgEl || !layout) return;
-
-    const { width, height, minX, minY } = layout.bounds;
-    const serializer = new XMLSerializer();
-    const clone = svgEl.cloneNode(true) as SVGSVGElement;
-
-    clone.setAttribute("viewBox", `${minX} ${minY} ${width} ${height}`);
-    clone.setAttribute("width", `${width}`);
-    clone.setAttribute("height", `${height}`);
-
-    const g = clone.querySelector("g.mindmap-viewport");
-    if (g) {
-      g.removeAttribute("transform");
-    }
-
-    const svgString = serializer.serializeToString(clone);
-    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${title || "mindmap"}-思维导图.svg`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [layout, title]);
-
   // Export as PNG
   const handleExportPng = useCallback(() => {
     const svgEl = svgRef.current;
@@ -561,6 +602,11 @@ export const MindmapView = memo(function MindmapView({
     return layout.nodes.find((n) => n.id === editingNodeId) || null;
   }, [editingNodeId, layout.nodes]);
 
+  const contextTargetNode = useMemo(() => {
+    if (!contextMenu) return null;
+    return findNode(tree, contextMenu.nodeId);
+  }, [contextMenu, tree]);
+
   return (
     <div
       ref={containerRef}
@@ -571,10 +617,10 @@ export const MindmapView = memo(function MindmapView({
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
     >
-      {/* Top Floating XMind-like Control Bar */}
+      {/* Top Floating Clean Control Bar */}
       <header className="mindmap-toolbar">
         <div className="mindmap-toolbar-left">
-          <span className="mindmap-toolbar-title" title={title}>
+          <span className="mindmap-toolbar-title" title={tree.text || title}>
             <ListTree size={16} className="text-cyan" />
             <strong>{tree.text || title || "思维导图"}</strong>
             <span className="mindmap-node-count-badge">
@@ -654,56 +700,30 @@ export const MindmapView = memo(function MindmapView({
               </div>
 
               <div className="mindmap-toolbar-divider" />
+
+              <div className="mindmap-toolbar-btn-group">
+                <button
+                  type="button"
+                  className="mindmap-tool-btn text-btn"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const containerRect = containerRef.current?.getBoundingClientRect();
+                    setContextMenu({
+                      x: rect.left - (containerRect?.left ?? 0),
+                      y: rect.bottom - (containerRect?.top ?? 0) + 4,
+                      nodeId: selectedNodeId || tree.id,
+                    });
+                  }}
+                  title="自定义节点颜色、形状及连线风格 (也可在节点上右键)"
+                >
+                  <Palette size={13} className="text-cyan" />
+                  <span>外观样式</span>
+                </button>
+              </div>
+
+              <div className="mindmap-toolbar-divider" />
             </>
           )}
-
-          <div className="mindmap-toolbar-btn-group">
-            <button
-              type="button"
-              className="mindmap-tool-btn"
-              onClick={() =>
-                setTransform((prev) => ({
-                  ...prev,
-                  scale: Math.min(2.5, Number((prev.scale * 1.15).toFixed(2))),
-                }))
-              }
-              title="放大 (滚轮向上)"
-            >
-              <ZoomIn size={14} />
-            </button>
-            <span className="mindmap-zoom-text">{Math.round(transform.scale * 100)}%</span>
-            <button
-              type="button"
-              className="mindmap-tool-btn"
-              onClick={() =>
-                setTransform((prev) => ({
-                  ...prev,
-                  scale: Math.max(0.25, Number((prev.scale * 0.85).toFixed(2))),
-                }))
-              }
-              title="缩小 (滚轮向下)"
-            >
-              <ZoomOut size={14} />
-            </button>
-            <button
-              type="button"
-              className="mindmap-tool-btn"
-              onClick={() => setTransform((prev) => ({ ...prev, scale: 1 }))}
-              title="原始比例 (100%)"
-            >
-              <RotateCcw size={13} />
-            </button>
-            <button
-              type="button"
-              className="mindmap-tool-btn"
-              onClick={handleFitToScreen}
-              title="自适应居中全屏"
-            >
-              <Maximize2 size={13} />
-            </button>
-          </div>
-
-          <div className="mindmap-toolbar-divider" />
 
           <div className="mindmap-toolbar-btn-group">
             <button
@@ -729,20 +749,11 @@ export const MindmapView = memo(function MindmapView({
           <button
             type="button"
             className="mindmap-tool-btn text-btn"
-            onClick={handleExportSvg}
-            title="导出矢量 SVG"
-          >
-            <Download size={13} />
-            <span>SVG</span>
-          </button>
-          <button
-            type="button"
-            className="mindmap-tool-btn text-btn"
             onClick={handleExportPng}
             title="导出高清 PNG 图片"
           >
             <Download size={13} />
-            <span>PNG</span>
+            <span>导出 PNG</span>
           </button>
           {onClose && (
             <>
@@ -778,10 +789,11 @@ export const MindmapView = memo(function MindmapView({
           className="mindmap-viewport"
           transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
         >
-          {/* Render Bezier Connecting Edges */}
+          {/* Render Bezier / Step / Straight Connecting Edges */}
           <g className="mindmap-edges-group">
             {layout.edges.map((edge) => {
-              const color = BRANCH_COLORS[edge.colorIndex % BRANCH_COLORS.length];
+              const defaultColor = BRANCH_COLORS[edge.colorIndex % BRANCH_COLORS.length];
+              const color = edge.color || defaultColor;
               const isHighlighted =
                 hoveredNodeId === edge.fromId ||
                 hoveredNodeId === edge.toId ||
@@ -805,10 +817,11 @@ export const MindmapView = memo(function MindmapView({
           {/* Render Mindmap Nodes */}
           <g className="mindmap-nodes-group">
             {layout.nodes.map((node) => {
-              const color =
+              const defaultColor =
                 node.level === 0
                   ? "#38bdf8"
                   : BRANCH_COLORS[node.colorIndex % BRANCH_COLORS.length];
+              const color = node.color || defaultColor;
               const isHovered = hoveredNodeId === node.id;
               const isSelected = selectedNodeId === node.id;
               const isRoot = node.level === 0;
@@ -825,6 +838,7 @@ export const MindmapView = memo(function MindmapView({
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedNodeId(node.id);
+                    setContextMenu(null);
                   }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
@@ -834,11 +848,20 @@ export const MindmapView = memo(function MindmapView({
                       onJumpToHeading(node.id, node.line);
                     }
                   }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedNodeId(node.id);
+                    const containerRect = containerRef.current?.getBoundingClientRect();
+                    const cX = containerRect ? e.clientX - containerRect.left : e.clientX;
+                    const cY = containerRect ? e.clientY - containerRect.top : e.clientY;
+                    setContextMenu({ x: cX, y: cY, nodeId: node.id });
+                  }}
                 >
                   <title>
                     {isRoot
-                      ? "中心主题 (按 Tab 添加子主题)"
-                      : `${node.text} (双击编辑，Tab 添加子主题，Enter 添加同级主题)`}
+                      ? "中心主题 (右键设置样式，按 Tab 添加子主题)"
+                      : `${node.text} (双击编辑，右键修改外观，Tab 添加子主题，Enter 添加同级主题)`}
                   </title>
 
                   {/* Selection Glow Outline */}
@@ -848,8 +871,28 @@ export const MindmapView = memo(function MindmapView({
                       y={-3}
                       width={node.width + 6}
                       height={node.height + 6}
-                      rx={isRoot ? 11 : 9}
-                      ry={isRoot ? 11 : 9}
+                      rx={
+                        node.shape === "capsule"
+                          ? (node.height + 6) / 2
+                          : node.shape === "rect"
+                          ? 0
+                          : node.shape === "underline"
+                          ? 4
+                          : isRoot
+                          ? 11
+                          : 9
+                      }
+                      ry={
+                        node.shape === "capsule"
+                          ? (node.height + 6) / 2
+                          : node.shape === "rect"
+                          ? 0
+                          : node.shape === "underline"
+                          ? 4
+                          : isRoot
+                          ? 11
+                          : 9
+                      }
                       className="mindmap-node-selection-ring"
                       stroke="#38bdf8"
                       strokeWidth={2}
@@ -858,17 +901,56 @@ export const MindmapView = memo(function MindmapView({
                     />
                   )}
 
-                  {/* Node Capsule Background */}
-                  <rect
-                    width={node.width}
-                    height={node.height}
-                    rx={isRoot ? 8 : 6}
-                    ry={isRoot ? 8 : 6}
-                    className="mindmap-node-rect"
-                    stroke={color}
-                    strokeWidth={isSelected ? 2.2 : isHovered ? 1.8 : isRoot ? 1.6 : 1.2}
-                    filter={isSelected || isHovered ? "url(#node-glow)" : undefined}
-                  />
+                  {/* Node Capsule / Rounded / Rect / Underline Background */}
+                  {node.shape === "underline" ? (
+                    <>
+                      <rect
+                        width={node.width}
+                        height={node.height}
+                        fill="transparent"
+                        className="mindmap-node-rect-underline"
+                      />
+                      <line
+                        x1={0}
+                        y1={node.height - 2}
+                        x2={node.width}
+                        y2={node.height - 2}
+                        stroke={color}
+                        strokeWidth={isSelected ? 2.8 : isHovered ? 2.2 : 1.8}
+                      />
+                    </>
+                  ) : (
+                    <rect
+                      width={node.width}
+                      height={node.height}
+                      rx={
+                        node.shape === "capsule"
+                          ? node.height / 2
+                          : node.shape === "rect"
+                          ? 0
+                          : node.shape === "rounded"
+                          ? 6
+                          : isRoot
+                          ? 8
+                          : 6
+                      }
+                      ry={
+                        node.shape === "capsule"
+                          ? node.height / 2
+                          : node.shape === "rect"
+                          ? 0
+                          : node.shape === "rounded"
+                          ? 6
+                          : isRoot
+                          ? 8
+                          : 6
+                      }
+                      className="mindmap-node-rect"
+                      stroke={color}
+                      strokeWidth={isSelected ? 2.2 : isHovered ? 1.8 : isRoot ? 1.6 : 1.2}
+                      filter={isSelected || isHovered ? "url(#node-glow)" : undefined}
+                    />
+                  )}
 
                   {/* Level Tag / Icon Indicator */}
                   {!isRoot && (
@@ -906,38 +988,15 @@ export const MindmapView = memo(function MindmapView({
                     {node.text}
                   </text>
 
-                  {/* Quick Add Subtopic Button on Hover */}
-                  {editable && (isHovered || isSelected) && (
-                    <g
-                      className="mindmap-node-add-btn"
-                      transform={`translate(${node.width + 12}, ${node.height / 2})`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddChild(node.id);
-                      }}
-                    >
-                      <circle r={8} className="mindmap-add-circle" fill="#38bdf8" />
-                      <text
-                        textAnchor="middle"
-                        dy={3.5}
-                        className="mindmap-add-symbol"
-                        fill="#ffffff"
-                      >
-                        +
-                      </text>
-                      <title>添加子主题 (Tab)</title>
-                    </g>
-                  )}
-
                   {/* Children Collapse/Expand Toggle Button */}
                   {node.hasChildren && (
                     <g
                       className="mindmap-collapse-btn"
-                      transform={`translate(${node.width}, ${node.height / 2})`}
+                      transform={`translate(${node.width + 1}, ${node.height / 2})`}
                       onClick={(e) => handleToggleCollapse(node.id, e)}
                     >
                       <circle
-                        r={7.5}
+                        r={7}
                         className="mindmap-collapse-circle"
                         stroke={color}
                         strokeWidth={1.2}
@@ -951,6 +1010,30 @@ export const MindmapView = memo(function MindmapView({
                         {node.collapsed ? "+" : "−"}
                       </text>
                       <title>{node.collapsed ? "展开子分支" : "折叠子分支"}</title>
+                    </g>
+                  )}
+
+                  {/* Quick Add Subtopic Button on Hover/Selection (Separated cleanly without overlap) */}
+                  {editable && (isHovered || isSelected) && (
+                    <g
+                      className="mindmap-node-add-btn"
+                      transform={`translate(${node.hasChildren ? node.width + 22 : node.width + 10}, ${node.height / 2})`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleAddChild(node.id);
+                      }}
+                    >
+                      <circle r={7} className="mindmap-add-circle" fill="#38bdf8" />
+                      <text
+                        textAnchor="middle"
+                        dy={3.2}
+                        className="mindmap-add-symbol"
+                        fill="#ffffff"
+                      >
+                        +
+                      </text>
+                      <title>添加子主题 (Tab)</title>
                     </g>
                   )}
                 </g>
@@ -987,6 +1070,170 @@ export const MindmapView = memo(function MindmapView({
             }
           }}
         />
+      )}
+
+      {/* Right Click Appearance Customization Context Menu */}
+      {contextMenu && (
+        <div
+          className="mindmap-context-menu"
+          style={{
+            left: Math.min(contextMenu.x, (containerRef.current?.clientWidth || 800) - 240),
+            top: Math.min(contextMenu.y, (containerRef.current?.clientHeight || 600) - 370),
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mindmap-ctx-header">
+            <span className="mindmap-ctx-title" title={contextTargetNode?.text || "主题样式定制"}>
+              <Palette size={13} className="text-cyan" />
+              {contextTargetNode?.text || "主题样式定制"}
+            </span>
+            <button
+              type="button"
+              className="mindmap-ctx-close"
+              onClick={() => setContextMenu(null)}
+              title="关闭"
+            >
+              <X size={13} />
+            </button>
+          </div>
+
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label">节点颜色</div>
+            <div className="mindmap-ctx-palette">
+              {PRESET_COLORS.map((c) => {
+                const isActive = (contextTargetNode?.color || "") === c.value;
+                return (
+                  <button
+                    key={c.label}
+                    type="button"
+                    className={`mindmap-color-swatch ${isActive ? "is-active" : ""}`}
+                    style={{ background: c.value || "var(--surface-2)" }}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { color: c.value })}
+                    title={c.label}
+                  >
+                    {isActive && <Check size={11} color={c.value ? "#ffffff" : "var(--text)"} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label">节点形状</div>
+            <div className="mindmap-ctx-pills">
+              {PRESET_SHAPES.map((s) => {
+                const currentShape = contextTargetNode?.shape || (contextTargetNode?.level === 0 ? "capsule" : "rounded");
+                const isActive = currentShape === s.value;
+                return (
+                  <button
+                    key={s.value}
+                    type="button"
+                    className={`mindmap-pill-btn ${isActive ? "is-active" : ""}`}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { shape: s.value })}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label">分支连线形状</div>
+            <div className="mindmap-ctx-pills">
+              {PRESET_LINE_STYLES.map((l) => {
+                const currentStyle = contextTargetNode?.lineStyle || "bezier";
+                const isActive = currentStyle === l.value;
+                return (
+                  <button
+                    key={l.value}
+                    type="button"
+                    className={`mindmap-pill-btn ${isActive ? "is-active" : ""}`}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { lineStyle: l.value })}
+                  >
+                    {l.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label">连线颜色</div>
+            <div className="mindmap-ctx-palette">
+              {PRESET_LINE_COLORS.map((c) => {
+                const isActive = (contextTargetNode?.lineColor || "") === c.value;
+                return (
+                  <button
+                    key={c.label}
+                    type="button"
+                    className={`mindmap-color-swatch ${isActive ? "is-active" : ""}`}
+                    style={{ background: c.value || "var(--surface-2)" }}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { lineColor: c.value })}
+                    title={`连线: ${c.label}`}
+                  >
+                    {isActive && <Check size={11} color={c.value ? "#ffffff" : "var(--text)"} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mindmap-ctx-divider" />
+
+          <div className="mindmap-ctx-actions">
+            <button
+              type="button"
+              className="mindmap-ctx-action-item"
+              onClick={() => {
+                const nid = contextMenu.nodeId;
+                setContextMenu(null);
+                handleAddChild(nid);
+              }}
+            >
+              <CornerDownRight size={13} />
+              <span>添加子主题 (Tab)</span>
+            </button>
+            <button
+              type="button"
+              className="mindmap-ctx-action-item"
+              onClick={() => {
+                const nid = contextMenu.nodeId;
+                setContextMenu(null);
+                handleAddSibling(nid);
+              }}
+            >
+              <PlusCircle size={13} />
+              <span>添加同级主题 (Enter)</span>
+            </button>
+            <button
+              type="button"
+              className="mindmap-ctx-action-item"
+              onClick={() => {
+                const nid = contextMenu.nodeId;
+                setContextMenu(null);
+                startEditing(nid);
+              }}
+            >
+              <Edit3 size={13} />
+              <span>重命名 (F2)</span>
+            </button>
+            {contextMenu.nodeId !== tree.id && contextMenu.nodeId !== "root-mindmap-node" && (
+              <button
+                type="button"
+                className="mindmap-ctx-action-item is-delete"
+                onClick={() => {
+                  const nid = contextMenu.nodeId;
+                  setContextMenu(null);
+                  handleDeleteNode(nid);
+                }}
+              >
+                <Trash2 size={13} />
+                <span>删除主题 (Del)</span>
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
