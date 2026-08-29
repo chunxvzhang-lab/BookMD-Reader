@@ -7933,6 +7933,79 @@ body:has(.flash-capsule-overlay) {
   user-select: none;
 }
 
+/* XMind Interactive Selection & Focus */
+.mindmap-node-selection-ring {
+  pointer-events: none;
+  animation: mindmap-ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes mindmap-ring-pulse {
+  0%, 100% {
+    stroke-opacity: 0.9;
+  }
+  50% {
+    stroke-opacity: 0.45;
+  }
+}
+
+.mindmap-node-interactive.is-selected .mindmap-node-rect {
+  fill: color-mix(in srgb, #38bdf8 14%, var(--surface));
+}
+
+/* Quick Add Subtopic Button on Node */
+.mindmap-node-add-btn {
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mindmap-node-add-btn:hover {
+  transform: scale(1.22);
+}
+
+.mindmap-add-circle {
+  transition: fill 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.mindmap-add-symbol {
+  font-size: 12px;
+  font-weight: bold;
+  dominant-baseline: middle;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* XMind Toolbar Buttons */
+.mindmap-tool-btn.highlight-btn {
+  color: #38bdf8;
+  font-weight: 500;
+}
+
+.mindmap-tool-btn.highlight-btn:hover {
+  background: color-mix(in srgb, #38bdf8 15%, transparent);
+}
+
+.mindmap-tool-btn.delete-btn:hover:not(:disabled) {
+  color: #f43f5e;
+  background: color-mix(in srgb, #f43f5e 12%, transparent);
+}
+
+/* Inline Mindmap Topic Text Input */
+.mindmap-inline-edit-input {
+  position: absolute;
+  box-sizing: border-box;
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid #38bdf8;
+  border-radius: 6px;
+  padding: 2px 8px;
+  outline: none;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.28), 0 0 0 2px rgba(56, 189, 248, 0.2);
+  z-index: 30;
+  font-family: inherit;
+  font-weight: 500;
+}
+
 /* ==========================================================================
    Blocklink Anchors & Embed Cards (块级互联)
    ========================================================================== */

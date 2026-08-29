@@ -4,6 +4,12 @@ import {
   buildMindmapTree,
   layoutMindmap,
   BRANCH_COLORS,
+  parseMarkdownToMindmapTree,
+  mindmapTreeToMarkdown,
+  addChildNode,
+  addSiblingNode,
+  deleteNode,
+  updateNodeText,
 } from "../services/mindmapService";
 
 describe("mindmapService", () => {
@@ -108,5 +114,117 @@ describe("mindmapService", () => {
     expect(nodeIds.includes("c1")).toBe(false);
     expect(nodeIds.includes("c2")).toBe(false);
     expect(layout.edges.length).toBe(1); // root -> p only
+  });
+
+  describe("XMind Interactive Features & Serialization", () => {
+    it("parses indented bullet lists into multi-level mindmap tree", () => {
+      const source = `# 我的知识图谱
+
+- 核心架构
+  - 前端界面
+    - React 19
+    - CodeMirror 6
+  - 后端服务
+    - Electron 42
+- 性能优化
+  - 双向滚动虚拟化
+`;
+
+      const tree = parseMarkdownToMindmapTree(source, "默认标题");
+
+      expect(tree.text).toBe("我的知识图谱");
+      expect(tree.level).toBe(0);
+      expect(tree.children.length).toBe(2);
+
+      const branch1 = tree.children[0];
+      expect(branch1.text).toBe("核心架构");
+      expect(branch1.children.length).toBe(2);
+
+      const frontend = branch1.children[0];
+      expect(frontend.text).toBe("前端界面");
+      expect(frontend.children.length).toBe(2);
+      expect(frontend.children[0].text).toBe("React 19");
+      expect(frontend.children[1].text).toBe("CodeMirror 6");
+
+      const branch2 = tree.children[1];
+      expect(branch2.text).toBe("性能优化");
+      expect(branch2.children[0].text).toBe("双向滚动虚拟化");
+    });
+
+    it("serializes mindmap tree back to clean Markdown list", () => {
+      const source = `# 软件工程
+
+- 需求分析
+  - 用户画像
+- 系统设计
+  - 架构图
+`;
+      const tree = parseMarkdownToMindmapTree(source);
+      const markdown = mindmapTreeToMarkdown(tree);
+
+      expect(markdown).toContain("# 软件工程");
+      expect(markdown).toContain("- 需求分析");
+      expect(markdown).toContain("  - 用户画像");
+      expect(markdown).toContain("- 系统设计");
+      expect(markdown).toContain("  - 架构图");
+
+      // Verify round-trip idempotency
+      const roundTripTree = parseMarkdownToMindmapTree(markdown);
+      expect(roundTripTree.text).toBe(tree.text);
+      expect(roundTripTree.children.length).toBe(tree.children.length);
+      expect(roundTripTree.children[0].children[0].text).toBe("用户画像");
+    });
+
+    it("adds child node and sibling node properly", () => {
+      const root = parseMarkdownToMindmapTree("# 测试中心\n\n- 主题 1\n");
+      const topic1 = root.children[0];
+
+      // Add child to topic 1
+      const { nextTree: treeWithChild, newNodeId: childId } = addChildNode(
+        root,
+        topic1.id,
+        "子主题 1.1"
+      );
+      const updatedTopic1 = treeWithChild.children[0];
+      expect(updatedTopic1.children.length).toBe(1);
+      expect(updatedTopic1.children[0].id).toBe(childId);
+      expect(updatedTopic1.children[0].text).toBe("子主题 1.1");
+
+      // Add sibling to child
+      const { nextTree: treeWithSibling, newNodeId: siblingId } = addSiblingNode(
+        treeWithChild,
+        childId,
+        "子主题 1.2"
+      );
+      const topic1AfterSibling = treeWithSibling.children[0];
+      expect(topic1AfterSibling.children.length).toBe(2);
+      expect(topic1AfterSibling.children[1].id).toBe(siblingId);
+      expect(topic1AfterSibling.children[1].text).toBe("子主题 1.2");
+    });
+
+    it("deletes node and prevents deleting root node", () => {
+      const source = `# 根节点\n\n- 节点 A\n- 节点 B\n`;
+      const root = parseMarkdownToMindmapTree(source);
+      const nodeA = root.children[0];
+
+      // Delete Node A
+      const { nextTree, fallbackSelectedId } = deleteNode(root, nodeA.id);
+      expect(nextTree.children.length).toBe(1);
+      expect(nextTree.children[0].text).toBe("节点 B");
+      expect(fallbackSelectedId).toBe(nextTree.id);
+
+      // Attempt to delete root node (must be prevented)
+      const { nextTree: rootUnchanged } = deleteNode(nextTree, nextTree.id);
+      expect(rootUnchanged.children.length).toBe(1);
+      expect(rootUnchanged.id).toBe(nextTree.id);
+    });
+
+    it("updates node text seamlessly", () => {
+      const root = parseMarkdownToMindmapTree("# 计划\n\n- 任务 1\n");
+      const task1 = root.children[0];
+
+      const updated = updateNodeText(root, task1.id, "任务 1 (已完成)");
+      expect(updated.children[0].text).toBe("任务 1 (已完成)");
+    });
   });
 });

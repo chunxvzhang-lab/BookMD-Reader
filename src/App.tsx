@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, FilePlus2, FileText, FolderOpen, Zap, X } from "lucide-react";
+import { BookOpen, FilePlus2, FileText, FolderOpen, Zap, X, ListTree } from "lucide-react";
 import { AboutDialog } from "./components/AboutDialog";
 import { ActivityBar } from "./components/ActivityBar";
 import { BookmarkPanel } from "./components/BookmarkPanel";
@@ -63,6 +63,7 @@ type PendingAction =
   | { type: "open-desktop-file"; absolutePath: string; preloadedSource?: ChapterSource | null }
   | { type: "open-directory" }
   | { type: "new-file" }
+  | { type: "new-mindmap" }
   | { type: "close-window"; requestId: number };
 
 export function App() {
@@ -635,6 +636,10 @@ export function App() {
           await doCreateNewFile();
           break;
         }
+        case "new-mindmap": {
+          await doCreateNewMindmap();
+          break;
+        }
         case "close-window": {
           if (window.bookMDDesktop?.resolveBeforeClose) {
             window.bookMDDesktop.resolveBeforeClose({
@@ -1164,6 +1169,87 @@ export function App() {
     }
   };
 
+  const doCreateNewMindmap = async () => {
+    if (!window.bookMDDesktop) {
+      setNotice("新建思维导图功能仅在桌面版可用。");
+      return;
+    }
+
+    try {
+      const rootPath = manifest?.rootPath;
+      const initialContent = `# 中心主题\n\n- 主要分支 1\n  - 子主题 1.1\n  - 子主题 1.2\n- 主要分支 2\n  - 子主题 2.1\n- 主要分支 3\n`;
+      const result = await window.bookMDDesktop.createMarkdownFile({
+        rootPath,
+        defaultName: "新建思维导图.mindmap.md",
+        initialContent,
+      });
+      if (result.canceled || !result.success) {
+        if (!result.canceled && result.message) setNotice(result.message);
+        return;
+      }
+
+      let nextManifest = manifest;
+      if (rootPath && window.bookMDDesktop.refreshDirectory) {
+        nextManifest = await window.bookMDDesktop.refreshDirectory(rootPath);
+      } else {
+        const newChapter = result.chapter;
+        nextManifest = {
+          id: manifest?.id ?? `directory:${result.absolutePath}`,
+          title: manifest?.title ?? result.chapter.title,
+          rootPath: manifest?.rootPath,
+          chapters: manifest ? [...manifest.chapters, newChapter] : [newChapter],
+        };
+      }
+
+      const activeChap =
+        nextManifest.chapters.find(
+          (c) => c.absolutePath && c.absolutePath.toLowerCase() === result.absolutePath.toLowerCase()
+        ) ?? result.chapter;
+
+      setManifest(nextManifest);
+      setChapterId(activeChap.id);
+      setTabs((prev) => {
+        const exists = prev.some(
+          (t) =>
+            t.id === activeChap.id ||
+            (t.absolutePath &&
+              activeChap.absolutePath &&
+              t.absolutePath.toLowerCase() === activeChap.absolutePath.toLowerCase())
+        );
+        if (exists) return prev;
+        return [
+          ...prev,
+          {
+            id: activeChap.id,
+            title: activeChap.title,
+            relativePath: activeChap.src,
+            absolutePath: result.absolutePath,
+            isDirty: false,
+          },
+        ];
+      });
+      setSidebarOpen(true);
+      setSidebarTab("toc");
+      setViewMode("mindmap");
+      activeLoadedChapterIdRef.current = activeChap.id;
+
+      openSession({
+        chapterId: activeChap.id,
+        absolutePath: result.absolutePath,
+        fileName: activeChap.src.split("/").pop() ?? activeChap.title,
+        baseUrl: result.source.baseUrl,
+        source: result.source.markdown,
+        diskVersion: result.source.diskVersion ?? null,
+        writable: true,
+        hasBom: result.source.hasBom,
+        lineEnding: result.source.lineEnding,
+      });
+      setNotice(`已新建思维导图：${activeChap.title}（按 Tab 添加子主题，Enter 添加同级主题）`);
+    } catch (err: any) {
+      setNotice(`新建思维导图失败：${err.message || String(err)}`);
+    }
+  };
+
   const openMarkdownFile = useCallback(
     (file: File) => {
       guardAction({ type: "open-file", file });
@@ -1187,6 +1273,10 @@ export function App() {
 
   const createNewFile = useCallback(() => {
     guardAction({ type: "new-file" });
+  }, [guardAction]);
+
+  const createNewMindmap = useCallback(() => {
+    guardAction({ type: "new-mindmap" });
   }, [guardAction]);
 
   const jumpBookmark = useCallback(
@@ -2177,6 +2267,7 @@ export function App() {
                 isDirty={isDirty}
                 onSelectChapter={selectChapter}
                 onRenameChapter={handleRenameChapter}
+                onNewMindmap={window.bookMDDesktop ? createNewMindmap : undefined}
               />
             </div>
           ) : (
@@ -2377,6 +2468,9 @@ export function App() {
               <MindmapView
                 title={activeChapter?.title ?? session?.fileName ?? "知识思维导图"}
                 headings={renderedChapter?.headings ?? []}
+                source={session.source}
+                onSourceChange={updateSource}
+                editable={session.writable}
                 theme={preferences.theme}
                 onJumpToHeading={(headingId, _line) => {
                   setViewMode("split");
@@ -2430,6 +2524,12 @@ export function App() {
                       <button type="button" className="empty-action-card" onClick={createNewFile}>
                         <FilePlus2 size={22} className="about-icon text-orange" />
                         <span>新建 Markdown</span>
+                      </button>
+                    ) : null}
+                    {window.bookMDDesktop ? (
+                      <button type="button" className="empty-action-card" onClick={createNewMindmap}>
+                        <ListTree size={22} className="about-icon text-cyan" />
+                        <span>新建思维导图</span>
                       </button>
                     ) : null}
                     <button

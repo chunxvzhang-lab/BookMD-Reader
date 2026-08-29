@@ -6,23 +6,41 @@ import {
   ZoomOut,
   RotateCcw,
   Download,
-  FolderTree,
   ListTree,
-  FileText,
   X,
+  PlusCircle,
+  CornerDownRight,
+  Edit3,
+  Trash2,
+  Undo2,
+  Redo2,
+  Plus,
 } from "lucide-react";
 import type { Heading, ThemeMode } from "../core/types";
 import {
   BRANCH_COLORS,
   buildMindmapTree,
   layoutMindmap,
+  parseMarkdownToMindmapTree,
+  mindmapTreeToMarkdown,
+  addChildNode,
+  addSiblingNode,
+  deleteNode,
+  updateNodeText,
+  findNode,
+  findParent,
+  findSibling,
   type MindmapLayoutNode,
 } from "../services/mindmapService";
+import type { MindmapNode } from "../core/types";
 
 export type MindmapViewProps = {
   title: string;
-  headings: Heading[];
-  onJumpToHeading: (headingId: string, line?: number) => void;
+  headings?: Heading[];
+  source?: string;
+  onSourceChange?: (newSource: string) => void;
+  editable?: boolean;
+  onJumpToHeading?: (headingId: string, line?: number) => void;
   onClose?: () => void;
   theme?: ThemeMode;
 };
@@ -30,12 +48,57 @@ export type MindmapViewProps = {
 export const MindmapView = memo(function MindmapView({
   title,
   headings,
+  source,
+  onSourceChange,
+  editable = true,
   onJumpToHeading,
   onClose,
   theme = "system",
 }: MindmapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const editInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Initialize tree from source or headings
+  const initialTree = useMemo(() => {
+    if (source && source.trim()) {
+      return parseMarkdownToMindmapTree(source, title);
+    }
+    if (headings && headings.length > 0) {
+      return buildMindmapTree(title, headings);
+    }
+    return {
+      id: "root-mindmap-node",
+      text: title || "中心主题",
+      level: 0,
+      children: [],
+    };
+  }, [source, title, headings]);
+
+  const [tree, setTree] = useState<MindmapNode>(initialTree);
+
+  // Keep tree in sync if external source changes
+  useEffect(() => {
+    if (source && source.trim()) {
+      setTree(parseMarkdownToMindmapTree(source, title));
+    }
+  }, [source, title]);
+
+  // Selected node and inline editing state
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(tree.id);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>("");
+
+  // Undo / Redo history stacks
+  const undoStackRef = useRef<MindmapNode[]>([]);
+  const redoStackRef = useRef<MindmapNode[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  const updateHistoryStatus = useCallback(() => {
+    setCanUndo(undoStackRef.current.length > 0);
+    setCanRedo(redoStackRef.current.length > 0);
+  }, []);
 
   // Pan & Zoom transform state
   const [transform, setTransform] = useState({ x: 60, y: 80, scale: 1 });
@@ -44,19 +107,12 @@ export const MindmapView = memo(function MindmapView({
 
   // Node collapse state
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
-
-  // Active hover node for focus indication
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  // 1. Build hierarchical tree from document headings
-  const mindmapTree = useMemo(() => {
-    return buildMindmapTree(title, headings);
-  }, [title, headings]);
-
-  // 2. Compute 2D layout coordinates
+  // Compute 2D layout coordinates
   const layout = useMemo(() => {
-    return layoutMindmap(mindmapTree, collapsedIds);
-  }, [mindmapTree, collapsedIds]);
+    return layoutMindmap(tree, collapsedIds);
+  }, [tree, collapsedIds]);
 
   // Fit to screen helper
   const handleFitToScreen = useCallback(() => {
@@ -69,9 +125,9 @@ export const MindmapView = memo(function MindmapView({
 
     if (lWidth === 0 || lHeight === 0) return;
 
-    const scaleX = (cWidth - 100) / lWidth;
-    const scaleY = (cHeight - 100) / lHeight;
-    const newScale = Math.max(0.35, Math.min(1.25, Math.min(scaleX, scaleY)));
+    const scaleX = (cWidth - 120) / lWidth;
+    const scaleY = (cHeight - 120) / lHeight;
+    const newScale = Math.max(0.35, Math.min(1.2, Math.min(scaleX, scaleY)));
 
     const newX = (cWidth - lWidth * newScale) / 2 - minX * newScale;
     const newY = (cHeight - lHeight * newScale) / 2 - minY * newScale;
@@ -79,21 +135,264 @@ export const MindmapView = memo(function MindmapView({
     setTransform({ x: Math.round(newX), y: Math.round(newY), scale: Number(newScale.toFixed(2)) });
   }, [layout]);
 
-  // Initial fit on mount or major heading structure change
+  // Initial fit on mount
   useEffect(() => {
     const timer = setTimeout(() => {
       handleFitToScreen();
-    }, 50);
+    }, 60);
     return () => clearTimeout(timer);
-  }, [headings.length]);
+  }, []);
+
+  // Tree mutation & Markdown synchronization
+  const applyTreeChange = useCallback(
+    (nextTree: MindmapNode) => {
+      undoStackRef.current.push(tree);
+      redoStackRef.current = [];
+      updateHistoryStatus();
+      setTree(nextTree);
+
+      if (onSourceChange) {
+        const md = mindmapTreeToMarkdown(nextTree);
+        onSourceChange(md);
+      }
+    },
+    [tree, onSourceChange, updateHistoryStatus]
+  );
+
+  const handleUndo = useCallback(() => {
+    if (undoStackRef.current.length === 0) return;
+    const prev = undoStackRef.current.pop()!;
+    redoStackRef.current.push(tree);
+    updateHistoryStatus();
+    setTree(prev);
+    if (onSourceChange) {
+      onSourceChange(mindmapTreeToMarkdown(prev));
+    }
+  }, [tree, onSourceChange, updateHistoryStatus]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStackRef.current.length === 0) return;
+    const next = redoStackRef.current.pop()!;
+    undoStackRef.current.push(tree);
+    updateHistoryStatus();
+    setTree(next);
+    if (onSourceChange) {
+      onSourceChange(mindmapTreeToMarkdown(next));
+    }
+  }, [tree, onSourceChange, updateHistoryStatus]);
+
+  // XMind Interactive Actions
+  const handleAddChild = useCallback(
+    (parentId?: string) => {
+      if (!editable) return;
+      const targetId = parentId || selectedNodeId || tree.id;
+      // Uncollapse if collapsed
+      if (collapsedIds.has(targetId)) {
+        setCollapsedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(targetId);
+          return next;
+        });
+      }
+      const { nextTree, newNodeId } = addChildNode(tree, targetId, "新建子主题");
+      applyTreeChange(nextTree);
+      setSelectedNodeId(newNodeId);
+      setEditingNodeId(newNodeId);
+      setEditingText("新建子主题");
+    },
+    [editable, selectedNodeId, tree, collapsedIds, applyTreeChange]
+  );
+
+  const handleAddSibling = useCallback(
+    (targetId?: string) => {
+      if (!editable) return;
+      const id = targetId || selectedNodeId || tree.id;
+      const { nextTree, newNodeId } = addSiblingNode(tree, id, "新建同级主题");
+      applyTreeChange(nextTree);
+      setSelectedNodeId(newNodeId);
+      setEditingNodeId(newNodeId);
+      setEditingText("新建同级主题");
+    },
+    [editable, selectedNodeId, tree, applyTreeChange]
+  );
+
+  const handleDeleteNode = useCallback(
+    (nodeId?: string) => {
+      if (!editable) return;
+      const id = nodeId || selectedNodeId;
+      if (!id || id === tree.id || id === "root-mindmap-node") return;
+      const { nextTree, fallbackSelectedId } = deleteNode(tree, id);
+      applyTreeChange(nextTree);
+      setSelectedNodeId(fallbackSelectedId);
+      setEditingNodeId(null);
+    },
+    [editable, selectedNodeId, tree, applyTreeChange]
+  );
+
+  const startEditing = useCallback(
+    (nodeId?: string) => {
+      if (!editable) return;
+      const id = nodeId || selectedNodeId || tree.id;
+      const node = findNode(tree, id);
+      if (node) {
+        setSelectedNodeId(id);
+        setEditingNodeId(id);
+        setEditingText(node.text);
+      }
+    },
+    [editable, selectedNodeId, tree]
+  );
+
+  const handleCommitEdit = useCallback(() => {
+    if (!editingNodeId) return;
+    if (editingText.trim()) {
+      const nextTree = updateNodeText(tree, editingNodeId, editingText.trim());
+      applyTreeChange(nextTree);
+    }
+    setEditingNodeId(null);
+  }, [editingNodeId, editingText, tree, applyTreeChange]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingNodeId(null);
+  }, []);
+
+  // Keyboard navigation
+  const handleNavigate = useCallback(
+    (direction: "up" | "down" | "left" | "right") => {
+      const currId = selectedNodeId || tree.id;
+      if (direction === "left") {
+        const parent = findParent(tree, currId);
+        if (parent) setSelectedNodeId(parent.id);
+      } else if (direction === "right") {
+        const curr = findNode(tree, currId);
+        if (curr?.children && curr.children.length > 0) {
+          setSelectedNodeId(curr.children[0].id);
+        }
+      } else if (direction === "up") {
+        const prev = findSibling(tree, currId, -1);
+        if (prev) setSelectedNodeId(prev.id);
+      } else if (direction === "down") {
+        const next = findSibling(tree, currId, 1);
+        if (next) setSelectedNodeId(next.id);
+      }
+    },
+    [selectedNodeId, tree]
+  );
+
+  // Global Mindmap Keydown shortcuts
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // If currently editing text in the overlay input, let input handle its own keys
+      if (editingNodeId) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleCommitEdit();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          handleCancelEdit();
+        }
+        return;
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+      if (
+        (e.ctrlKey && e.key.toLowerCase() === "y") ||
+        (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "z")
+      ) {
+        e.preventDefault();
+        handleRedo();
+        return;
+      }
+
+      if (e.key === "Tab" || e.key === "Insert") {
+        e.preventDefault();
+        handleAddChild();
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAddSibling();
+        return;
+      }
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        handleDeleteNode();
+        return;
+      }
+      if (e.key === "F2" || e.key === " ") {
+        e.preventDefault();
+        startEditing();
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        handleNavigate("up");
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        handleNavigate("down");
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handleNavigate("left");
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNavigate("right");
+        return;
+      }
+      if (e.key === "Escape" && onClose) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    editingNodeId,
+    handleCommitEdit,
+    handleCancelEdit,
+    handleUndo,
+    handleRedo,
+    handleAddChild,
+    handleAddSibling,
+    handleDeleteNode,
+    startEditing,
+    handleNavigate,
+    onClose,
+  ]);
+
+  // Focus and select input on entering edit mode
+  useEffect(() => {
+    if (editingNodeId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingNodeId]);
 
   // Pan interaction handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Only left click on background initiates panning
     if (e.button !== 0) return;
     const target = e.target as HTMLElement | SVGElement;
-    if (target.closest(".mindmap-node-interactive") || target.closest(".mindmap-toolbar")) {
+    if (
+      target.closest(".mindmap-node-interactive") ||
+      target.closest(".mindmap-toolbar") ||
+      target.closest(".mindmap-inline-edit-input")
+    ) {
       return;
+    }
+    // Clicking canvas background deselects or commits edit
+    if (editingNodeId) {
+      handleCommitEdit();
     }
     setIsDragging(true);
     dragStartRef.current = {
@@ -102,7 +401,7 @@ export const MindmapView = memo(function MindmapView({
       startTransformX: transform.x,
       startTransformY: transform.y,
     };
-  }, [transform.x, transform.y]);
+  }, [transform.x, transform.y, editingNodeId, handleCommitEdit]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
@@ -162,7 +461,7 @@ export const MindmapView = memo(function MindmapView({
     setCollapsedIds(new Set());
   }, []);
 
-  // Collapse to Level 2 (show only H1 and H2)
+  // Collapse to Level 2
   const handleCollapseToLevel2 = useCallback(() => {
     const toCollapse = new Set<string>();
     for (const n of layout.nodes) {
@@ -182,7 +481,6 @@ export const MindmapView = memo(function MindmapView({
     const serializer = new XMLSerializer();
     const clone = svgEl.cloneNode(true) as SVGSVGElement;
 
-    // Set viewbox to bounds
     clone.setAttribute("viewBox", `${minX} ${minY} ${width} ${height}`);
     clone.setAttribute("width", `${width}`);
     clone.setAttribute("height", `${height}`);
@@ -238,7 +536,6 @@ export const MindmapView = memo(function MindmapView({
       if (!ctx) return;
 
       ctx.scale(dpr, dpr);
-      // Background fill based on theme
       ctx.fillStyle = theme === "twitter" ? "#0f172a" : theme === "eink" ? "#f8f6f0" : "#ffffff";
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
@@ -259,6 +556,11 @@ export const MindmapView = memo(function MindmapView({
     img.src = url;
   }, [layout, title, theme]);
 
+  const editingNode = useMemo(() => {
+    if (!editingNodeId) return null;
+    return layout.nodes.find((n) => n.id === editingNodeId) || null;
+  }, [editingNodeId, layout.nodes]);
+
   return (
     <div
       ref={containerRef}
@@ -269,12 +571,12 @@ export const MindmapView = memo(function MindmapView({
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
     >
-      {/* Top Floating Control Bar */}
+      {/* Top Floating XMind-like Control Bar */}
       <header className="mindmap-toolbar">
         <div className="mindmap-toolbar-left">
           <span className="mindmap-toolbar-title" title={title}>
             <ListTree size={16} className="text-cyan" />
-            <strong>{title || "知识思维导图"}</strong>
+            <strong>{tree.text || title || "思维导图"}</strong>
             <span className="mindmap-node-count-badge">
               {layout.nodes.length} 节点
             </span>
@@ -282,6 +584,79 @@ export const MindmapView = memo(function MindmapView({
         </div>
 
         <div className="mindmap-toolbar-center">
+          {editable && (
+            <>
+              <div className="mindmap-toolbar-btn-group">
+                <button
+                  type="button"
+                  className="mindmap-tool-btn text-btn highlight-btn"
+                  onClick={() => handleAddSibling()}
+                  title="添加同级主题 (Enter)"
+                >
+                  <PlusCircle size={13} />
+                  <span>同级主题</span>
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-tool-btn text-btn highlight-btn"
+                  onClick={() => handleAddChild()}
+                  title="添加子主题 (Tab)"
+                >
+                  <CornerDownRight size={13} />
+                  <span>子主题</span>
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-tool-btn text-btn"
+                  onClick={() => startEditing()}
+                  title="重命名主题文字 (F2 / 双击)"
+                >
+                  <Edit3 size={13} />
+                  <span>重命名</span>
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-tool-btn text-btn delete-btn"
+                  onClick={() => handleDeleteNode()}
+                  disabled={
+                    !selectedNodeId ||
+                    selectedNodeId === tree.id ||
+                    selectedNodeId === "root-mindmap-node"
+                  }
+                  title="删除选中主题 (Delete)"
+                >
+                  <Trash2 size={13} />
+                  <span>删除</span>
+                </button>
+              </div>
+
+              <div className="mindmap-toolbar-divider" />
+
+              <div className="mindmap-toolbar-btn-group">
+                <button
+                  type="button"
+                  className="mindmap-tool-btn"
+                  onClick={handleUndo}
+                  disabled={!canUndo}
+                  title="撤销 (Ctrl+Z)"
+                >
+                  <Undo2 size={13} />
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-tool-btn"
+                  onClick={handleRedo}
+                  disabled={!canRedo}
+                  title="重做 (Ctrl+Y)"
+                >
+                  <Redo2 size={13} />
+                </button>
+              </div>
+
+              <div className="mindmap-toolbar-divider" />
+            </>
+          )}
+
           <div className="mindmap-toolbar-btn-group">
             <button
               type="button"
@@ -335,7 +710,7 @@ export const MindmapView = memo(function MindmapView({
               type="button"
               className="mindmap-tool-btn text-btn"
               onClick={handleCollapseToLevel2}
-              title="仅保留 1~2 级标题"
+              title="仅保留 1~2 级主题"
             >
               折叠至2级
             </button>
@@ -408,7 +783,10 @@ export const MindmapView = memo(function MindmapView({
             {layout.edges.map((edge) => {
               const color = BRANCH_COLORS[edge.colorIndex % BRANCH_COLORS.length];
               const isHighlighted =
-                hoveredNodeId === edge.fromId || hoveredNodeId === edge.toId;
+                hoveredNodeId === edge.fromId ||
+                hoveredNodeId === edge.toId ||
+                selectedNodeId === edge.fromId ||
+                selectedNodeId === edge.toId;
               return (
                 <path
                   key={`${edge.fromId}->${edge.toId}`}
@@ -432,28 +810,54 @@ export const MindmapView = memo(function MindmapView({
                   ? "#38bdf8"
                   : BRANCH_COLORS[node.colorIndex % BRANCH_COLORS.length];
               const isHovered = hoveredNodeId === node.id;
+              const isSelected = selectedNodeId === node.id;
               const isRoot = node.level === 0;
 
               return (
                 <g
                   key={node.id}
                   className={`mindmap-node-interactive ${isRoot ? "is-root" : ""} ${
-                    isHovered ? "is-hovered" : ""
-                  }`}
+                    isSelected ? "is-selected" : ""
+                  } ${isHovered ? "is-hovered" : ""}`}
                   transform={`translate(${node.x}, ${node.y})`}
                   onMouseEnter={() => setHoveredNodeId(node.id)}
                   onMouseLeave={() => setHoveredNodeId(null)}
-                  onClick={() => {
-                    if (node.id !== "root-mindmap-node") {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedNodeId(node.id);
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    if (editable) {
+                      startEditing(node.id);
+                    } else if (!isRoot && onJumpToHeading) {
                       onJumpToHeading(node.id, node.line);
                     }
                   }}
                 >
                   <title>
-                    {node.id === "root-mindmap-node"
-                      ? "文档根节点"
-                      : `点击平滑跳转到小节: ${node.text} (第 ${node.line || 1} 行)`}
+                    {isRoot
+                      ? "中心主题 (按 Tab 添加子主题)"
+                      : `${node.text} (双击编辑，Tab 添加子主题，Enter 添加同级主题)`}
                   </title>
+
+                  {/* Selection Glow Outline */}
+                  {isSelected && (
+                    <rect
+                      x={-3}
+                      y={-3}
+                      width={node.width + 6}
+                      height={node.height + 6}
+                      rx={isRoot ? 11 : 9}
+                      ry={isRoot ? 11 : 9}
+                      className="mindmap-node-selection-ring"
+                      stroke="#38bdf8"
+                      strokeWidth={2}
+                      fill="none"
+                      strokeDasharray="4 2"
+                    />
+                  )}
+
                   {/* Node Capsule Background */}
                   <rect
                     width={node.width}
@@ -462,8 +866,8 @@ export const MindmapView = memo(function MindmapView({
                     ry={isRoot ? 8 : 6}
                     className="mindmap-node-rect"
                     stroke={color}
-                    strokeWidth={isHovered ? 2 : isRoot ? 1.8 : 1.2}
-                    filter={isHovered ? "url(#node-glow)" : undefined}
+                    strokeWidth={isSelected ? 2.2 : isHovered ? 1.8 : isRoot ? 1.6 : 1.2}
+                    filter={isSelected || isHovered ? "url(#node-glow)" : undefined}
                   />
 
                   {/* Level Tag / Icon Indicator */}
@@ -502,6 +906,29 @@ export const MindmapView = memo(function MindmapView({
                     {node.text}
                   </text>
 
+                  {/* Quick Add Subtopic Button on Hover */}
+                  {editable && (isHovered || isSelected) && (
+                    <g
+                      className="mindmap-node-add-btn"
+                      transform={`translate(${node.width + 12}, ${node.height / 2})`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddChild(node.id);
+                      }}
+                    >
+                      <circle r={8} className="mindmap-add-circle" fill="#38bdf8" />
+                      <text
+                        textAnchor="middle"
+                        dy={3.5}
+                        className="mindmap-add-symbol"
+                        fill="#ffffff"
+                      >
+                        +
+                      </text>
+                      <title>添加子主题 (Tab)</title>
+                    </g>
+                  )}
+
                   {/* Children Collapse/Expand Toggle Button */}
                   {node.hasChildren && (
                     <g
@@ -510,7 +937,7 @@ export const MindmapView = memo(function MindmapView({
                       onClick={(e) => handleToggleCollapse(node.id, e)}
                     >
                       <circle
-                        r={8}
+                        r={7.5}
                         className="mindmap-collapse-circle"
                         stroke={color}
                         strokeWidth={1.2}
@@ -523,6 +950,7 @@ export const MindmapView = memo(function MindmapView({
                       >
                         {node.collapsed ? "+" : "−"}
                       </text>
+                      <title>{node.collapsed ? "展开子分支" : "折叠子分支"}</title>
                     </g>
                   )}
                 </g>
@@ -531,6 +959,35 @@ export const MindmapView = memo(function MindmapView({
           </g>
         </g>
       </svg>
+
+      {/* Inline Text Editing Overlay Input */}
+      {editingNode && (
+        <input
+          ref={editInputRef}
+          type="text"
+          className="mindmap-inline-edit-input"
+          style={{
+            position: "absolute",
+            left: transform.x + editingNode.x * transform.scale,
+            top: transform.y + editingNode.y * transform.scale,
+            width: Math.max(120, editingNode.width * transform.scale),
+            height: Math.max(30, editingNode.height * transform.scale),
+            fontSize: `${Math.max(11, Math.round(13 * transform.scale))}px`,
+          }}
+          value={editingText}
+          onChange={(e) => setEditingText(e.target.value)}
+          onBlur={handleCommitEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleCommitEdit();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              handleCancelEdit();
+            }
+          }}
+        />
+      )}
     </div>
   );
 });

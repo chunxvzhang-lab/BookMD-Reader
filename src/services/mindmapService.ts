@@ -78,6 +78,294 @@ export function buildMindmapTree(
 }
 
 /**
+ * Parses markdown content (both indented bullet lists and headings) into an interactive MindmapNode tree.
+ */
+export function parseMarkdownToMindmapTree(
+  source: string,
+  defaultTitle = "中心主题"
+): MindmapNode {
+  if (!source || !source.trim()) {
+    return {
+      id: "root-mindmap-node",
+      text: defaultTitle,
+      level: 0,
+      children: [],
+    };
+  }
+
+  const lines = source.split(/\r?\n/);
+  let rootTitle = defaultTitle;
+  let rootHeadingFound = false;
+
+  // Step 1: Detect primary title (# ...)
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("# ")) {
+      rootTitle = trimmed.slice(2).trim();
+      rootHeadingFound = true;
+      break;
+    }
+  }
+
+  const root: MindmapNode = {
+    id: "root-mindmap-node",
+    text: rootTitle || defaultTitle,
+    level: 0,
+    children: [],
+  };
+
+  // Step 2: Check if source contains indented list items (- item or * item)
+  const listRegex = /^(\s*)(?:[-*+]|\d+\.)\s+(.+)$/;
+  const hasListItems = lines.some((line) => listRegex.test(line));
+
+  if (hasListItems) {
+    // Parse hierarchical list items
+    const stack: { node: MindmapNode; indent: number }[] = [
+      { node: root, indent: -1 },
+    ];
+
+    let counter = 1;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const match = line.match(listRegex);
+      if (!match) continue;
+
+      const indent = match[1].length;
+      let text = match[2].trim();
+      // Remove inline block markers like ^block-id
+      text = text.replace(/\s\^[a-zA-Z0-9_-]+$/, "").trim();
+      if (!text) continue;
+
+      // Pop until parent indent < current indent
+      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+        stack.pop();
+      }
+
+      const parent = stack[stack.length - 1].node;
+      const newNode: MindmapNode = {
+        id: `node-${Date.now().toString(36)}-${counter++}`,
+        text,
+        level: stack.length,
+        line: i + 1,
+        children: [],
+      };
+      parent.children.push(newNode);
+      stack.push({ node: newNode, indent });
+    }
+
+    return root;
+  }
+
+  // Step 3: Fallback: parse Markdown headings (#, ##, ###)
+  const headingRegex = /^(#{1,6})\s+(.+)$/;
+  const headings: { id: string; text: string; level: number; line: number }[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const match = line.match(headingRegex);
+    if (match) {
+      const level = match[1].length;
+      const text = match[2].trim().replace(/\s\^[a-zA-Z0-9_-]+$/, "");
+      if (level === 1 && text === rootTitle && rootHeadingFound && headings.length === 0) {
+        continue;
+      }
+      headings.push({
+        id: `heading-${i + 1}-${encodeURIComponent(text.slice(0, 10))}`,
+        text,
+        level,
+        line: i + 1,
+      });
+    }
+  }
+
+  if (headings.length > 0) {
+    const stack: { node: MindmapNode; level: number }[] = [
+      { node: root, level: 0 },
+    ];
+    for (const h of headings) {
+      const node: MindmapNode = {
+        id: h.id,
+        text: h.text,
+        level: h.level,
+        line: h.line,
+        children: [],
+      };
+      while (stack.length > 1 && stack[stack.length - 1].level >= h.level) {
+        stack.pop();
+      }
+      const parent = stack[stack.length - 1].node;
+      parent.children.push(node);
+      stack.push({ node, level: h.level });
+    }
+  }
+
+  return root;
+}
+
+/**
+ * Serializes an interactive MindmapNode tree back to standard hierarchical Markdown.
+ */
+export function mindmapTreeToMarkdown(tree: MindmapNode): string {
+  const lines: string[] = [];
+  lines.push(`# ${tree.text.trim() || "中心主题"}`);
+  lines.push("");
+
+  function serializeChildren(nodes: MindmapNode[], indentLevel: number) {
+    const indent = "  ".repeat(indentLevel);
+    for (const node of nodes) {
+      lines.push(`${indent}- ${node.text.trim() || "分支主题"}`);
+      if (node.children && node.children.length > 0) {
+        serializeChildren(node.children, indentLevel + 1);
+      }
+    }
+  }
+
+  if (tree.children && tree.children.length > 0) {
+    serializeChildren(tree.children, 0);
+  }
+
+  lines.push("");
+  return lines.join("\n");
+}
+
+export function cloneTree(node: MindmapNode): MindmapNode {
+  return {
+    ...node,
+    children: node.children ? node.children.map(cloneTree) : [],
+  };
+}
+
+export function findNode(tree: MindmapNode, id: string): MindmapNode | null {
+  if (tree.id === id) return tree;
+  if (tree.children) {
+    for (const child of tree.children) {
+      const found = findNode(child, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+export function findParent(tree: MindmapNode, id: string): MindmapNode | null {
+  if (tree.id === id) return null;
+  if (tree.children) {
+    for (const child of tree.children) {
+      if (child.id === id) return tree;
+      const found = findParent(child, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+export function findSibling(tree: MindmapNode, id: string, delta: number): MindmapNode | null {
+  const parent = findParent(tree, id);
+  if (!parent || !parent.children) return null;
+  const idx = parent.children.findIndex((c) => c.id === id);
+  if (idx === -1) return null;
+  const targetIdx = idx + delta;
+  if (targetIdx >= 0 && targetIdx < parent.children.length) {
+    return parent.children[targetIdx];
+  }
+  return null;
+}
+
+export function addChildNode(
+  tree: MindmapNode,
+  parentId: string,
+  text = "新建子主题"
+): { nextTree: MindmapNode; newNodeId: string } {
+  const nextTree = cloneTree(tree);
+  const target = findNode(nextTree, parentId);
+  const newNodeId = `node-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const newNode: MindmapNode = {
+    id: newNodeId,
+    text,
+    level: (target?.level ?? 0) + 1,
+    children: [],
+  };
+
+  if (target) {
+    if (!target.children) target.children = [];
+    target.children.push(newNode);
+  } else {
+    nextTree.children.push(newNode);
+  }
+
+  return { nextTree, newNodeId };
+}
+
+export function addSiblingNode(
+  tree: MindmapNode,
+  targetId: string,
+  text = "新建主题"
+): { nextTree: MindmapNode; newNodeId: string } {
+  const nextTree = cloneTree(tree);
+  const newNodeId = `node-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  // If target is root, add as child of root
+  if (targetId === nextTree.id || targetId === "root-mindmap-node") {
+    return addChildNode(tree, nextTree.id, text);
+  }
+
+  const parent = findParent(nextTree, targetId);
+  if (!parent || !parent.children) {
+    return addChildNode(tree, nextTree.id, text);
+  }
+
+  const idx = parent.children.findIndex((c) => c.id === targetId);
+  const newNode: MindmapNode = {
+    id: newNodeId,
+    text,
+    level: parent.level + 1,
+    children: [],
+  };
+
+  if (idx === -1) {
+    parent.children.push(newNode);
+  } else {
+    parent.children.splice(idx + 1, 0, newNode);
+  }
+
+  return { nextTree, newNodeId };
+}
+
+export function deleteNode(
+  tree: MindmapNode,
+  nodeId: string
+): { nextTree: MindmapNode; fallbackSelectedId: string } {
+  // Root node cannot be deleted
+  if (nodeId === tree.id || nodeId === "root-mindmap-node") {
+    return { nextTree: tree, fallbackSelectedId: tree.id };
+  }
+
+  const nextTree = cloneTree(tree);
+  const parent = findParent(nextTree, nodeId);
+  if (!parent || !parent.children) {
+    return { nextTree, fallbackSelectedId: nextTree.id };
+  }
+
+  const idx = parent.children.findIndex((c) => c.id === nodeId);
+  if (idx !== -1) {
+    parent.children.splice(idx, 1);
+  }
+
+  return { nextTree, fallbackSelectedId: parent.id };
+}
+
+export function updateNodeText(
+  tree: MindmapNode,
+  nodeId: string,
+  newText: string
+): MindmapNode {
+  const nextTree = cloneTree(tree);
+  const node = findNode(nextTree, nodeId);
+  if (node) {
+    node.text = newText.trim() || "未命名主题";
+  }
+  return nextTree;
+}
+
+/**
  * Palette of harmonic accent colors for root branches.
  */
 export const BRANCH_COLORS = [

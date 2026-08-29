@@ -1,4 +1,4 @@
-import { ChevronRight, FileText, Folder, FolderOpen, FolderMinus, Edit3 } from "lucide-react";
+import { ChevronRight, FileText, Folder, FolderOpen, FolderMinus, Edit3, ListTree } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { BookManifest, ChapterManifest } from "../core/types";
 
@@ -8,6 +8,7 @@ type ChapterListProps = {
   isDirty?: boolean;
   onSelectChapter: (chapterId: string) => void;
   onRenameChapter?: (chapter: ChapterManifest) => void;
+  onNewMindmap?: () => void;
 };
 
 type TreeNode = {
@@ -23,6 +24,7 @@ export function ChapterList({
   isDirty = false,
   onSelectChapter,
   onRenameChapter,
+  onNewMindmap,
 }: ChapterListProps) {
   const activeChapter = useMemo(
     () => manifest.chapters.find((chapter) => chapter.id === activeChapterId),
@@ -58,16 +60,30 @@ export function ChapterList({
     <aside className="chapter-list file-tree" aria-label="文档目录">
       <div className="tree-heading">
         <span>DOCUMENT</span>
-        {openFolders.size > 0 && (
-          <button
-            className="tree-action-btn"
-            onClick={() => setOpenFolders(new Set())}
-            title="全部收起"
-            aria-label="全部收起文件夹"
-          >
-            <FolderMinus size={13} />
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          {onNewMindmap && (
+            <button
+              type="button"
+              className="tree-action-btn"
+              onClick={onNewMindmap}
+              title="新建思维导图 (XMind 交互模式)"
+              aria-label="新建思维导图"
+            >
+              <ListTree size={13} />
+            </button>
+          )}
+          {openFolders.size > 0 && (
+            <button
+              type="button"
+              className="tree-action-btn"
+              onClick={() => setOpenFolders(new Set())}
+              title="全部收起"
+              aria-label="全部收起文件夹"
+            >
+              <FolderMinus size={13} />
+            </button>
+          )}
+        </div>
       </div>
       <nav>
         {tree.length ? (
