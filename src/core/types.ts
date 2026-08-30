@@ -16,6 +16,9 @@ export type MindmapNode = {
   shape?: MindmapNodeShape;
   lineColor?: string;
   lineStyle?: MindmapLineStyle;
+  fontSize?: number;
+  fontWeight?: "normal" | "bold";
+  textColor?: string;
 };
 
 export type DiskVersion = {

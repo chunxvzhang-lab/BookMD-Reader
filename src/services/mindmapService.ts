@@ -22,6 +22,9 @@ export interface MindmapLayoutNode {
   shape?: MindmapNodeShape;
   lineColor?: string;
   lineStyle?: MindmapLineStyle;
+  fontSize?: number;
+  fontWeight?: "normal" | "bold";
+  textColor?: string;
 }
 
 export interface MindmapLayoutResult {
@@ -97,6 +100,9 @@ export function parseStyleComment(line: string): {
   shape?: MindmapNodeShape;
   lineColor?: string;
   lineStyle?: MindmapLineStyle;
+  fontSize?: number;
+  fontWeight?: "normal" | "bold";
+  textColor?: string;
 } {
   const match = line.match(/\s*<!--\s*(?:mindmap|style):\s*([^>]+?)\s*-->/i);
   if (!match) {
@@ -110,6 +116,9 @@ export function parseStyleComment(line: string): {
     shape?: MindmapNodeShape;
     lineColor?: string;
     lineStyle?: MindmapLineStyle;
+    fontSize?: number;
+    fontWeight?: "normal" | "bold";
+    textColor?: string;
   } = { cleanText };
 
   const pairs = rawStyle.split(/[,;\s]+/).filter(Boolean);
@@ -128,6 +137,15 @@ export function parseStyleComment(line: string): {
       result.lineColor = val;
     } else if (key === "linestyle" && ["bezier", "step", "straight"].includes(val)) {
       result.lineStyle = val as MindmapLineStyle;
+    } else if (key === "fontsize") {
+      const num = parseInt(val, 10);
+      if (!isNaN(num) && num >= 9 && num <= 36) {
+        result.fontSize = num;
+      }
+    } else if (key === "fontweight" || key === "bold") {
+      result.fontWeight = (val === "bold" || val === "true") ? "bold" : "normal";
+    } else if (key === "textcolor") {
+      result.textColor = val;
     }
   }
 
@@ -143,6 +161,9 @@ export function formatStyleComment(node: Partial<MindmapNode>): string {
   if (node.shape) parts.push(`shape=${node.shape}`);
   if (node.lineColor) parts.push(`lineColor=${node.lineColor}`);
   if (node.lineStyle) parts.push(`lineStyle=${node.lineStyle}`);
+  if (node.fontSize) parts.push(`fontSize=${node.fontSize}`);
+  if (node.fontWeight) parts.push(`fontWeight=${node.fontWeight}`);
+  if (node.textColor) parts.push(`textColor=${node.textColor}`);
   return parts.length > 0 ? ` <!-- style: ${parts.join(",")} -->` : "";
 }
 
@@ -188,6 +209,9 @@ export function parseMarkdownToMindmapTree(
     shape: rootStyle?.shape,
     lineColor: rootStyle?.lineColor,
     lineStyle: rootStyle?.lineStyle,
+    fontSize: rootStyle?.fontSize,
+    fontWeight: rootStyle?.fontWeight,
+    textColor: rootStyle?.textColor,
   };
 
   // Step 2: Check if source contains indented list items (- item or * item)
@@ -235,6 +259,9 @@ export function parseMarkdownToMindmapTree(
         shape: parsedStyle.shape,
         lineColor: parsedStyle.lineColor,
         lineStyle: parsedStyle.lineStyle,
+        fontSize: parsedStyle.fontSize,
+        fontWeight: parsedStyle.fontWeight,
+        textColor: parsedStyle.textColor,
       };
       parent.children.push(newNode);
       stack.push({ node: newNode, indent, path: currentPath });
@@ -282,6 +309,9 @@ export function parseMarkdownToMindmapTree(
         shape: h.style?.shape,
         lineColor: h.style?.lineColor,
         lineStyle: h.style?.lineStyle,
+        fontSize: h.style?.fontSize,
+        fontWeight: h.style?.fontWeight,
+        textColor: h.style?.textColor,
       };
       while (stack.length > 1 && stack[stack.length - 1].level >= h.level) {
         stack.pop();
@@ -475,16 +505,25 @@ export const BRANCH_COLORS = [
   "#2dd4bf", // Teal
 ];
 
-function estimateNodeWidth(text: string, level: number): number {
+function getNodeHeight(node: MindmapNode): number {
+  const isRoot = node.level === 0;
+  const base = isRoot ? 44 : 36;
+  if (node.fontSize && node.fontSize >= 18) return base + 8;
+  if (node.fontSize && node.fontSize >= 16) return base + 4;
+  return base;
+}
+
+function estimateNodeWidth(text: string, level: number, fontSize?: number): number {
   const basePad = level === 0 ? 44 : 32;
-  const charWidth = level === 0 ? 15 : 13;
+  const effectiveSize = fontSize || (level === 0 ? 15 : 13);
+  const charWidth = effectiveSize * 1.05;
   // Estimate Chinese & ASCII character widths
   let estimated = basePad;
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
     estimated += code > 127 ? charWidth : charWidth * 0.65;
   }
-  return Math.max(64, Math.min(320, Math.round(estimated)));
+  return Math.max(64, Math.min(420, Math.round(estimated)));
 }
 
 /**
@@ -499,21 +538,20 @@ export function layoutMindmap(
 
   const LEVEL_GAP = 72; // Horizontal gap between levels
   const SIBLING_GAP = 18; // Vertical gap between siblings
-  const NODE_HEIGHT = 36;
-  const ROOT_HEIGHT = 44;
 
   // First pass: measure subtree vertical heights
   function measureSubtree(node: MindmapNode): number {
     const isCollapsed = collapsedIds.has(node.id);
+    const selfHeight = getNodeHeight(node);
     if (isCollapsed || !node.children || node.children.length === 0) {
-      return node.level === 0 ? ROOT_HEIGHT : NODE_HEIGHT;
+      return selfHeight;
     }
     let totalHeight = 0;
     for (let i = 0; i < node.children.length; i++) {
       totalHeight += measureSubtree(node.children[i]);
       if (i > 0) totalHeight += SIBLING_GAP;
     }
-    return Math.max(node.level === 0 ? ROOT_HEIGHT : NODE_HEIGHT, totalHeight);
+    return Math.max(selfHeight, totalHeight);
   }
 
   // Second pass: assign (x, y) coordinates
@@ -525,8 +563,8 @@ export function layoutMindmap(
   ): MindmapLayoutNode {
     const isCollapsed = collapsedIds.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
-    const width = estimateNodeWidth(node.text, node.level);
-    const height = node.level === 0 ? ROOT_HEIGHT : NODE_HEIGHT;
+    const width = estimateNodeWidth(node.text, node.level, node.fontSize);
+    const height = getNodeHeight(node);
     const subtreeHeight = measureSubtree(node);
 
     // Center node vertically within its subtree allocation
@@ -549,6 +587,9 @@ export function layoutMindmap(
       shape: node.shape,
       lineColor: node.lineColor,
       lineStyle: node.lineStyle,
+      fontSize: node.fontSize,
+      fontWeight: node.fontWeight,
+      textColor: node.textColor,
     };
     allNodes.push(layoutNode);
 
@@ -644,6 +685,9 @@ export function updateNodeStyle(
     shape?: MindmapNodeShape;
     lineColor?: string;
     lineStyle?: MindmapLineStyle;
+    fontSize?: number;
+    fontWeight?: "normal" | "bold";
+    textColor?: string;
   }
 ): MindmapNode {
   return updateNodesStyle(tree, [nodeId], styles);
@@ -657,6 +701,9 @@ export function updateNodesStyle(
     shape?: MindmapNodeShape;
     lineColor?: string;
     lineStyle?: MindmapLineStyle;
+    fontSize?: number;
+    fontWeight?: "normal" | "bold";
+    textColor?: string;
   }
 ): MindmapNode {
   const nextTree = cloneTree(tree);
@@ -668,6 +715,9 @@ export function updateNodesStyle(
       if ("shape" in styles) node.shape = styles.shape || undefined;
       if ("lineColor" in styles) node.lineColor = styles.lineColor || undefined;
       if ("lineStyle" in styles) node.lineStyle = styles.lineStyle || undefined;
+      if ("fontSize" in styles) node.fontSize = styles.fontSize || undefined;
+      if ("fontWeight" in styles) node.fontWeight = styles.fontWeight || undefined;
+      if ("textColor" in styles) node.textColor = styles.textColor || undefined;
     }
     if (node.children) {
       for (const child of node.children) {

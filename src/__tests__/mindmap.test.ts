@@ -319,7 +319,51 @@ describe("mindmapService", () => {
         expect(child.lineStyle).toBe("step");
       }
     });
+
+    it("parses, serializes, and applies typography styles (fontSize, fontWeight, textColor)", () => {
+      const markdown =
+        "# 主题 <!-- style: fontSize=18,fontWeight=bold,textColor=#2563eb -->\n\n" +
+        "- 分支A <!-- style: fontSize=16,fontWeight=bold,textColor=#ef4444 -->\n" +
+        "- 分支B <!-- style: fontSize=12,textColor=#10b981 -->\n";
+
+      const tree = parseMarkdownToMindmapTree(markdown);
+      expect(tree.fontSize).toBe(18);
+      expect(tree.fontWeight).toBe("bold");
+      expect(tree.textColor).toBe("#2563eb");
+
+      expect(tree.children[0].fontSize).toBe(16);
+      expect(tree.children[0].fontWeight).toBe("bold");
+      expect(tree.children[0].textColor).toBe("#ef4444");
+
+      expect(tree.children[1].fontSize).toBe(12);
+      expect(tree.children[1].textColor).toBe("#10b981");
+
+      const layout = layoutMindmap(tree);
+      const rootLayout = layout.nodes.find((n) => n.id === tree.id);
+      const childALayout = layout.nodes.find((n) => n.id === tree.children[0].id);
+
+      expect(rootLayout?.fontSize).toBe(18);
+      expect(rootLayout?.fontWeight).toBe("bold");
+      expect(rootLayout?.textColor).toBe("#2563eb");
+      expect(rootLayout?.height).toBeGreaterThanOrEqual(44);
+
+      expect(childALayout?.fontSize).toBe(16);
+      expect(childALayout?.fontWeight).toBe("bold");
+
+      // Verify batch typography update
+      const updatedTree = updateNodesStyle(tree, [tree.children[0].id, tree.children[1].id], {
+        fontSize: 20,
+        fontWeight: "bold",
+        textColor: "#dc2626",
+      });
+
+      const serialized = mindmapTreeToMarkdown(updatedTree);
+      expect(serialized).toContain("fontSize=20");
+      expect(serialized).toContain("fontWeight=bold");
+      expect(serialized).toContain("textColor=#dc2626");
+    });
   });
 });
+
 
 

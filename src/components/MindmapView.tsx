@@ -10,6 +10,7 @@ import {
   Check,
   X,
   CheckSquare,
+  Bold,
 } from "lucide-react";
 import type { Heading, ThemeMode, MindmapNodeShape, MindmapLineStyle } from "../core/types";
 import {
@@ -42,7 +43,7 @@ export type MindmapViewProps = {
   theme?: ThemeMode;
 };
 
-// Rich 16-color modern curated palette
+// Rich 17-color modern curated palette for node background/border
 const PRESET_COLORS = [
   { label: "默认", value: "" },
   { label: "天蓝", value: "#38bdf8" },
@@ -68,6 +69,29 @@ const PRESET_SHAPES: { label: string; value: MindmapNodeShape }[] = [
   { label: "圆角", value: "rounded" },
   { label: "直角", value: "rect" },
   { label: "下划线", value: "underline" },
+];
+
+const PRESET_FONT_SIZES = [
+  { label: "12", value: 12 },
+  { label: "14", value: 14 },
+  { label: "16", value: 16 },
+  { label: "18", value: 18 },
+  { label: "20", value: 20 },
+];
+
+// Curated high-contrast font colors
+const PRESET_TEXT_COLORS = [
+  { label: "默认", value: "" },
+  { label: "纯黑", value: "#0f172a" },
+  { label: "纯白", value: "#ffffff" },
+  { label: "极客蓝", value: "#2563eb" },
+  { label: "翡翠绿", value: "#059669" },
+  { label: "珊瑚橙", value: "#ea580c" },
+  { label: "朱砂红", value: "#dc2626" },
+  { label: "玫瑰粉", value: "#e11d48" },
+  { label: "兰花紫", value: "#9333ea" },
+  { label: "琥珀黄", value: "#d97706" },
+  { label: "石墨灰", value: "#64748b" },
 ];
 
 const PRESET_LINE_STYLES: { label: string; value: MindmapLineStyle }[] = [
@@ -151,8 +175,8 @@ export const MindmapView = memo(function MindmapView({
     const cWidth = container.clientWidth;
     const cHeight = container.clientHeight;
     const menuEl = menuRef.current;
-    const mWidth = menuEl?.offsetWidth || 250;
-    const mHeight = menuEl?.offsetHeight || 360;
+    const mWidth = menuEl?.offsetWidth || 256;
+    const mHeight = menuEl?.offsetHeight || 420;
 
     let left = contextMenu.x;
     let top = contextMenu.y;
@@ -361,7 +385,7 @@ export const MindmapView = memo(function MindmapView({
     setEditingNodeId(null);
   }, []);
 
-  // Update Appearance Styles (Batch-updates all selected nodes if multiple nodes are selected!)
+  // Update Appearance & Typography Styles (Batch-updates all selected nodes if multiple nodes are selected!)
   const handleUpdateStyle = useCallback(
     (
       nodeId: string,
@@ -370,6 +394,9 @@ export const MindmapView = memo(function MindmapView({
         shape?: MindmapNodeShape;
         lineColor?: string;
         lineStyle?: MindmapLineStyle;
+        fontSize?: number;
+        fontWeight?: "normal" | "bold";
+        textColor?: string;
       }
     ) => {
       // If multiple nodes are selected, apply to ALL selected nodes at once!
@@ -665,7 +692,7 @@ export const MindmapView = memo(function MindmapView({
     // Resolve theme colors for standalone SVG serialization
     const isDark = theme === "twitter" || (theme === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
     const nodeBg = isDark ? "#1e293b" : "#ffffff";
-    const textFill = isDark ? "#f8fafc" : "#0f172a";
+    const defaultTextFill = isDark ? "#f8fafc" : "#0f172a";
     const rootTextFill = "#38bdf8";
 
     // Set explicit inline fill and stroke on rects, texts, and circles
@@ -680,10 +707,14 @@ export const MindmapView = memo(function MindmapView({
     });
     clone.querySelectorAll("text.mindmap-node-title-text").forEach((textEl) => {
       const isRootText = textEl.classList.contains("root-title");
-      textEl.setAttribute("fill", isRootText ? rootTextFill : textFill);
+      const customFill = (textEl as SVGTextElement).style.fill;
+      const customFontSize = (textEl as SVGTextElement).style.fontSize;
+      const customFontWeight = (textEl as SVGTextElement).style.fontWeight;
+
+      textEl.setAttribute("fill", customFill || (isRootText ? rootTextFill : defaultTextFill));
       textEl.setAttribute("font-family", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif");
-      textEl.setAttribute("font-size", isRootText ? "14px" : "12.5px");
-      textEl.setAttribute("font-weight", isRootText ? "700" : "500");
+      textEl.setAttribute("font-size", customFontSize || (isRootText ? "14px" : "12.5px"));
+      textEl.setAttribute("font-weight", customFontWeight || (isRootText ? "700" : "500"));
       textEl.setAttribute("text-anchor", "middle");
       textEl.setAttribute("dominant-baseline", "central");
     });
@@ -802,7 +833,7 @@ export const MindmapView = memo(function MindmapView({
                       nodeId: primarySelectedId || tree.id,
                     });
                   }}
-                  title="自定义节点颜色、形状及连线风格 (也可在节点上右键)"
+                  title="自定义节点颜色、形状、字体及连线风格 (也可在节点上右键)"
                 >
                   <Palette size={14} className="text-cyan" />
                   <span>{isBatchMode ? `批量样式 (${selectedNodeIds.size})` : "外观样式"}</span>
@@ -956,7 +987,7 @@ export const MindmapView = memo(function MindmapView({
                   <title>
                     {isRoot
                       ? "中心主题 (右键设置样式，按 Tab 添加子主题)"
-                      : `${node.text} (双击编辑，右键修改外观，Tab 添加子主题，Enter 添加同级主题)`}
+                      : `${node.text} (双击编辑，右键修改外观与字体，Tab 添加子主题，Enter 添加同级主题)`}
                   </title>
 
                   {/* Selection Glow Outline */}
@@ -1047,13 +1078,18 @@ export const MindmapView = memo(function MindmapView({
                     />
                   )}
 
-                  {/* Node Label Text - Exactly Centered inside Card */}
+                  {/* Node Label Text - Exactly Centered inside Card with custom fontSize, fontWeight, textColor */}
                   <text
                     x={node.width / 2}
                     y={node.height / 2}
                     textAnchor="middle"
                     dominantBaseline="central"
                     className={`mindmap-node-title-text ${isRoot ? "root-title" : ""}`}
+                    style={{
+                      fontSize: node.fontSize ? `${node.fontSize}px` : undefined,
+                      fontWeight: node.fontWeight ? (node.fontWeight === "bold" ? 700 : 400) : (isRoot ? 700 : 500),
+                      fill: node.textColor || undefined,
+                    }}
                   >
                     {node.text}
                   </text>
@@ -1154,7 +1190,8 @@ export const MindmapView = memo(function MindmapView({
             top: transform.y + editingNode.y * transform.scale,
             width: Math.max(120, editingNode.width * transform.scale),
             height: Math.max(30, editingNode.height * transform.scale),
-            fontSize: `${Math.max(11, Math.round(13 * transform.scale))}px`,
+            fontSize: `${Math.max(11, Math.round((editingNode.fontSize || 13) * transform.scale))}px`,
+            fontWeight: editingNode.fontWeight === "bold" ? 700 : 500,
             textAlign: "center",
           }}
           value={editingText}
@@ -1172,7 +1209,7 @@ export const MindmapView = memo(function MindmapView({
         />
       )}
 
-      {/* Right Click Appearance Customization Context Menu */}
+      {/* Right Click Appearance & Typography Customization Context Menu */}
       {contextMenu && (
         <div
           ref={menuRef}
@@ -1207,10 +1244,11 @@ export const MindmapView = memo(function MindmapView({
             </button>
           </div>
 
+          {/* Node Background / Border Color */}
           <div className="mindmap-ctx-section">
             <div className="mindmap-ctx-label-row">
               <span className="mindmap-ctx-label">节点背景颜色</span>
-              <label className="mindmap-custom-color-trigger" title="拾取任意自定义颜色">
+              <label className="mindmap-custom-color-trigger" title="拾取任意自定义背景颜色">
                 <input
                   type="color"
                   className="mindmap-hidden-color-input"
@@ -1239,6 +1277,7 @@ export const MindmapView = memo(function MindmapView({
             </div>
           </div>
 
+          {/* Node Shape */}
           <div className="mindmap-ctx-section">
             <div className="mindmap-ctx-label">节点形状</div>
             <div className="mindmap-ctx-pills">
@@ -1259,6 +1298,75 @@ export const MindmapView = memo(function MindmapView({
             </div>
           </div>
 
+          {/* Typography: Font Size & Bold Toggle */}
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label-row">
+              <span className="mindmap-ctx-label">字号与加粗</span>
+              <button
+                type="button"
+                className={`mindmap-bold-toggle-btn ${contextTargetNode?.fontWeight === "bold" ? "is-active" : ""}`}
+                onClick={() => {
+                  const nextWeight = contextTargetNode?.fontWeight === "bold" ? "normal" : "bold";
+                  handleUpdateStyle(contextMenu.nodeId, { fontWeight: nextWeight });
+                }}
+                title={contextTargetNode?.fontWeight === "bold" ? "取消加粗" : "文字加粗 (Bold)"}
+              >
+                <Bold size={11} strokeWidth={2.6} />
+                <span>加粗</span>
+              </button>
+            </div>
+            <div className="mindmap-ctx-pills">
+              {PRESET_FONT_SIZES.map((fs) => {
+                const currentSize = contextTargetNode?.fontSize || (contextTargetNode?.level === 0 ? 16 : 14);
+                const isActive = currentSize === fs.value;
+                return (
+                  <button
+                    key={fs.value}
+                    type="button"
+                    className={`mindmap-pill-btn ${isActive ? "is-active" : ""}`}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { fontSize: fs.value })}
+                  >
+                    {fs.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Typography: Font/Text Color */}
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label-row">
+              <span className="mindmap-ctx-label">文字颜色</span>
+              <label className="mindmap-custom-color-trigger" title="拾取任意文字颜色">
+                <input
+                  type="color"
+                  className="mindmap-hidden-color-input"
+                  value={contextTargetNode?.textColor || "#0f172a"}
+                  onChange={(e) => handleUpdateStyle(contextMenu.nodeId, { textColor: e.target.value })}
+                />
+                <span className="mindmap-custom-color-badge">🎨 自定义</span>
+              </label>
+            </div>
+            <div className="mindmap-ctx-palette font-palette">
+              {PRESET_TEXT_COLORS.map((tc) => {
+                const isActive = (contextTargetNode?.textColor || "") === tc.value;
+                return (
+                  <button
+                    key={tc.label}
+                    type="button"
+                    className={`mindmap-color-swatch text-color-swatch ${isActive ? "is-active" : ""}`}
+                    style={{ background: tc.value || "var(--surface-2)" }}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { textColor: tc.value })}
+                    title={`文字: ${tc.label}`}
+                  >
+                    {isActive && <Check size={11} color={tc.value === "#ffffff" ? "#0f172a" : "#ffffff"} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Branch Connector Line Shape */}
           <div className="mindmap-ctx-section">
             <div className="mindmap-ctx-label">分支连线形状</div>
             <div className="mindmap-ctx-pills">
@@ -1279,6 +1387,7 @@ export const MindmapView = memo(function MindmapView({
             </div>
           </div>
 
+          {/* Branch Connector Line Color */}
           <div className="mindmap-ctx-section">
             <div className="mindmap-ctx-label-row">
               <span className="mindmap-ctx-label">连线颜色</span>
@@ -1313,6 +1422,7 @@ export const MindmapView = memo(function MindmapView({
 
           <div className="mindmap-ctx-divider" />
 
+          {/* Actions */}
           <div className="mindmap-ctx-actions">
             {!isBatchMode && (
               <>
