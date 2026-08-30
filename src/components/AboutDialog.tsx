@@ -17,6 +17,10 @@ import {
   History,
   Zap,
   Wrench,
+  ListTree,
+  Network,
+  Layers,
+  SplitSquareVertical,
 } from "lucide-react";
 import appLogo from "../assets/icon.png";
 
@@ -117,7 +121,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div>
               <div className="about-header-title-row">
                 <span className="about-app-name">KnowSpace</span>
-                <span className="about-version-badge">v1.6.0</span>
+                <span className="about-version-badge">v1.9.0</span>
               </div>
               <p className="about-tagline">Personal Knowledge Workspace · 个人知识工作台</p>
             </div>
@@ -134,7 +138,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div className="about-slogan-title">Write. Read. Connect. Know.</div>
             <div className="about-slogan-sub">记录 · 阅读 · 连接 · 认知</div>
             <p className="about-description" style={{ marginTop: 6 }}>
-              <strong>KnowSpace</strong> 是一款本地优先（Local-First）、现代化高颜值的个人知识工作台。以私密、高效、纯粹为核心，助你构建结构化思维空间。
+              <strong>KnowSpace</strong> 是一款本地优先（Local-First）、现代化高颜值的个人知识工作台。以私密、高效、纯粹为核心，融汇交互式思维导图、全景知识图谱与块级双向链接，助你构建立体多维的结构化思维空间。
             </p>
           </div>
 
@@ -143,9 +147,50 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div className="about-card-title">
               <History size={16} className="about-icon text-blue" />
               <span>版本更新日志 · What&apos;s New</span>
-              <span className="about-changelog-version-badge">v1.6.0</span>
+              <span className="about-changelog-version-badge">v1.9.0</span>
             </div>
             <div className="about-changelog-list">
+              {/* v1.9.0 */}
+              <div className="about-changelog-group">
+                <div className="about-changelog-group-label">
+                  <ListTree size={12} className="text-cyan" />
+                  <span>v1.9.0 交互式思维导图、节点样式深度定制与高清导出</span>
+                </div>
+                <ul className="about-changelog-items">
+                  <li>🧠 <strong>全新思维导图模式 (Mindmap Studio)</strong>：双向解析 Markdown 结构与标题大纲，无缝实时渲染树状交互脑图与平移缩放画布</li>
+                  <li>⌨️ <strong>极速键盘流交互</strong>：<code>Enter</code> 插入同级主题、<code>Tab</code>/<code>Insert</code> 插入子主题、<code>Delete</code> 快速删除、<code>F2</code>/双击原地编辑重命名</li>
+                  <li>🎨 <strong>节点深度视觉定制</strong>：实体背景全彩填充、国际标准透明透空选项、独立边框色选择（14款高亮色彩+原生取色器）、多种几何形状（胶囊/圆角/直角/下划线）</li>
+                  <li>🔠 <strong>文字排版与智能对比度</strong>：字号档位调节（12~20px）、加粗开关（Bold）、高对比度文字颜色及基于背景亮度的<strong>自动对比度算法</strong></li>
+                  <li>🪄 <strong>批量多选与全选统一修改</strong>：<code>Ctrl+A</code> 全选或多选节点，一键同步应用背景色、边框色、字体及连接线样式</li>
+                  <li>🖼️ <strong>高清透明 PNG 矢量导出</strong>：告别黑底与背景遮挡，一键导出透明底高清思维导图图片</li>
+                </ul>
+              </div>
+
+              {/* v1.8.0 */}
+              <div className="about-changelog-group">
+                <div className="about-changelog-group-label">
+                  <Network size={12} className="text-purple" />
+                  <span>v1.8.0 块级双向链接、动态嵌入与全景知识图谱</span>
+                </div>
+                <ul className="about-changelog-items">
+                  <li>🔗 <strong>块级精确引用 (Block Reference)</strong>：支持 <code>^block-id</code> 块级锚点、行级精细定位与实时悬浮卡片透视预览</li>
+                  <li>🕸️ <strong>全景关系图谱进阶</strong>：支持孤立节点过滤、中心节点聚焦、交互平移与知识连通探索</li>
+                </ul>
+              </div>
+
+              {/* v1.7.0 */}
+              <div className="about-changelog-group">
+                <div className="about-changelog-group-label">
+                  <SplitSquareVertical size={12} className="text-blue" />
+                  <span>v1.7.0 双文档并排分栏与多标签管理</span>
+                </div>
+                <ul className="about-changelog-items">
+                  <li>📑 <strong>多标签页管理与持久化</strong>：多篇文档灵活切换，独立阅读与编辑进度记忆</li>
+                  <li>🪟 <strong>双栏并排对照 (Split View)</strong>：支持双文档独立滚动、沉浸式对照写作与对比校对</li>
+                </ul>
+              </div>
+
+              {/* v1.6.0 */}
               <div className="about-changelog-group">
                 <div className="about-changelog-group-label">
                   <Zap size={12} className="text-amber" />
@@ -154,10 +199,11 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                 <ul className="about-changelog-items">
                   <li>⚡ <strong>闪念胶囊 (Flash Notes) 独立微窗</strong>：随时秒级呼出毛玻璃微窗，无打扰捕获灵感与即时待办，<code>Ctrl+Enter</code> 原子归档至 <code>Inbox/</code></li>
                   <li>⌨️ <strong>全局快捷键自由自定义</strong>：默认 <code>Alt+Space</code>，支持按键直接录制、预设切换与系统冲突防护</li>
-                  <li>🗔 <strong>系统托盘常驻与后台运行</strong>：右下角托盘图标就绪，关闭主窗口时自动最小化到托盘，服务持续常驻</li>
-                  <li>🚀 <strong>开机自启动与静默就绪</strong>：Windows 开机后台静默运行，不弹窗打扰，随时随地一键唤起</li>
+                  <li>🗔 <strong>系统托盘常驻与开机自启</strong>：右下角托盘图标就绪，关闭主窗口时自动最小化到托盘，服务持续常驻</li>
                 </ul>
               </div>
+
+              {/* v1.5.1 */}
               <div className="about-changelog-group">
                 <div className="about-changelog-group-label">
                   <BookOpen size={12} className="text-orange" />
@@ -166,25 +212,12 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                 <ul className="about-changelog-items">
                   <li>📖 <strong>仿电子墨水屏 (E-ink Paper)</strong> 护眼阅读与写作沉浸主题上线，模拟温润纸质质感</li>
                   <li>🖋️ <strong>CodeMirror 6 专属墨水语法</strong>：高对比黑白墨水排版、内敛行高亮与低噪字形</li>
-                  <li>⚖️ <strong>三主题直选控制组</strong>：日光浅色 (Light) / 仿电子墨水屏 (E-ink) / 极客暗黑 (Dark) 一键切换</li>
-                  <li>📊 <strong>Monochrome 墨水架构图</strong>：Mermaid 图表自动适配 Neutral 纯净灰度墨水矢量渲染</li>
-                </ul>
-              </div>
-              <div className="about-changelog-group">
-                <div className="about-changelog-group-label">
-                  <Wrench size={12} className="text-green" />
-                  <span>v1.5.0 历史特性</span>
-                </div>
-                <ul className="about-changelog-items">
-                  <li>🏗️ 升级为 <strong>KnowSpace</strong> 个人知识工作台，升级六大核心知识管理能力体系</li>
-                  <li>🔍 段落卡片聚合即时检索与多级目录树展开记忆</li>
-                  <li>🛡️ 物理事务原子落盘与外部链接安全防护体系</li>
                 </ul>
               </div>
             </div>
           </div>
 
-          {/* 闪念胶囊速记 */}
+          {/* 闪念胶囊速记快捷入口 */}
           <div className="about-card">
             <div className="about-card-title">
               <Zap size={16} className="about-icon text-amber" />
@@ -258,19 +291,33 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </p>
           </div>
 
-          {/* 3. 六大能力体系 */}
+          {/* 4. 核心能力体系 */}
           <div className="about-card">
             <div className="about-card-title">
               <Sparkles size={16} className="about-icon text-blue" />
-              <span>六大核心能力体系 (Core Pillars)</span>
+              <span>核心能力体系 (Core Pillars)</span>
             </div>
             <div className="about-pillars-grid">
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
+                  <ListTree size={14} className="text-cyan" />
+                  <strong>Mindmap (思维导图)</strong>
+                </div>
+                <div className="about-pillar-desc">树状交互导图、无缝双向解析、极速脑暴与高清透明导出</div>
+              </div>
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
+                  <Network size={14} className="text-purple" />
+                  <strong>Graph (全景图谱)</strong>
+                </div>
+                <div className="about-pillar-desc">文档与块级双向网状拓扑、知识连通度与交互漫游</div>
+              </div>
               <div className="about-pillar-item">
                 <div className="about-pillar-head">
                   <BookOpen size={14} className="text-orange" />
                   <strong>Reader (阅读)</strong>
                 </div>
-                <div className="about-pillar-desc">沉浸纯净排版、源码行号与双侧联动高亮</div>
+                <div className="about-pillar-desc">沉浸纯净排版、仿电子墨水屏护眼与双侧联动高亮</div>
               </div>
               <div className="about-pillar-item">
                 <div className="about-pillar-head">
@@ -281,24 +328,24 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               </div>
               <div className="about-pillar-item">
                 <div className="about-pillar-head">
+                  <Zap size={14} className="text-amber" />
+                  <strong>Flash (闪念胶囊)</strong>
+                </div>
+                <div className="about-pillar-desc">全局热键随手记、毛玻璃微窗与 Inbox 原子归档</div>
+              </div>
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
+                  <SplitSquareVertical size={14} className="text-blue" />
+                  <strong>Split (双栏分屏)</strong>
+                </div>
+                <div className="about-pillar-desc">多标签页管理与并排双文档独立滚动对照写作</div>
+              </div>
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
                   <FolderTree size={14} className="text-green" />
                   <strong>Library (知识库)</strong>
                 </div>
                 <div className="about-pillar-desc">多级目录树展开记忆、单文档与多层知识库智能载入</div>
-              </div>
-              <div className="about-pillar-item">
-                <div className="about-pillar-head">
-                  <Search size={14} className="text-purple" />
-                  <strong>Search (检索)</strong>
-                </div>
-                <div className="about-pillar-desc">段落卡片聚合即时检索、多级大纲随动追踪</div>
-              </div>
-              <div className="about-pillar-item">
-                <div className="about-pillar-head">
-                  <Sparkles size={14} className="text-cyan" />
-                  <strong>Visual (视觉与导出)</strong>
-                </div>
-                <div className="about-pillar-desc">Mermaid 3× 超清导出、高质毛玻璃灯箱平移缩放</div>
               </div>
               <div className="about-pillar-item">
                 <div className="about-pillar-head">
@@ -310,7 +357,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </div>
           </div>
 
-          {/* 4. GitHub 主页与开源仓库 */}
+          {/* 5. GitHub 主页与开源仓库 */}
           <div className="about-card">
             <div className="about-card-title">
               <Github size={16} className="about-icon text-purple" />
@@ -333,7 +380,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </div>
           </div>
 
-          {/* 5. 账号与作者信息 */}
+          {/* 6. 账号与作者信息 */}
           <div className="about-card">
             <div className="about-card-title">
               <User size={16} className="about-icon text-blue" />
@@ -357,12 +404,12 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               </div>
               <div className="about-info-row">
                 <span className="about-label">研发团队：</span>
-                <span className="about-value">摸鱼Lab</span>
+                <span className="about-value">KnowSpace Lab · 摸鱼Lab</span>
               </div>
             </div>
           </div>
 
-          {/* 6. 运行环境与开源许可 */}
+          {/* 7. 运行环境与开源许可 */}
           <div className="about-card">
             <div className="about-card-title">
               <Cpu size={16} className="about-icon text-green" />
@@ -376,7 +423,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                   <span className="about-tech-tag">React 19</span>
                   <span className="about-tech-tag">Vite 7</span>
                   <span className="about-tech-tag">CodeMirror 6</span>
-                  <span className="about-tech-tag">TypeScript</span>
+                  <span className="about-tech-tag">TypeScript 5.9</span>
                 </div>
               </div>
               <div className="about-info-row">
@@ -416,4 +463,3 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
     </div>
   );
 }
-
