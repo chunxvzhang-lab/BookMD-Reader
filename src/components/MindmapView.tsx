@@ -23,6 +23,7 @@ import {
   deleteNode,
   updateNodeText,
   updateNodeStyle,
+  updateNodesStyle,
   findNode,
   findParent,
   findSibling,
@@ -41,15 +42,25 @@ export type MindmapViewProps = {
   theme?: ThemeMode;
 };
 
+// Rich 16-color modern curated palette
 const PRESET_COLORS = [
   { label: "默认", value: "" },
   { label: "天蓝", value: "#38bdf8" },
+  { label: "极客蓝", value: "#3b82f6" },
+  { label: "靛青", value: "#6366f1" },
+  { label: "青空", value: "#06b6d4" },
   { label: "翡翠绿", value: "#10b981" },
-  { label: "珊瑚橙", value: "#f97316" },
-  { label: "罗兰紫", value: "#a855f7" },
-  { label: "玫瑰粉", value: "#f43f5e" },
+  { label: "薄荷绿", value: "#14b8a6" },
+  { label: "鲜柠绿", value: "#84cc16" },
   { label: "琥珀黄", value: "#f59e0b" },
+  { label: "暖日光", value: "#eab308" },
+  { label: "珊瑚橙", value: "#f97316" },
+  { label: "朱砂红", value: "#ef4444" },
+  { label: "玫瑰粉", value: "#f43f5e" },
+  { label: "兰花紫", value: "#a855f7" },
+  { label: "丁香紫", value: "#c084fc" },
   { label: "石墨灰", value: "#64748b" },
+  { label: "曜石黑", value: "#334155" },
 ];
 
 const PRESET_SHAPES: { label: string; value: MindmapNodeShape }[] = [
@@ -65,14 +76,22 @@ const PRESET_LINE_STYLES: { label: string; value: MindmapLineStyle }[] = [
   { label: "直线", value: "straight" },
 ];
 
+// Rich 14-color line palette
 const PRESET_LINE_COLORS = [
   { label: "继承", value: "" },
   { label: "天蓝", value: "#38bdf8" },
+  { label: "极客蓝", value: "#3b82f6" },
+  { label: "青空", value: "#06b6d4" },
   { label: "翡翠绿", value: "#10b981" },
+  { label: "薄荷绿", value: "#14b8a6" },
+  { label: "鲜柠绿", value: "#84cc16" },
+  { label: "琥珀黄", value: "#f59e0b" },
   { label: "珊瑚橙", value: "#f97316" },
-  { label: "罗兰紫", value: "#a855f7" },
+  { label: "朱砂红", value: "#ef4444" },
   { label: "玫瑰粉", value: "#f43f5e" },
+  { label: "兰花紫", value: "#a855f7" },
   { label: "石墨灰", value: "#94a3b8" },
+  { label: "曜石黑", value: "#334155" },
 ];
 
 export const MindmapView = memo(function MindmapView({
@@ -132,8 +151,8 @@ export const MindmapView = memo(function MindmapView({
     const cWidth = container.clientWidth;
     const cHeight = container.clientHeight;
     const menuEl = menuRef.current;
-    const mWidth = menuEl?.offsetWidth || 248;
-    const mHeight = menuEl?.offsetHeight || 340;
+    const mWidth = menuEl?.offsetWidth || 250;
+    const mHeight = menuEl?.offsetHeight || 360;
 
     let left = contextMenu.x;
     let top = contextMenu.y;
@@ -153,7 +172,7 @@ export const MindmapView = memo(function MindmapView({
     setMenuPos({ left: Math.round(left), top: Math.round(top) });
   }, [contextMenu]);
 
-  // Primary single selected node for actions
+  // Primary single selected node for single-target actions
   const primarySelectedId = useMemo(() => {
     if (selectedNodeIds.size === 0) return null;
     const arr = Array.from(selectedNodeIds);
@@ -342,7 +361,7 @@ export const MindmapView = memo(function MindmapView({
     setEditingNodeId(null);
   }, []);
 
-  // Update Appearance Styles
+  // Update Appearance Styles (Batch-updates all selected nodes if multiple nodes are selected!)
   const handleUpdateStyle = useCallback(
     (
       nodeId: string,
@@ -353,10 +372,16 @@ export const MindmapView = memo(function MindmapView({
         lineStyle?: MindmapLineStyle;
       }
     ) => {
-      const nextTree = updateNodeStyle(tree, nodeId, styles);
+      // If multiple nodes are selected, apply to ALL selected nodes at once!
+      const targetIds =
+        selectedNodeIds.size > 1
+          ? Array.from(selectedNodeIds)
+          : [nodeId];
+
+      const nextTree = updateNodesStyle(tree, targetIds, styles);
       applyTreeChange(nextTree);
     },
-    [tree, applyTreeChange]
+    [tree, selectedNodeIds, applyTreeChange]
   );
 
   // Keyboard navigation
@@ -709,6 +734,8 @@ export const MindmapView = memo(function MindmapView({
     return findNode(tree, contextMenu.nodeId);
   }, [contextMenu, tree]);
 
+  const isBatchMode = selectedNodeIds.size > 1;
+
   return (
     <div
       ref={containerRef}
@@ -778,7 +805,7 @@ export const MindmapView = memo(function MindmapView({
                   title="自定义节点颜色、形状及连线风格 (也可在节点上右键)"
                 >
                   <Palette size={14} className="text-cyan" />
-                  <span>外观样式</span>
+                  <span>{isBatchMode ? `批量样式 (${selectedNodeIds.size})` : "外观样式"}</span>
                 </button>
               </div>
 
@@ -1157,9 +1184,18 @@ export const MindmapView = memo(function MindmapView({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mindmap-ctx-header">
-            <span className="mindmap-ctx-title" title={contextTargetNode?.text || "主题样式定制"}>
+            <span
+              className="mindmap-ctx-title"
+              title={
+                isBatchMode
+                  ? `批量样式定制 (已选 ${selectedNodeIds.size} 个节点)`
+                  : contextTargetNode?.text || "主题样式定制"
+              }
+            >
               <Palette size={13} className="text-cyan" />
-              {contextTargetNode?.text || "主题样式定制"}
+              {isBatchMode
+                ? `批量样式定制 (${selectedNodeIds.size}节点)`
+                : contextTargetNode?.text || "主题样式定制"}
             </span>
             <button
               type="button"
@@ -1172,7 +1208,18 @@ export const MindmapView = memo(function MindmapView({
           </div>
 
           <div className="mindmap-ctx-section">
-            <div className="mindmap-ctx-label">节点颜色</div>
+            <div className="mindmap-ctx-label-row">
+              <span className="mindmap-ctx-label">节点背景颜色</span>
+              <label className="mindmap-custom-color-trigger" title="拾取任意自定义颜色">
+                <input
+                  type="color"
+                  className="mindmap-hidden-color-input"
+                  value={contextTargetNode?.color || "#38bdf8"}
+                  onChange={(e) => handleUpdateStyle(contextMenu.nodeId, { color: e.target.value })}
+                />
+                <span className="mindmap-custom-color-badge">🎨 自定义</span>
+              </label>
+            </div>
             <div className="mindmap-ctx-palette">
               {PRESET_COLORS.map((c) => {
                 const isActive = (contextTargetNode?.color || "") === c.value;
@@ -1233,7 +1280,18 @@ export const MindmapView = memo(function MindmapView({
           </div>
 
           <div className="mindmap-ctx-section">
-            <div className="mindmap-ctx-label">连线颜色</div>
+            <div className="mindmap-ctx-label-row">
+              <span className="mindmap-ctx-label">连线颜色</span>
+              <label className="mindmap-custom-color-trigger" title="拾取任意连线颜色">
+                <input
+                  type="color"
+                  className="mindmap-hidden-color-input"
+                  value={contextTargetNode?.lineColor || "#38bdf8"}
+                  onChange={(e) => handleUpdateStyle(contextMenu.nodeId, { lineColor: e.target.value })}
+                />
+                <span className="mindmap-custom-color-badge">🎨 自定义</span>
+              </label>
+            </div>
             <div className="mindmap-ctx-palette">
               {PRESET_LINE_COLORS.map((c) => {
                 const isActive = (contextTargetNode?.lineColor || "") === c.value;
@@ -1256,56 +1314,58 @@ export const MindmapView = memo(function MindmapView({
           <div className="mindmap-ctx-divider" />
 
           <div className="mindmap-ctx-actions">
-            <button
-              type="button"
-              className="mindmap-ctx-action-item"
-              onClick={() => {
-                const nid = contextMenu.nodeId;
-                setContextMenu(null);
-                handleAddChild(nid);
-              }}
-            >
-              <CornerDownRight size={13} />
-              <span>添加子主题 (Tab)</span>
-            </button>
-            <button
-              type="button"
-              className="mindmap-ctx-action-item"
-              onClick={() => {
-                const nid = contextMenu.nodeId;
-                setContextMenu(null);
-                handleAddSibling(nid);
-              }}
-            >
-              <PlusCircle size={13} />
-              <span>添加同级主题 (Enter)</span>
-            </button>
-            <button
-              type="button"
-              className="mindmap-ctx-action-item"
-              onClick={() => {
-                const nid = contextMenu.nodeId;
-                setContextMenu(null);
-                startEditing(nid);
-              }}
-            >
-              <Edit3 size={13} />
-              <span>重命名 (F2)</span>
-            </button>
-            {contextMenu.nodeId !== tree.id && contextMenu.nodeId !== "root-mindmap-node" && (
-              <button
-                type="button"
-                className="mindmap-ctx-action-item is-delete"
-                onClick={() => {
-                  const nid = contextMenu.nodeId;
-                  setContextMenu(null);
-                  handleDeleteNode(nid);
-                }}
-              >
-                <Trash2 size={13} />
-                <span>删除主题 (Del)</span>
-              </button>
+            {!isBatchMode && (
+              <>
+                <button
+                  type="button"
+                  className="mindmap-ctx-action-item"
+                  onClick={() => {
+                    const nid = contextMenu.nodeId;
+                    setContextMenu(null);
+                    handleAddChild(nid);
+                  }}
+                >
+                  <CornerDownRight size={13} />
+                  <span>添加子主题 (Tab)</span>
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-ctx-action-item"
+                  onClick={() => {
+                    const nid = contextMenu.nodeId;
+                    setContextMenu(null);
+                    handleAddSibling(nid);
+                  }}
+                >
+                  <PlusCircle size={13} />
+                  <span>添加同级主题 (Enter)</span>
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-ctx-action-item"
+                  onClick={() => {
+                    const nid = contextMenu.nodeId;
+                    setContextMenu(null);
+                    startEditing(nid);
+                  }}
+                >
+                  <Edit3 size={13} />
+                  <span>重命名 (F2)</span>
+                </button>
+              </>
             )}
+            <button
+              type="button"
+              className="mindmap-ctx-action-item is-delete"
+              onClick={() => {
+                const nid = contextMenu.nodeId;
+                setContextMenu(null);
+                handleDeleteNode(nid);
+              }}
+            >
+              <Trash2 size={13} />
+              <span>{isBatchMode ? `删除选中的 ${selectedNodeIds.size} 个主题 (Del)` : "删除主题 (Del)"}</span>
+            </button>
           </div>
         </div>
       )}

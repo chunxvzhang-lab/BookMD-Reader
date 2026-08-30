@@ -646,13 +646,37 @@ export function updateNodeStyle(
     lineStyle?: MindmapLineStyle;
   }
 ): MindmapNode {
-  const nextTree = cloneTree(tree);
-  const node = findNode(nextTree, nodeId);
-  if (node) {
-    if ("color" in styles) node.color = styles.color || undefined;
-    if ("shape" in styles) node.shape = styles.shape || undefined;
-    if ("lineColor" in styles) node.lineColor = styles.lineColor || undefined;
-    if ("lineStyle" in styles) node.lineStyle = styles.lineStyle || undefined;
+  return updateNodesStyle(tree, [nodeId], styles);
+}
+
+export function updateNodesStyle(
+  tree: MindmapNode,
+  nodeIds: string[],
+  styles: {
+    color?: string;
+    shape?: MindmapNodeShape;
+    lineColor?: string;
+    lineStyle?: MindmapLineStyle;
   }
+): MindmapNode {
+  const nextTree = cloneTree(tree);
+  const idSet = new Set(nodeIds);
+
+  function applyStyles(node: MindmapNode) {
+    if (idSet.has(node.id)) {
+      if ("color" in styles) node.color = styles.color || undefined;
+      if ("shape" in styles) node.shape = styles.shape || undefined;
+      if ("lineColor" in styles) node.lineColor = styles.lineColor || undefined;
+      if ("lineStyle" in styles) node.lineStyle = styles.lineStyle || undefined;
+    }
+    if (node.children) {
+      for (const child of node.children) {
+        applyStyles(child);
+      }
+    }
+  }
+
+  applyStyles(nextTree);
   return nextTree;
 }
+

@@ -11,6 +11,7 @@ import {
   deleteNode,
   updateNodeText,
   updateNodeStyle,
+  updateNodesStyle,
   parseStyleComment,
   formatStyleComment,
 } from "../services/mindmapService";
@@ -301,6 +302,24 @@ describe("mindmapService", () => {
         expect(typeof node.y).toBe("number");
       }
     });
+
+    it("batch updates styles on multiple nodes simultaneously", () => {
+      const tree = parseMarkdownToMindmapTree("# 项目总览\n\n- 模块一\n- 模块二\n- 模块三\n");
+      const nodeIds = tree.children.map((c) => c.id);
+
+      const batchStyledTree = updateNodesStyle(tree, nodeIds, {
+        color: "#f59e0b",
+        shape: "capsule",
+        lineStyle: "step",
+      });
+
+      for (const child of batchStyledTree.children) {
+        expect(child.color).toBe("#f59e0b");
+        expect(child.shape).toBe("capsule");
+        expect(child.lineStyle).toBe("step");
+      }
+    });
   });
 });
+
 
