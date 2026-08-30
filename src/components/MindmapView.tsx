@@ -43,9 +43,10 @@ export type MindmapViewProps = {
   theme?: ThemeMode;
 };
 
-// Rich 17-color modern curated palette for node card background fill
+// Rich 18-color modern curated palette for node card background fill (includes transparent)
 const PRESET_COLORS = [
   { label: "默认", value: "" },
+  { label: "透明", value: "transparent" },
   { label: "天蓝", value: "#38bdf8" },
   { label: "极客蓝", value: "#3b82f6" },
   { label: "靛青", value: "#6366f1" },
@@ -62,6 +63,26 @@ const PRESET_COLORS = [
   { label: "丁香紫", value: "#c084fc" },
   { label: "石墨灰", value: "#64748b" },
   { label: "曜石黑", value: "#334155" },
+];
+
+// Curated node border colors (includes default branch color and transparent border)
+const PRESET_BORDER_COLORS = [
+  { label: "默认", value: "" },
+  { label: "无边框", value: "transparent" },
+  { label: "天蓝", value: "#38bdf8" },
+  { label: "极客蓝", value: "#3b82f6" },
+  { label: "青空", value: "#06b6d4" },
+  { label: "翡翠绿", value: "#10b981" },
+  { label: "薄荷绿", value: "#14b8a6" },
+  { label: "鲜柠绿", value: "#84cc16" },
+  { label: "琥珀黄", value: "#f59e0b" },
+  { label: "珊瑚橙", value: "#f97316" },
+  { label: "朱砂红", value: "#ef4444" },
+  { label: "玫瑰粉", value: "#f43f5e" },
+  { label: "兰花紫", value: "#a855f7" },
+  { label: "石墨灰", value: "#64748b" },
+  { label: "曜石黑", value: "#334155" },
+  { label: "纯白", value: "#ffffff" },
 ];
 
 const PRESET_SHAPES: { label: string; value: MindmapNodeShape }[] = [
@@ -122,7 +143,7 @@ const PRESET_LINE_COLORS = [
  * Calculates optimal contrast text color (dark vs white) based on background luminance.
  */
 function getContrastTextColor(hexColor?: string): string {
-  if (!hexColor) return "";
+  if (!hexColor || hexColor === "transparent") return "";
   const hex = hexColor.replace("#", "");
   if (hex.length !== 6) return "#ffffff";
   const r = parseInt(hex.substring(0, 2), 16);
@@ -191,7 +212,7 @@ export const MindmapView = memo(function MindmapView({
     const cHeight = container.clientHeight;
     const menuEl = menuRef.current;
     const mWidth = menuEl?.offsetWidth || 256;
-    const mHeight = menuEl?.offsetHeight || 420;
+    const mHeight = menuEl?.offsetHeight || 440;
 
     let left = contextMenu.x;
     let top = contextMenu.y;
@@ -412,6 +433,7 @@ export const MindmapView = memo(function MindmapView({
         fontSize?: number;
         fontWeight?: "normal" | "bold";
         textColor?: string;
+        borderColor?: string;
       }
     ) => {
       // If multiple nodes are selected, apply to ALL selected nodes at once!
@@ -713,7 +735,12 @@ export const MindmapView = memo(function MindmapView({
     // Set explicit inline fill and stroke on rects, texts, and circles
     clone.querySelectorAll("rect.mindmap-node-rect").forEach((rect) => {
       const customFill = (rect as SVGRectElement).style.fill;
-      rect.setAttribute("fill", customFill && customFill !== "transparent" ? customFill : nodeBg);
+      const customStroke = (rect as SVGRectElement).style.stroke;
+      const customStrokeWidth = (rect as SVGRectElement).style.strokeWidth;
+
+      rect.setAttribute("fill", customFill || nodeBg);
+      if (customStroke) rect.setAttribute("stroke", customStroke);
+      if (customStrokeWidth) rect.setAttribute("stroke-width", customStrokeWidth);
     });
     clone.querySelectorAll("rect.mindmap-node-rect-underline").forEach((rect) => {
       rect.setAttribute("fill", "transparent");
@@ -849,7 +876,7 @@ export const MindmapView = memo(function MindmapView({
                       nodeId: primarySelectedId || tree.id,
                     });
                   }}
-                  title="自定义节点背景、形状、字体及连线风格 (也可在节点上右键)"
+                  title="自定义节点背景、边框、形状、字体及连线风格 (也可在节点上右键)"
                 >
                   <Palette size={14} className="text-cyan" />
                   <span>{isBatchMode ? `批量样式 (${selectedNodeIds.size})` : "外观样式"}</span>
@@ -953,22 +980,31 @@ export const MindmapView = memo(function MindmapView({
                   ? "#38bdf8"
                   : BRANCH_COLORS[node.colorIndex % BRANCH_COLORS.length];
               const customBg = node.color || "";
+              const isCustomTransparent = customBg === "transparent";
               const isHovered = hoveredNodeId === node.id;
               const isSelected = selectedNodeIds.has(node.id);
               const isRoot = node.level === 0;
 
-              // When custom background color is set, use it as fill!
-              // Border stroke: if customBg exists, provide a polished border; otherwise branch color
-              const strokeColor = customBg
-                ? isSelected
+              // Border stroke calculation
+              let strokeColor = defaultBranchColor;
+              let strokeWidth = isSelected ? 2.2 : isHovered ? 1.8 : isRoot ? 1.6 : 1.2;
+
+              if (node.borderColor === "transparent") {
+                strokeColor = "transparent";
+                strokeWidth = 0;
+              } else if (node.borderColor) {
+                strokeColor = node.borderColor;
+              } else if (customBg && !isCustomTransparent) {
+                strokeColor = isSelected
                   ? "#38bdf8"
                   : isHovered
                   ? "rgba(255, 255, 255, 0.75)"
-                  : "rgba(0, 0, 0, 0.18)"
-                : defaultBranchColor;
+                  : "rgba(0, 0, 0, 0.18)";
+              }
 
               // Automatic high-contrast text color when custom background is set
-              const autoContrastTextColor = customBg ? getContrastTextColor(customBg) : "";
+              const autoContrastTextColor =
+                customBg && !isCustomTransparent ? getContrastTextColor(customBg) : "";
               const resolvedTextColor =
                 node.textColor ||
                 autoContrastTextColor ||
@@ -1020,7 +1056,7 @@ export const MindmapView = memo(function MindmapView({
                   <title>
                     {isRoot
                       ? "中心主题 (右键设置样式，按 Tab 添加子主题)"
-                      : `${node.text} (双击编辑，右键修改背景与文字，Tab 添加子主题，Enter 添加同级主题)`}
+                      : `${node.text} (双击编辑，右键修改背景与边框，Tab 添加子主题，Enter 添加同级主题)`}
                   </title>
 
                   {/* Selection Glow Outline */}
@@ -1074,7 +1110,7 @@ export const MindmapView = memo(function MindmapView({
                         y1={node.height - 2}
                         x2={node.width}
                         y2={node.height - 2}
-                        stroke={customBg || defaultBranchColor}
+                        stroke={node.borderColor || (customBg && !isCustomTransparent ? customBg : defaultBranchColor)}
                         strokeWidth={isSelected ? 2.8 : isHovered ? 2.2 : 1.8}
                       />
                     </>
@@ -1106,12 +1142,14 @@ export const MindmapView = memo(function MindmapView({
                       }
                       className="mindmap-node-rect"
                       data-custom-color={!!customBg}
+                      data-transparent={isCustomTransparent}
                       style={{
-                        fill: customBg || undefined,
+                        fill: isCustomTransparent ? "transparent" : (customBg || undefined),
                         stroke: strokeColor,
+                        strokeWidth: strokeWidth,
                       }}
                       stroke={strokeColor}
-                      strokeWidth={isSelected ? 2.2 : isHovered ? 1.8 : isRoot ? 1.6 : 1.2}
+                      strokeWidth={strokeWidth}
                       filter={isSelected || isHovered ? "url(#node-glow)" : undefined}
                     />
                   )}
@@ -1142,7 +1180,7 @@ export const MindmapView = memo(function MindmapView({
                       <circle
                         r={7}
                         className="mindmap-collapse-circle"
-                        stroke={customBg || defaultBranchColor}
+                        stroke={strokeColor !== "transparent" ? strokeColor : defaultBranchColor}
                         strokeWidth={1.2}
                       />
                       {/* Horizontal bar of minus / plus - guaranteed centered at y=0 */}
@@ -1151,7 +1189,7 @@ export const MindmapView = memo(function MindmapView({
                         y1={0}
                         x2={3.2}
                         y2={0}
-                        stroke={customBg || defaultBranchColor}
+                        stroke={strokeColor !== "transparent" ? strokeColor : defaultBranchColor}
                         strokeWidth={1.4}
                         strokeLinecap="round"
                         pointerEvents="none"
@@ -1163,7 +1201,7 @@ export const MindmapView = memo(function MindmapView({
                           y1={-3.2}
                           x2={0}
                           y2={3.2}
-                          stroke={customBg || defaultBranchColor}
+                          stroke={strokeColor !== "transparent" ? strokeColor : defaultBranchColor}
                           strokeWidth={1.4}
                           strokeLinecap="round"
                           pointerEvents="none"
@@ -1290,7 +1328,7 @@ export const MindmapView = memo(function MindmapView({
                 <input
                   type="color"
                   className="mindmap-hidden-color-input"
-                  value={contextTargetNode?.color || "#38bdf8"}
+                  value={contextTargetNode?.color && contextTargetNode.color !== "transparent" ? contextTargetNode.color : "#38bdf8"}
                   onChange={(e) => handleUpdateStyle(contextMenu.nodeId, { color: e.target.value })}
                 />
                 <span className="mindmap-custom-color-badge">🎨 自定义</span>
@@ -1299,16 +1337,51 @@ export const MindmapView = memo(function MindmapView({
             <div className="mindmap-ctx-palette">
               {PRESET_COLORS.map((c) => {
                 const isActive = (contextTargetNode?.color || "") === c.value;
+                const isTransparent = c.value === "transparent";
                 return (
                   <button
                     key={c.label}
                     type="button"
-                    className={`mindmap-color-swatch ${isActive ? "is-active" : ""}`}
-                    style={{ background: c.value || "var(--surface-2)" }}
+                    className={`mindmap-color-swatch ${isTransparent ? "is-transparent-swatch" : ""} ${isActive ? "is-active" : ""}`}
+                    style={{ background: isTransparent ? undefined : (c.value || "var(--surface-2)") }}
                     onClick={() => handleUpdateStyle(contextMenu.nodeId, { color: c.value })}
                     title={`背景: ${c.label}`}
                   >
-                    {isActive && <Check size={11} color={c.value ? "#ffffff" : "var(--text)"} />}
+                    {isActive && <Check size={11} color={c.value === "transparent" ? "#0f172a" : (c.value ? "#ffffff" : "var(--text)")} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Node Border Color */}
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label-row">
+              <span className="mindmap-ctx-label">节点边框颜色</span>
+              <label className="mindmap-custom-color-trigger" title="拾取任意边框颜色">
+                <input
+                  type="color"
+                  className="mindmap-hidden-color-input"
+                  value={contextTargetNode?.borderColor && contextTargetNode.borderColor !== "transparent" ? contextTargetNode.borderColor : "#38bdf8"}
+                  onChange={(e) => handleUpdateStyle(contextMenu.nodeId, { borderColor: e.target.value })}
+                />
+                <span className="mindmap-custom-color-badge">🎨 自定义</span>
+              </label>
+            </div>
+            <div className="mindmap-ctx-palette">
+              {PRESET_BORDER_COLORS.map((c) => {
+                const isActive = (contextTargetNode?.borderColor || "") === c.value;
+                const isTransparent = c.value === "transparent";
+                return (
+                  <button
+                    key={c.label}
+                    type="button"
+                    className={`mindmap-color-swatch ${isTransparent ? "is-transparent-swatch" : ""} ${isActive ? "is-active" : ""}`}
+                    style={{ background: isTransparent ? undefined : (c.value || "var(--surface-2)") }}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { borderColor: c.value })}
+                    title={`边框: ${c.label}`}
+                  >
+                    {isActive && <Check size={11} color={c.value === "transparent" ? "#0f172a" : (c.value ? "#ffffff" : "var(--text)")} />}
                   </button>
                 );
               })}

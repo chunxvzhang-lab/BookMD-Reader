@@ -25,6 +25,7 @@ export interface MindmapLayoutNode {
   fontSize?: number;
   fontWeight?: "normal" | "bold";
   textColor?: string;
+  borderColor?: string;
 }
 
 export interface MindmapLayoutResult {
@@ -103,6 +104,7 @@ export function parseStyleComment(line: string): {
   fontSize?: number;
   fontWeight?: "normal" | "bold";
   textColor?: string;
+  borderColor?: string;
 } {
   const match = line.match(/\s*<!--\s*(?:mindmap|style):\s*([^>]+?)\s*-->/i);
   if (!match) {
@@ -119,6 +121,7 @@ export function parseStyleComment(line: string): {
     fontSize?: number;
     fontWeight?: "normal" | "bold";
     textColor?: string;
+    borderColor?: string;
   } = { cleanText };
 
   const pairs = rawStyle.split(/[,;\s]+/).filter(Boolean);
@@ -146,6 +149,8 @@ export function parseStyleComment(line: string): {
       result.fontWeight = (val === "bold" || val === "true") ? "bold" : "normal";
     } else if (key === "textcolor") {
       result.textColor = val;
+    } else if (key === "bordercolor") {
+      result.borderColor = val;
     }
   }
 
@@ -164,6 +169,7 @@ export function formatStyleComment(node: Partial<MindmapNode>): string {
   if (node.fontSize) parts.push(`fontSize=${node.fontSize}`);
   if (node.fontWeight) parts.push(`fontWeight=${node.fontWeight}`);
   if (node.textColor) parts.push(`textColor=${node.textColor}`);
+  if (node.borderColor) parts.push(`borderColor=${node.borderColor}`);
   return parts.length > 0 ? ` <!-- style: ${parts.join(",")} -->` : "";
 }
 
@@ -212,6 +218,7 @@ export function parseMarkdownToMindmapTree(
     fontSize: rootStyle?.fontSize,
     fontWeight: rootStyle?.fontWeight,
     textColor: rootStyle?.textColor,
+    borderColor: rootStyle?.borderColor,
   };
 
   // Step 2: Check if source contains indented list items (- item or * item)
@@ -262,6 +269,7 @@ export function parseMarkdownToMindmapTree(
         fontSize: parsedStyle.fontSize,
         fontWeight: parsedStyle.fontWeight,
         textColor: parsedStyle.textColor,
+        borderColor: parsedStyle.borderColor,
       };
       parent.children.push(newNode);
       stack.push({ node: newNode, indent, path: currentPath });
@@ -312,6 +320,7 @@ export function parseMarkdownToMindmapTree(
         fontSize: h.style?.fontSize,
         fontWeight: h.style?.fontWeight,
         textColor: h.style?.textColor,
+        borderColor: h.style?.borderColor,
       };
       while (stack.length > 1 && stack[stack.length - 1].level >= h.level) {
         stack.pop();
@@ -590,6 +599,7 @@ export function layoutMindmap(
       fontSize: node.fontSize,
       fontWeight: node.fontWeight,
       textColor: node.textColor,
+      borderColor: node.borderColor,
     };
     allNodes.push(layoutNode);
 
@@ -688,6 +698,7 @@ export function updateNodeStyle(
     fontSize?: number;
     fontWeight?: "normal" | "bold";
     textColor?: string;
+    borderColor?: string;
   }
 ): MindmapNode {
   return updateNodesStyle(tree, [nodeId], styles);
@@ -704,6 +715,7 @@ export function updateNodesStyle(
     fontSize?: number;
     fontWeight?: "normal" | "bold";
     textColor?: string;
+    borderColor?: string;
   }
 ): MindmapNode {
   const nextTree = cloneTree(tree);
@@ -718,6 +730,7 @@ export function updateNodesStyle(
       if ("fontSize" in styles) node.fontSize = styles.fontSize || undefined;
       if ("fontWeight" in styles) node.fontWeight = styles.fontWeight || undefined;
       if ("textColor" in styles) node.textColor = styles.textColor || undefined;
+      if ("borderColor" in styles) node.borderColor = styles.borderColor || undefined;
     }
     if (node.children) {
       for (const child of node.children) {

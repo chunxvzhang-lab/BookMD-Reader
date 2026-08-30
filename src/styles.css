@@ -7900,6 +7900,10 @@ body:has(.flash-capsule-overlay) {
   transition: stroke-width 0.15s ease, filter 0.15s ease, fill 0.15s ease;
 }
 
+.mindmap-node-rect[data-transparent="true"] {
+  fill: transparent !important;
+}
+
 .mindmap-node-interactive.is-root .mindmap-node-rect:not([data-custom-color="true"]) {
   fill: color-mix(in srgb, #38bdf8 12%, var(--surface));
 }
@@ -8200,6 +8204,11 @@ body:has(.flash-capsule-overlay) {
   outline: 2px solid #38bdf8;
   outline-offset: 1px;
   box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+}
+
+.mindmap-color-swatch.is-transparent-swatch {
+  background: repeating-conic-gradient(#94a3b8 0% 25%, #ffffff 0% 50%) 50% / 6px 6px !important;
+  position: relative;
 }
 
 .mindmap-ctx-pills {

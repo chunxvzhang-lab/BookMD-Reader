@@ -362,8 +362,40 @@ describe("mindmapService", () => {
       expect(serialized).toContain("fontWeight=bold");
       expect(serialized).toContain("textColor=#dc2626");
     });
+
+    it("parses, serializes, and updates borderColor and transparent color", () => {
+      const markdown =
+        "# 主题 <!-- style: color=transparent,borderColor=#38bdf8 -->\n\n" +
+        "- 节点1 <!-- style: color=transparent,borderColor=transparent -->\n" +
+        "- 节点2 <!-- style: borderColor=#ef4444 -->\n";
+
+      const tree = parseMarkdownToMindmapTree(markdown);
+      expect(tree.color).toBe("transparent");
+      expect(tree.borderColor).toBe("#38bdf8");
+
+      expect(tree.children[0].color).toBe("transparent");
+      expect(tree.children[0].borderColor).toBe("transparent");
+
+      expect(tree.children[1].borderColor).toBe("#ef4444");
+
+      const layout = layoutMindmap(tree);
+      const rootLayout = layout.nodes.find((n) => n.id === tree.id);
+      expect(rootLayout?.color).toBe("transparent");
+      expect(rootLayout?.borderColor).toBe("#38bdf8");
+
+      // Batch update borderColor
+      const updated = updateNodesStyle(tree, [tree.children[0].id, tree.children[1].id], {
+        color: "transparent",
+        borderColor: "#10b981",
+      });
+
+      const serialized = mindmapTreeToMarkdown(updated);
+      expect(serialized).toContain("color=transparent");
+      expect(serialized).toContain("borderColor=#10b981");
+    });
   });
 });
+
 
 
 
