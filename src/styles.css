@@ -7897,14 +7897,14 @@ body:has(.flash-capsule-overlay) {
 
 .mindmap-node-rect {
   fill: var(--surface);
-  transition: stroke-width 0.15s ease, filter 0.15s ease;
+  transition: stroke-width 0.15s ease, filter 0.15s ease, fill 0.15s ease;
 }
 
-.mindmap-node-interactive.is-root .mindmap-node-rect {
+.mindmap-node-interactive.is-root .mindmap-node-rect:not([data-custom-color="true"]) {
   fill: color-mix(in srgb, #38bdf8 12%, var(--surface));
 }
 
-.mindmap-node-interactive:hover .mindmap-node-rect {
+.mindmap-node-interactive:hover .mindmap-node-rect:not([data-custom-color="true"]) {
   fill: color-mix(in srgb, var(--accent) 8%, var(--surface));
 }
 
@@ -7962,7 +7962,7 @@ body:has(.flash-capsule-overlay) {
   }
 }
 
-.mindmap-node-interactive.is-selected .mindmap-node-rect {
+.mindmap-node-interactive.is-selected .mindmap-node-rect:not([data-custom-color="true"]) {
   fill: color-mix(in srgb, #38bdf8 14%, var(--surface));
 }
 

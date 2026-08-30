@@ -43,7 +43,7 @@ export type MindmapViewProps = {
   theme?: ThemeMode;
 };
 
-// Rich 17-color modern curated palette for node background/border
+// Rich 17-color modern curated palette for node card background fill
 const PRESET_COLORS = [
   { label: "默认", value: "" },
   { label: "天蓝", value: "#38bdf8" },
@@ -117,6 +117,21 @@ const PRESET_LINE_COLORS = [
   { label: "石墨灰", value: "#94a3b8" },
   { label: "曜石黑", value: "#334155" },
 ];
+
+/**
+ * Calculates optimal contrast text color (dark vs white) based on background luminance.
+ */
+function getContrastTextColor(hexColor?: string): string {
+  if (!hexColor) return "";
+  const hex = hexColor.replace("#", "");
+  if (hex.length !== 6) return "#ffffff";
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return "#ffffff";
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 150 ? "#0f172a" : "#ffffff";
+}
 
 export const MindmapView = memo(function MindmapView({
   title,
@@ -697,7 +712,8 @@ export const MindmapView = memo(function MindmapView({
 
     // Set explicit inline fill and stroke on rects, texts, and circles
     clone.querySelectorAll("rect.mindmap-node-rect").forEach((rect) => {
-      rect.setAttribute("fill", nodeBg);
+      const customFill = (rect as SVGRectElement).style.fill;
+      rect.setAttribute("fill", customFill && customFill !== "transparent" ? customFill : nodeBg);
     });
     clone.querySelectorAll("rect.mindmap-node-rect-underline").forEach((rect) => {
       rect.setAttribute("fill", "transparent");
@@ -833,7 +849,7 @@ export const MindmapView = memo(function MindmapView({
                       nodeId: primarySelectedId || tree.id,
                     });
                   }}
-                  title="自定义节点颜色、形状、字体及连线风格 (也可在节点上右键)"
+                  title="自定义节点背景、形状、字体及连线风格 (也可在节点上右键)"
                 >
                   <Palette size={14} className="text-cyan" />
                   <span>{isBatchMode ? `批量样式 (${selectedNodeIds.size})` : "外观样式"}</span>
@@ -932,14 +948,31 @@ export const MindmapView = memo(function MindmapView({
           {/* Render Mindmap Nodes */}
           <g className="mindmap-nodes-group">
             {layout.nodes.map((node) => {
-              const defaultColor =
+              const defaultBranchColor =
                 node.level === 0
                   ? "#38bdf8"
                   : BRANCH_COLORS[node.colorIndex % BRANCH_COLORS.length];
-              const color = node.color || defaultColor;
+              const customBg = node.color || "";
               const isHovered = hoveredNodeId === node.id;
               const isSelected = selectedNodeIds.has(node.id);
               const isRoot = node.level === 0;
+
+              // When custom background color is set, use it as fill!
+              // Border stroke: if customBg exists, provide a polished border; otherwise branch color
+              const strokeColor = customBg
+                ? isSelected
+                  ? "#38bdf8"
+                  : isHovered
+                  ? "rgba(255, 255, 255, 0.75)"
+                  : "rgba(0, 0, 0, 0.18)"
+                : defaultBranchColor;
+
+              // Automatic high-contrast text color when custom background is set
+              const autoContrastTextColor = customBg ? getContrastTextColor(customBg) : "";
+              const resolvedTextColor =
+                node.textColor ||
+                autoContrastTextColor ||
+                (isRoot ? "#38bdf8" : undefined);
 
               return (
                 <g
@@ -987,7 +1020,7 @@ export const MindmapView = memo(function MindmapView({
                   <title>
                     {isRoot
                       ? "中心主题 (右键设置样式，按 Tab 添加子主题)"
-                      : `${node.text} (双击编辑，右键修改外观与字体，Tab 添加子主题，Enter 添加同级主题)`}
+                      : `${node.text} (双击编辑，右键修改背景与文字，Tab 添加子主题，Enter 添加同级主题)`}
                   </title>
 
                   {/* Selection Glow Outline */}
@@ -1041,7 +1074,7 @@ export const MindmapView = memo(function MindmapView({
                         y1={node.height - 2}
                         x2={node.width}
                         y2={node.height - 2}
-                        stroke={color}
+                        stroke={customBg || defaultBranchColor}
                         strokeWidth={isSelected ? 2.8 : isHovered ? 2.2 : 1.8}
                       />
                     </>
@@ -1072,7 +1105,12 @@ export const MindmapView = memo(function MindmapView({
                           : 6
                       }
                       className="mindmap-node-rect"
-                      stroke={color}
+                      data-custom-color={!!customBg}
+                      style={{
+                        fill: customBg || undefined,
+                        stroke: strokeColor,
+                      }}
+                      stroke={strokeColor}
                       strokeWidth={isSelected ? 2.2 : isHovered ? 1.8 : isRoot ? 1.6 : 1.2}
                       filter={isSelected || isHovered ? "url(#node-glow)" : undefined}
                     />
@@ -1088,7 +1126,7 @@ export const MindmapView = memo(function MindmapView({
                     style={{
                       fontSize: node.fontSize ? `${node.fontSize}px` : undefined,
                       fontWeight: node.fontWeight ? (node.fontWeight === "bold" ? 700 : 400) : (isRoot ? 700 : 500),
-                      fill: node.textColor || undefined,
+                      fill: resolvedTextColor || undefined,
                     }}
                   >
                     {node.text}
@@ -1104,7 +1142,7 @@ export const MindmapView = memo(function MindmapView({
                       <circle
                         r={7}
                         className="mindmap-collapse-circle"
-                        stroke={color}
+                        stroke={customBg || defaultBranchColor}
                         strokeWidth={1.2}
                       />
                       {/* Horizontal bar of minus / plus - guaranteed centered at y=0 */}
@@ -1113,7 +1151,7 @@ export const MindmapView = memo(function MindmapView({
                         y1={0}
                         x2={3.2}
                         y2={0}
-                        stroke={color}
+                        stroke={customBg || defaultBranchColor}
                         strokeWidth={1.4}
                         strokeLinecap="round"
                         pointerEvents="none"
@@ -1125,7 +1163,7 @@ export const MindmapView = memo(function MindmapView({
                           y1={-3.2}
                           x2={0}
                           y2={3.2}
-                          stroke={color}
+                          stroke={customBg || defaultBranchColor}
                           strokeWidth={1.4}
                           strokeLinecap="round"
                           pointerEvents="none"
@@ -1244,7 +1282,7 @@ export const MindmapView = memo(function MindmapView({
             </button>
           </div>
 
-          {/* Node Background / Border Color */}
+          {/* Node Background Color */}
           <div className="mindmap-ctx-section">
             <div className="mindmap-ctx-label-row">
               <span className="mindmap-ctx-label">节点背景颜色</span>
@@ -1268,7 +1306,7 @@ export const MindmapView = memo(function MindmapView({
                     className={`mindmap-color-swatch ${isActive ? "is-active" : ""}`}
                     style={{ background: c.value || "var(--surface-2)" }}
                     onClick={() => handleUpdateStyle(contextMenu.nodeId, { color: c.value })}
-                    title={c.label}
+                    title={`背景: ${c.label}`}
                   >
                     {isActive && <Check size={11} color={c.value ? "#ffffff" : "var(--text)"} />}
                   </button>
