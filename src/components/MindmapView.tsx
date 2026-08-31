@@ -11,8 +11,13 @@ import {
   X,
   CheckSquare,
   Bold,
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  AlignJustify,
+  RotateCcw,
 } from "lucide-react";
-import type { Heading, ThemeMode, MindmapNodeShape, MindmapLineStyle } from "../core/types";
+import type { Heading, ThemeMode, MindmapNodeShape, MindmapLineStyle, MindmapTextAlign } from "../core/types";
 import {
   BRANCH_COLORS,
   buildMindmapTree,
@@ -115,6 +120,13 @@ const PRESET_TEXT_COLORS = [
   { label: "石墨灰", value: "#64748b" },
 ];
 
+const PRESET_ALIGNMENTS: { label: string; value: MindmapTextAlign; icon: typeof AlignCenter }[] = [
+  { label: "居中", value: "center", icon: AlignCenter },
+  { label: "左对齐", value: "left", icon: AlignLeft },
+  { label: "右对齐", value: "right", icon: AlignRight },
+  { label: "双边对齐", value: "justify", icon: AlignJustify },
+];
+
 const PRESET_LINE_STYLES: { label: string; value: MindmapLineStyle }[] = [
   { label: "曲线", value: "bezier" },
   { label: "折线", value: "step" },
@@ -166,7 +178,7 @@ export const MindmapView = memo(function MindmapView({
 }: MindmapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const editInputRef = useRef<HTMLInputElement | null>(null);
+  const editInputRef = useRef<HTMLTextAreaElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const lastEmittedSourceRef = useRef<string>("");
 
@@ -251,6 +263,15 @@ export const MindmapView = memo(function MindmapView({
   // Node collapse state
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+
+  // Node manual resizing state
+  const [resizingNode, setResizingNode] = useState<{
+    nodeId: string;
+    startX: number;
+    startY: number;
+    startWidth: number;
+    startHeight: number;
+  } | null>(null);
 
   // Compute 2D layout coordinates
   const layout = useMemo(() => {
@@ -434,6 +455,9 @@ export const MindmapView = memo(function MindmapView({
         fontWeight?: "normal" | "bold";
         textColor?: string;
         borderColor?: string;
+        textAlign?: MindmapTextAlign;
+        customWidth?: number;
+        customHeight?: number;
       }
     ) => {
       // If multiple nodes are selected, apply to ALL selected nodes at once!
@@ -631,20 +655,38 @@ export const MindmapView = memo(function MindmapView({
     };
   }, [transform.x, transform.y, editingNodeId, contextMenu, handleCommitEdit]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
-    setTransform((prev) => ({
-      ...prev,
-      x: Math.round(dragStartRef.current.startTransformX + dx),
-      y: Math.round(dragStartRef.current.startTransformY + dy),
-    }));
-  }, [isDragging]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (resizingNode) {
+        const dx = (e.clientX - resizingNode.startX) / transform.scale;
+        const dy = (e.clientY - resizingNode.startY) / transform.scale;
+        const newWidth = Math.max(60, Math.round(resizingNode.startWidth + dx));
+        const newHeight = Math.max(30, Math.round(resizingNode.startHeight + dy));
+        handleUpdateStyle(resizingNode.nodeId, {
+          customWidth: newWidth,
+          customHeight: newHeight,
+        });
+        return;
+      }
+
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      setTransform((prev) => ({
+        ...prev,
+        x: Math.round(dragStartRef.current.startTransformX + dx),
+        y: Math.round(dragStartRef.current.startTransformY + dy),
+      }));
+    },
+    [isDragging, resizingNode, transform.scale, handleUpdateStyle]
+  );
 
   const handleMouseUp = useCallback(() => {
+    if (resizingNode) {
+      setResizingNode(null);
+    }
     setIsDragging(false);
-  }, []);
+  }, [resizingNode]);
 
   // Wheel zoom handler
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -722,9 +764,10 @@ export const MindmapView = memo(function MindmapView({
       g.removeAttribute("transform");
     }
 
-    // Strip out interactive-only elements: selection rings and add buttons
+    // Strip out interactive-only elements: selection rings, add buttons, and resize handles
     clone.querySelectorAll(".mindmap-node-selection-ring").forEach((el) => el.remove());
     clone.querySelectorAll(".mindmap-node-add-btn").forEach((el) => el.remove());
+    clone.querySelectorAll(".mindmap-node-resize-handle").forEach((el) => el.remove());
 
     // Resolve theme colors for standalone SVG serialization
     const isDark = theme === "twitter" || (theme === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
@@ -758,8 +801,6 @@ export const MindmapView = memo(function MindmapView({
       textEl.setAttribute("font-family", "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif");
       textEl.setAttribute("font-size", customFontSize || (isRootText ? "14px" : "12.5px"));
       textEl.setAttribute("font-weight", customFontWeight || (isRootText ? "700" : "500"));
-      textEl.setAttribute("text-anchor", "middle");
-      textEl.setAttribute("dominant-baseline", "central");
     });
 
     const serializer = new XMLSerializer();
@@ -1154,21 +1195,64 @@ export const MindmapView = memo(function MindmapView({
                     />
                   )}
 
-                  {/* Node Label Text - Exactly Centered inside Card with custom fontSize, fontWeight, textColor */}
-                  <text
-                    x={node.width / 2}
-                    y={node.height / 2}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className={`mindmap-node-title-text ${isRoot ? "root-title" : ""}`}
-                    style={{
-                      fontSize: node.fontSize ? `${node.fontSize}px` : undefined,
-                      fontWeight: node.fontWeight ? (node.fontWeight === "bold" ? 700 : 400) : (isRoot ? 700 : 500),
-                      fill: resolvedTextColor || undefined,
-                    }}
-                  >
-                    {node.text}
-                  </text>
+                  {/* Node Label Text - Rendered via <tspan> for multi-line and text alignments */}
+                  {(() => {
+                    const lines = node.lines && node.lines.length > 0 ? node.lines : [node.text];
+                    const align = node.textAlign || "center";
+                    const effectiveFontSize = node.fontSize || (isRoot ? 15 : 13);
+                    const lineHeight = Math.round(effectiveFontSize * 1.38);
+                    const padX = isRoot ? 18 : 12;
+                    const innerWidth = Math.max(20, node.width - padX * 2);
+
+                    // Compute start y position so lines are vertically centered in node
+                    const totalTextHeight = lines.length * lineHeight;
+                    const startY = (node.height - totalTextHeight) / 2 + effectiveFontSize * 0.88;
+
+                    let textAnchor: "middle" | "start" | "end" = "middle";
+                    let xPos = node.width / 2;
+
+                    if (align === "left") {
+                      textAnchor = "start";
+                      xPos = padX;
+                    } else if (align === "right") {
+                      textAnchor = "end";
+                      xPos = node.width - padX;
+                    } else if (align === "justify") {
+                      textAnchor = "start";
+                      xPos = padX;
+                    }
+
+                    return (
+                      <text
+                        x={xPos}
+                        y={startY}
+                        textAnchor={textAnchor}
+                        className={`mindmap-node-title-text ${isRoot ? "root-title" : ""}`}
+                        style={{
+                          fontSize: `${effectiveFontSize}px`,
+                          fontWeight: node.fontWeight ? (node.fontWeight === "bold" ? 700 : 400) : (isRoot ? 700 : 500),
+                          fill: resolvedTextColor || undefined,
+                        }}
+                      >
+                        {lines.map((line, idx) => {
+                          const isNotLast = idx < lines.length - 1;
+                          const isJustified = align === "justify" && isNotLast && line.trim().length > 1;
+
+                          return (
+                            <tspan
+                              key={idx}
+                              x={xPos}
+                              dy={idx === 0 ? 0 : lineHeight}
+                              textLength={isJustified ? innerWidth : undefined}
+                              lengthAdjust={isJustified ? "spacing" : undefined}
+                            >
+                              {line}
+                            </tspan>
+                          );
+                        })}
+                      </text>
+                    );
+                  })()}
 
                   {/* Children Collapse/Expand Toggle Button (+ / - geometrically centered via SVG vector lines) */}
                   {node.hasChildren && (
@@ -1247,6 +1331,62 @@ export const MindmapView = memo(function MindmapView({
                       <title>添加子主题 (Tab)</title>
                     </g>
                   )}
+
+                  {/* Manual Resize Handle at bottom-right corner */}
+                  {editable && (isHovered || isSelected) && (
+                    <g
+                      className="mindmap-node-resize-handle"
+                      transform={`translate(${node.width - 9}, ${node.height - 9})`}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setResizingNode({
+                          nodeId: node.id,
+                          startX: e.clientX,
+                          startY: e.clientY,
+                          startWidth: node.width,
+                          startHeight: node.height,
+                        });
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleUpdateStyle(node.id, {
+                          customWidth: undefined,
+                          customHeight: undefined,
+                        });
+                      }}
+                    >
+                      <rect
+                        x={0}
+                        y={0}
+                        width={9}
+                        height={9}
+                        fill="transparent"
+                        className="mindmap-resize-hitarea"
+                      />
+                      {/* Diagonal grip marks */}
+                      <line
+                        x1={7}
+                        y1={2}
+                        x2={2}
+                        y2={7}
+                        stroke="#38bdf8"
+                        strokeWidth={1.4}
+                        strokeLinecap="round"
+                      />
+                      <line
+                        x1={7}
+                        y1={5}
+                        x2={5}
+                        y2={7}
+                        stroke="#38bdf8"
+                        strokeWidth={1.4}
+                        strokeLinecap="round"
+                      />
+                      <title>拖动调整节点大小（双击恢复自动自适应）</title>
+                    </g>
+                  )}
                 </g>
               );
             })}
@@ -1256,9 +1396,8 @@ export const MindmapView = memo(function MindmapView({
 
       {/* Inline Text Editing Overlay Input */}
       {editingNode && (
-        <input
+        <textarea
           ref={editInputRef}
-          type="text"
           className="mindmap-inline-edit-input"
           style={{
             position: "absolute",
@@ -1268,13 +1407,14 @@ export const MindmapView = memo(function MindmapView({
             height: Math.max(30, editingNode.height * transform.scale),
             fontSize: `${Math.max(11, Math.round((editingNode.fontSize || 13) * transform.scale))}px`,
             fontWeight: editingNode.fontWeight === "bold" ? 700 : 500,
-            textAlign: "center",
+            textAlign: (editingNode.textAlign === "justify" ? "left" : editingNode.textAlign) || "center",
+            resize: "none",
           }}
           value={editingText}
           onChange={(e) => setEditingText(e.target.value)}
           onBlur={handleCommitEdit}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleCommitEdit();
             } else if (e.key === "Escape") {
@@ -1444,6 +1584,30 @@ export const MindmapView = memo(function MindmapView({
             </div>
           </div>
 
+          {/* Typography: Text Alignment (居中、左对齐、右对齐、双边对齐) */}
+          <div className="mindmap-ctx-section">
+            <div className="mindmap-ctx-label">文字对齐</div>
+            <div className="mindmap-ctx-pills">
+              {PRESET_ALIGNMENTS.map((al) => {
+                const currentAlign = contextTargetNode?.textAlign || "center";
+                const isActive = currentAlign === al.value;
+                const IconComponent = al.icon;
+                return (
+                  <button
+                    key={al.value}
+                    type="button"
+                    className={`mindmap-pill-btn mindmap-align-btn ${isActive ? "is-active" : ""}`}
+                    onClick={() => handleUpdateStyle(contextMenu.nodeId, { textAlign: al.value })}
+                    title={al.label}
+                  >
+                    <IconComponent size={12} />
+                    <span>{al.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Typography: Font/Text Color */}
           <div className="mindmap-ctx-section">
             <div className="mindmap-ctx-label-row">
@@ -1574,6 +1738,21 @@ export const MindmapView = memo(function MindmapView({
                   <span>重命名 (F2)</span>
                 </button>
               </>
+            )}
+            {(contextTargetNode?.customWidth || contextTargetNode?.customHeight) && (
+              <button
+                type="button"
+                className="mindmap-ctx-action-item"
+                onClick={() => {
+                  handleUpdateStyle(contextMenu.nodeId, {
+                    customWidth: undefined,
+                    customHeight: undefined,
+                  });
+                }}
+              >
+                <RotateCcw size={13} />
+                <span>恢复自适应大小</span>
+              </button>
             )}
             <button
               type="button"

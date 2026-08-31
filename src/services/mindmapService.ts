@@ -3,11 +3,13 @@ import type {
   MindmapNode,
   MindmapNodeShape,
   MindmapLineStyle,
+  MindmapTextAlign,
 } from "../core/types";
 
 export interface MindmapLayoutNode {
   id: string;
   text: string;
+  lines: string[];
   level: number;
   line?: number;
   x: number;
@@ -26,6 +28,9 @@ export interface MindmapLayoutNode {
   fontWeight?: "normal" | "bold";
   textColor?: string;
   borderColor?: string;
+  textAlign?: MindmapTextAlign;
+  customWidth?: number;
+  customHeight?: number;
 }
 
 export interface MindmapLayoutResult {
@@ -93,7 +98,7 @@ export function buildMindmapTree(
 }
 
 /**
- * Parses inline style annotations such as <!-- style: color=#10b981,shape=capsule,lineStyle=step -->
+ * Parses inline style annotations such as <!-- style: color=#10b981,shape=capsule,lineStyle=step,align=center,width=200 -->
  */
 export function parseStyleComment(line: string): {
   cleanText: string;
@@ -105,6 +110,9 @@ export function parseStyleComment(line: string): {
   fontWeight?: "normal" | "bold";
   textColor?: string;
   borderColor?: string;
+  textAlign?: MindmapTextAlign;
+  customWidth?: number;
+  customHeight?: number;
 } {
   const match = line.match(/\s*<!--\s*(?:mindmap|style):\s*([^>]+?)\s*-->/i);
   if (!match) {
@@ -122,6 +130,9 @@ export function parseStyleComment(line: string): {
     fontWeight?: "normal" | "bold";
     textColor?: string;
     borderColor?: string;
+    textAlign?: MindmapTextAlign;
+    customWidth?: number;
+    customHeight?: number;
   } = { cleanText };
 
   const pairs = rawStyle.split(/[,;\s]+/).filter(Boolean);
@@ -151,6 +162,20 @@ export function parseStyleComment(line: string): {
       result.textColor = val;
     } else if (key === "bordercolor") {
       result.borderColor = val;
+    } else if (key === "align" || key === "textalign") {
+      if (["left", "center", "right", "justify"].includes(val)) {
+        result.textAlign = val as MindmapTextAlign;
+      }
+    } else if (key === "width" || key === "customwidth") {
+      const w = parseInt(val, 10);
+      if (!isNaN(w) && w >= 60 && w <= 2000) {
+        result.customWidth = w;
+      }
+    } else if (key === "height" || key === "customheight") {
+      const h = parseInt(val, 10);
+      if (!isNaN(h) && h >= 24 && h <= 2000) {
+        result.customHeight = h;
+      }
     }
   }
 
@@ -170,6 +195,9 @@ export function formatStyleComment(node: Partial<MindmapNode>): string {
   if (node.fontWeight) parts.push(`fontWeight=${node.fontWeight}`);
   if (node.textColor) parts.push(`textColor=${node.textColor}`);
   if (node.borderColor) parts.push(`borderColor=${node.borderColor}`);
+  if (node.textAlign) parts.push(`align=${node.textAlign}`);
+  if (node.customWidth) parts.push(`width=${Math.round(node.customWidth)}`);
+  if (node.customHeight) parts.push(`height=${Math.round(node.customHeight)}`);
   return parts.length > 0 ? ` <!-- style: ${parts.join(",")} -->` : "";
 }
 
@@ -219,6 +247,9 @@ export function parseMarkdownToMindmapTree(
     fontWeight: rootStyle?.fontWeight,
     textColor: rootStyle?.textColor,
     borderColor: rootStyle?.borderColor,
+    textAlign: rootStyle?.textAlign,
+    customWidth: rootStyle?.customWidth,
+    customHeight: rootStyle?.customHeight,
   };
 
   // Step 2: Check if source contains indented list items (- item or * item)
@@ -270,6 +301,9 @@ export function parseMarkdownToMindmapTree(
         fontWeight: parsedStyle.fontWeight,
         textColor: parsedStyle.textColor,
         borderColor: parsedStyle.borderColor,
+        textAlign: parsedStyle.textAlign,
+        customWidth: parsedStyle.customWidth,
+        customHeight: parsedStyle.customHeight,
       };
       parent.children.push(newNode);
       stack.push({ node: newNode, indent, path: currentPath });
@@ -321,6 +355,9 @@ export function parseMarkdownToMindmapTree(
         fontWeight: h.style?.fontWeight,
         textColor: h.style?.textColor,
         borderColor: h.style?.borderColor,
+        textAlign: h.style?.textAlign,
+        customWidth: h.style?.customWidth,
+        customHeight: h.style?.customHeight,
       };
       while (stack.length > 1 && stack[stack.length - 1].level >= h.level) {
         stack.pop();
@@ -514,25 +551,131 @@ export const BRANCH_COLORS = [
   "#2dd4bf", // Teal
 ];
 
-function getNodeHeight(node: MindmapNode): number {
-  const isRoot = node.level === 0;
-  const base = isRoot ? 44 : 36;
-  if (node.fontSize && node.fontSize >= 18) return base + 8;
-  if (node.fontSize && node.fontSize >= 16) return base + 4;
-  return base;
-}
-
-function estimateNodeWidth(text: string, level: number, fontSize?: number): number {
-  const basePad = level === 0 ? 44 : 32;
-  const effectiveSize = fontSize || (level === 0 ? 15 : 13);
-  const charWidth = effectiveSize * 1.05;
-  // Estimate Chinese & ASCII character widths
-  let estimated = basePad;
+/**
+ * Calculates visual text pixel width based on character codes and font size.
+ */
+export function measureTextWidth(text: string, fontSize: number): number {
+  const charWidth = fontSize * 1.05;
+  let w = 0;
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
-    estimated += code > 127 ? charWidth : charWidth * 0.65;
+    if (code === 32) {
+      w += fontSize * 0.35; // Space
+    } else if (code > 127) {
+      w += charWidth; // CJK and wide characters
+    } else {
+      w += charWidth * 0.65; // Latin/ASCII
+    }
   }
-  return Math.max(64, Math.min(420, Math.round(estimated)));
+  return w;
+}
+
+/**
+ * Wraps text into multiple lines given an available inner width and font size.
+ * Handles both explicit newlines ('\n') and automatic wrapping for long text.
+ */
+export function wrapMindmapText(
+  rawText: string,
+  maxAvailableWidth: number,
+  fontSize: number
+): string[] {
+  if (!rawText) return [""];
+  const safeMaxWidth = Math.max(40, maxAvailableWidth);
+  const rawParagraphs = rawText.split(/\r?\n/);
+  const resultLines: string[] = [];
+
+  for (const para of rawParagraphs) {
+    if (!para) {
+      resultLines.push("");
+      continue;
+    }
+
+    let currentLine = "";
+    let currentLineWidth = 0;
+
+    for (let i = 0; i < para.length; i++) {
+      const char = para[i];
+      const code = char.charCodeAt(0);
+      const charW =
+        code === 32
+          ? fontSize * 0.35
+          : code > 127
+          ? fontSize * 1.05
+          : fontSize * 0.65;
+
+      if (currentLineWidth + charW > safeMaxWidth && currentLine.length > 0) {
+        resultLines.push(currentLine);
+        currentLine = char;
+        currentLineWidth = charW;
+      } else {
+        currentLine += char;
+        currentLineWidth += charW;
+      }
+    }
+
+    if (currentLine.length > 0) {
+      resultLines.push(currentLine);
+    }
+  }
+
+  return resultLines.length > 0 ? resultLines : [""];
+}
+
+/**
+ * Calculates adaptive or customized width, height, and wrapped text lines for a node.
+ */
+export function calculateNodeDimensions(
+  node: MindmapNode
+): { width: number; height: number; lines: string[] } {
+  const isRoot = node.level === 0;
+  const basePadX = isRoot ? 40 : 28;
+  const basePadY = isRoot ? 14 : 10;
+  const effectiveSize = node.fontSize || (isRoot ? 15 : 13);
+  const lineHeight = Math.round(effectiveSize * 1.38);
+
+  const minAutoWidth = isRoot ? 72 : 56;
+  const maxAutoWidth = isRoot ? 320 : 250;
+
+  let width: number;
+  let lines: string[];
+
+  if (node.customWidth && node.customWidth > 0) {
+    width = Math.max(minAutoWidth, Math.round(node.customWidth));
+    const innerWidth = Math.max(30, width - basePadX);
+    lines = wrapMindmapText(node.text, innerWidth, effectiveSize);
+  } else {
+    // Check if text with manual line breaks already fits within maxAutoWidth
+    const rawParagraphs = (node.text || "").split(/\r?\n/);
+    const maxParaWidth = Math.max(
+      ...rawParagraphs.map((p) => measureTextWidth(p, effectiveSize)),
+      0
+    );
+
+    if (maxParaWidth + basePadX <= maxAutoWidth) {
+      width = Math.max(minAutoWidth, Math.round(maxParaWidth + basePadX));
+      lines = rawParagraphs.length > 0 ? rawParagraphs : [""];
+    } else {
+      const innerWidth = maxAutoWidth - basePadX;
+      lines = wrapMindmapText(node.text, innerWidth, effectiveSize);
+      const maxLineWidth = Math.max(
+        ...lines.map((l) => measureTextWidth(l, effectiveSize)),
+        0
+      );
+      width = Math.max(minAutoWidth, Math.min(maxAutoWidth, Math.round(maxLineWidth + basePadX)));
+    }
+  }
+
+  const baseMinHeight = isRoot ? 44 : 36;
+  const textBlockHeight = lines.length * lineHeight;
+  const requiredMinHeight = Math.max(baseMinHeight, textBlockHeight + basePadY * 2);
+
+  let height = requiredMinHeight;
+  if (node.customHeight && node.customHeight > 0) {
+    // Custom height can expand node height, but text always stays contained inside the border
+    height = Math.max(requiredMinHeight, Math.round(node.customHeight));
+  }
+
+  return { width, height, lines };
 }
 
 /**
@@ -551,7 +694,7 @@ export function layoutMindmap(
   // First pass: measure subtree vertical heights
   function measureSubtree(node: MindmapNode): number {
     const isCollapsed = collapsedIds.has(node.id);
-    const selfHeight = getNodeHeight(node);
+    const { height: selfHeight } = calculateNodeDimensions(node);
     if (isCollapsed || !node.children || node.children.length === 0) {
       return selfHeight;
     }
@@ -572,8 +715,7 @@ export function layoutMindmap(
   ): MindmapLayoutNode {
     const isCollapsed = collapsedIds.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
-    const width = estimateNodeWidth(node.text, node.level, node.fontSize);
-    const height = getNodeHeight(node);
+    const { width, height, lines } = calculateNodeDimensions(node);
     const subtreeHeight = measureSubtree(node);
 
     // Center node vertically within its subtree allocation
@@ -582,6 +724,7 @@ export function layoutMindmap(
     const layoutNode: MindmapLayoutNode = {
       id: node.id,
       text: node.text,
+      lines,
       level: node.level,
       line: node.line,
       x: startX,
@@ -600,6 +743,9 @@ export function layoutMindmap(
       fontWeight: node.fontWeight,
       textColor: node.textColor,
       borderColor: node.borderColor,
+      textAlign: node.textAlign,
+      customWidth: node.customWidth,
+      customHeight: node.customHeight,
     };
     allNodes.push(layoutNode);
 
@@ -699,6 +845,9 @@ export function updateNodeStyle(
     fontWeight?: "normal" | "bold";
     textColor?: string;
     borderColor?: string;
+    textAlign?: MindmapTextAlign;
+    customWidth?: number;
+    customHeight?: number;
   }
 ): MindmapNode {
   return updateNodesStyle(tree, [nodeId], styles);
@@ -716,6 +865,9 @@ export function updateNodesStyle(
     fontWeight?: "normal" | "bold";
     textColor?: string;
     borderColor?: string;
+    textAlign?: MindmapTextAlign;
+    customWidth?: number;
+    customHeight?: number;
   }
 ): MindmapNode {
   const nextTree = cloneTree(tree);
@@ -731,6 +883,13 @@ export function updateNodesStyle(
       if ("fontWeight" in styles) node.fontWeight = styles.fontWeight || undefined;
       if ("textColor" in styles) node.textColor = styles.textColor || undefined;
       if ("borderColor" in styles) node.borderColor = styles.borderColor || undefined;
+      if ("textAlign" in styles) node.textAlign = styles.textAlign || undefined;
+      if ("customWidth" in styles) {
+        node.customWidth = styles.customWidth && styles.customWidth > 0 ? Math.round(styles.customWidth) : undefined;
+      }
+      if ("customHeight" in styles) {
+        node.customHeight = styles.customHeight && styles.customHeight > 0 ? Math.round(styles.customHeight) : undefined;
+      }
     }
     if (node.children) {
       for (const child of node.children) {

@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
-    tag = "v1.9.0"
-    title = "KnowSpace v1.9.0 - 实时双向思维导图、块级原子互联、卡片内联嵌入与 MSI 安装包"
+    tag = "v1.9.1"
+    title = "KnowSpace v1.9.1 - 导图文字边框自适应、自由拖拽调整尺寸与四向排版对齐"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -75,41 +75,36 @@ def main():
             time.sleep(2)
 
     # 3. Create Release Body
-    body_md = """# 🚀 KnowSpace v1.9.0
+    body_md = """# 🚀 KnowSpace v1.9.1
 
 **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次 **v1.9.0** 带来首要重磅版本更新——**「结构认知、实时双向思维导图与块级原子互联体系 (Mind Map & Block-level Links)」** 全新发布！从宏观章节大纲到微观段落原子，为知识创作者构建高密度的结构化认知网络！
+本次 **v1.9.1** 带来思维导图排版与交互深度升级——**「文字边框自适应、自由拖拽调整尺寸与四向排版对齐 (Auto-wrap & Resizable Mind Map)」**！彻底根除长文本溢出边框痛点，赋能自由灵活的脑图节点排版设计！
 
 ---
 
-### ✨ v1.9.0 核心更新亮点
+### ✨ v1.9.1 核心更新亮点
 
-1. **🧠 全键盘交互式思维导图 (Interactive Mind Map)**：
-   - **全键盘高能心流**：支持 `Tab`（添加子主题）、`Enter`（添加同级主题）、`Delete`（删除分支）、`F2` / 双击（就地重命名，完美支持中文输入法）、方向键漫游、`Ctrl+Z` / `Ctrl+Y`（撤销与重做）；
-   - **新建脑图入口**：目录树顶部新增 `+ 脑图` 按钮，空白首页新增专属卡片，一键生成标准 `.mindmap.md` 文件并立即进入交互编辑；
-   - **双向标准 Markdown 存储**：自动与自然易读的标准 Markdown 缩进层级双向序列化，外部编辑器与 Git 零侵入。
+1. **📐 边框自适应与智能折行（彻底告别文字溢出）**：
+   - **高精度字符测算**：自主研发多语言字符测算引擎，准确度量全角中文、半角英文、标点与数学符号；
+   - **智能多行拆分**：节点超长文本自动根据节点可用宽度智能自适应折行，边框高度自适应弹性伸展，文本 100% 保持在框内；
+   - **原生换行符支持**：完美兼顾用户显式键入的换行符 `\\n`，多段排版随心所欲。
 
-2. **🎨 节点与连线右键外观深度定制 (Right-Click Customization)**：
-   - **右键外观面板**：在任意脑图节点右键（或点击顶部“外观样式”按钮），呼出半透明毛玻璃定制面板；
-   - **8 色节点色彩**：天蓝、翡翠绿、珊瑚橙、罗兰紫、玫瑰粉、琥珀黄、石墨灰等或跟随分支色；
-   - **4 种节点形状**：圆角胶囊 (`capsule`)、圆角矩形 (`rounded`)、直角矩形 (`rect`)、极简下划线 (`underline`)；
-   - **3 种分支连接线**：平滑贝塞尔曲线 (`bezier`)、90° 直角折线 (`step`)、笔直直线 (`straight`)；
-   - **连线颜色定制**：可为特定分支流出的连线独立指定色彩或自动继承；
-   - **标准行内注释持久化**：以标准 Markdown 注释（如 `<!-- style: color=#10b981,shape=capsule,lineStyle=step -->`）保真落盘。
+2. **🖱️ 节点大小自由拖动拉伸与排版联动**：
+   - **微型拉手柄**：选中或悬停节点时右下角显示微型拉伸控制柄；
+   - **实时拖拽缩放**：按住控制柄平滑拉动节点宽高，节点内文字随宽度变化即时动态重新折行；
+   - **双击一键复原**：双击控制柄或在右键菜单中点击“恢复自适应大小”，秒级清除自定义尺寸恢复自动自适应；
+   - **Markdown 规范持久化**：自定义尺寸以 `<!-- style: width=280,height=90 -->` 保真落盘。
 
-3. **🎛️ 工具栏排版优化与防乱闪修复**：
-   - **排版工整不折行**：为所有工具栏按钮设置 `white-space: nowrap` 与标准尺寸，杜绝文字垂直分割折行；
-   - **精炼聚焦**：精简移除冗余缩放与 SVG 导出按键，专注核心脑图编辑与一键导出高清 PNG 图片（画布保留鼠标滚轮平滑缩放与拖拽漫游）；
-   - **加号排版与消除乱闪**：错开折叠按钮与悬浮加号按钮位置（杜绝物理重合），采用确定性稳定路径 ID 与防回流校验，彻底根除添加节点时的乱闪与重绘问题。
+3. **🔠 四种文字对齐模式 (Align Center / Left / Right / Justify)**：
+   - **全场景文字对齐**：支持 **居中**、**左对齐**、**右对齐**、**双边对齐 (Justify)**；
+   - **右键菜单一键切换**：节点右键外观面板中新增文字对齐专属控制组，支持多节点批量统一修改；
+   - **编辑区实时联动**：内联文本编辑区（`<textarea>`）实时同步对齐方式，输入多行文字体验极佳。
 
-4. **⚓ 块级原子互联体系 (Block-level Linking & Anchors)**：
-   - **块指纹标记 (`^block-id`)**：在任何段落、公式或列表末尾添加 ` ^block-id`，阅读引擎自动转化为可交互的块级徽章 `[^block-id]`；
-   - **一键复制块语法**：在正文中点击块徽章，瞬间将 `[[#^block-id]]` 复制到剪贴板；
-   - **精准块级跳转 (`[[doc#^block]]`)**：渲染为专属锚点双链，点击秒级精准穿梭至对应段落并触发青色微光脉冲；
-   - **块级内联卡片嵌入 (`![[doc#^block]]`)**：在正文中无缝渲染优雅的引用卡片，右上角带有出处溯源链接；
-   - **实时联想补全**：在源码编辑中键入 `[[#^` 或 `[[文档#^` 时，自动弹出候选块摘要，支持回车一键补全。
+4. **🖼️ 高清透明 PNG 导出增强**：
+   - 自动过滤交互式拖拽把手，保留多行文本精准对齐属性；
+   - 100% 透明背景底色，任意尺寸节点均可生成高质量无损脑图图片。
 
 ---
 
@@ -117,7 +112,7 @@ def main():
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`KnowSpace-1.9.0.msi`** | Windows 标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
+| **`KnowSpace-1.9.1.msi`** | Windows 标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
 | **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 免安装解压即用，解压后双击 `KnowSpace.exe` 即可运行 |
 
 ---
@@ -169,9 +164,9 @@ def main():
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.9.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.9.0.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.9.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.9.1.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.9.1.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.9.1.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
@@ -183,7 +178,7 @@ def main():
     assets_to_upload = [
         (
             msi_path,
-            "KnowSpace-1.9.0.msi",
+            "KnowSpace-1.9.1.msi",
             "application/x-msi"
         ),
         (

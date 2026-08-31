@@ -4,6 +4,7 @@ export type EditorViewMode = "read" | "split" | "source" | "mindmap";
 
 export type MindmapNodeShape = "rounded" | "capsule" | "rect" | "underline";
 export type MindmapLineStyle = "bezier" | "step" | "straight";
+export type MindmapTextAlign = "left" | "center" | "right" | "justify";
 
 export type MindmapNode = {
   id: string;
@@ -20,6 +21,9 @@ export type MindmapNode = {
   fontWeight?: "normal" | "bold";
   textColor?: string;
   borderColor?: string;
+  textAlign?: MindmapTextAlign;
+  customWidth?: number;
+  customHeight?: number;
 };
 
 export type DiskVersion = {

@@ -7984,6 +7984,25 @@ body:has(.flash-capsule-overlay) {
   filter: drop-shadow(0 2px 6px rgba(2, 132, 199, 0.5));
 }
 
+/* Node Resize Handle */
+.mindmap-node-resize-handle {
+  cursor: nwse-resize;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.mindmap-node-resize-handle:hover {
+  opacity: 1;
+}
+
+.mindmap-node-resize-handle:hover line {
+  stroke: #0284c7;
+}
+
+.mindmap-resize-hitarea {
+  cursor: nwse-resize;
+}
+
 .mindmap-add-symbol,
 .mindmap-collapse-symbol {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -8242,6 +8261,14 @@ body:has(.flash-capsule-overlay) {
   color: #38bdf8;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.mindmap-align-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 4px;
 }
 
 .mindmap-ctx-divider {

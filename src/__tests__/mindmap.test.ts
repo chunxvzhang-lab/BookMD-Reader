@@ -393,6 +393,51 @@ describe("mindmapService", () => {
       expect(serialized).toContain("color=transparent");
       expect(serialized).toContain("borderColor=#10b981");
     });
+
+    it("parses, calculates adaptive dimensions, and serializes textAlign, width, and height", () => {
+      const markdown =
+        "# 根主题 <!-- style: align=center,width=280,height=90 -->\n\n" +
+        "- 这是一个超长文本的思维导图子节点内容，用于验证自动折行和排版功能 <!-- style: align=justify -->\n" +
+        "- 右对齐节点 <!-- style: align=right -->\n" +
+        "- 左对齐节点 <!-- style: align=left -->\n";
+
+      const tree = parseMarkdownToMindmapTree(markdown);
+      expect(tree.textAlign).toBe("center");
+      expect(tree.customWidth).toBe(280);
+      expect(tree.customHeight).toBe(90);
+
+      const longNode = tree.children[0];
+      expect(longNode.textAlign).toBe("justify");
+
+      const rightNode = tree.children[1];
+      expect(rightNode.textAlign).toBe("right");
+
+      const leftNode = tree.children[2];
+      expect(leftNode.textAlign).toBe("left");
+
+      // Verify layout calculations
+      const layout = layoutMindmap(tree);
+      const rootLayout = layout.nodes.find((n) => n.id === tree.id);
+      expect(rootLayout?.width).toBe(280);
+      expect(rootLayout?.height).toBe(90);
+      expect(rootLayout?.textAlign).toBe("center");
+
+      const longLayout = layout.nodes.find((n) => n.id === longNode.id);
+      expect(longLayout?.lines.length).toBeGreaterThan(1);
+      expect(longLayout?.textAlign).toBe("justify");
+
+      // Verify update style with custom dimensions & alignment
+      const updated = updateNodesStyle(tree, [tree.children[0].id], {
+        textAlign: "center",
+        customWidth: 320,
+        customHeight: 110,
+      });
+
+      const serialized = mindmapTreeToMarkdown(updated);
+      expect(serialized).toContain("align=center");
+      expect(serialized).toContain("width=320");
+      expect(serialized).toContain("height=110");
+    });
   });
 });
 

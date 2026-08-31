@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.9.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.9.0" />
+  <img src="https://img.shields.io/badge/Version-v1.9.1-1D9BF0?style=flat-square&logo=github" alt="Version 1.9.1" />
   <img src="https://img.shields.io/badge/Mind_Map-Ctrl%2BM-00BA7C?style=flat-square" alt="Mind Map" />
   <img src="https://img.shields.io/badge/Block_Links-%5Eblock--id-8B5CF6?style=flat-square" alt="Block Links" />
   <img src="https://img.shields.io/badge/Knowledge_Graph-60FPS-00BA7C?style=flat-square" alt="Knowledge Graph" />
@@ -180,13 +180,17 @@
   - `F2` / `Space` / 双击：就地呼出悬浮输入框修改文字，完美支持中文输入法（IME）。
   - `方向键 (↑ ↓ ← →)`：在父子层级与同级兄弟分支之间流畅跳动导航。
   - `Ctrl + Z` / `Ctrl + Y`：完整的树结构历史快照堆栈，改动随心撤销与重做。
-- **🎨 节点与连线右键外观深度定制 (Right-Click Customization)**：
-  - **节点右键菜单**：在任意脑图节点（包括中心主题）上右键单击，秒级呼出半透明毛玻璃外观定制面板。
-  - **8 色节点色彩主题**：天蓝、翡翠绿、珊瑚橙、罗兰紫、玫瑰粉、琥珀黄、石墨灰等或跟随分支色。
+- **🎨 节点外观与文本深度定制 (Deep Visual & Typography Customization)**：
+  - **边框自适应与智能折行（彻底告别溢出）**：多语言字符测算引擎，超长文字根据节点宽度智能自适应折行，边框弹性纵向扩展，确保文字 100% 保持在框内。
+  - **自由拖拽调整大小与联动排版**：悬浮或选中节点时，右下角提供直观微型控制拉手，按住即可任意拉伸宽高；文字随宽度即时重排，双击或右键随时一键“恢复自适应大小”。
+  - **四向文字对齐**：支持**居中**、**左对齐**、**右对齐**、**双边对齐 (Justify)**，兼顾美观与专业制图，内联编辑区实时同步。
+  - **节点右键菜单**：在任意脑图节点（包括中心主题）上右键单击，秒级呼出半透明毛玻璃定制面板。
+  - **多选批量定制**：按住 `Shift` 框选或点击多节点，一键统一修改背景色、边框色、字号、文字对齐及连线形态。
+  - **14 色节点色彩与原生取色器**：实体色彩、标准透明透空背景与独立边框色搭配。
   - **4 种节点形状切换**：圆角胶囊 (`capsule`)、圆角矩形 (`rounded`)、纯直角矩形 (`rect`)、极简下划线 (`underline`)。
   - **3 种分支连接线形态**：平滑贝塞尔曲线 (`bezier`)、90° 直角阶梯折线 (`step`)、笔直直线 (`straight`)。
   - **连接线颜色定制**：可为特定分支流出的连线独立指定色彩或自动继承。
-  - **标准行内注释持久化**：所有样式以标准 Markdown 注释（如 `<!-- style: color=#10b981,shape=capsule,lineStyle=step -->`）保真保存，在第三方编辑器和 Git 中零侵入、纯净透明。
+  - **标准行内注释持久化**：所有样式以标准 Markdown 注释（如 `<!-- style: color=#10b981,shape=capsule,align=center,width=280 -->`）保真保存，在第三方编辑器和 Git 中零侵入、纯净透明。
 - **🎛️ 极简精炼工具栏与排版**：
   - **单行工整排版**：所有按键统一施加不换行保护与标准边距，彻底杜绝文字上下分割折行；
   - **功能聚焦**：精简移除冗余缩放与 SVG 导出按键，专注核心脑图编辑与一键导出高清 PNG 图片（画布保留鼠标滚轮平滑缩放与拖拽漫游）。
@@ -241,7 +245,7 @@
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`KnowSpace-1.9.0.msi`
+- **文件**：`KnowSpace-1.9.1.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版
