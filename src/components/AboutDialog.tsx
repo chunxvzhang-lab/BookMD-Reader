@@ -160,7 +160,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                   <li>📐 <strong>边框自适应与智能折行</strong>：彻底解决文字超出节点边框问题，超长文字根据可用宽度自动智能折行，卡片高度随内容弹性伸展。</li>
                   <li>🖱️ <strong>节点大小自由拖动拉伸</strong>：节点悬停或选中状态提供微型控制拉手，实时拖动调整宽高，文字自动随尺寸重新排版并持久化。</li>
                   <li>🔄 <strong>一键恢复自适应尺寸</strong>：支持双击手柄或在右键菜单中一键“恢复自适应大小”，快速恢复自适应弹性状态。</li>
-                  <li>🔠 <strong>四种文字对齐模式</strong>：新增文字<strong>居中</strong>、<strong>左对齐</strong>、**右对齐**、**双边对齐 (Justify)**，兼顾排版美感与多行对齐，内联编辑区实时同步。</li>
+                  <li>🔠 <strong>四种文字对齐模式</strong>：新增文字<strong>居中</strong>、<strong>左对齐</strong>、<strong>右对齐</strong>、<strong>双边对齐 (Justify)</strong>，兼顾排版美感与多行对齐，内联编辑区实时同步。</li>
                   <li>🖼️ <strong>透明高清 PNG 导出增强</strong>：自动过滤交互控制手柄，保留多行文本精准对齐与透明底色，输出完美矢量级画质。</li>
                 </ul>
               </div>
@@ -318,35 +318,49 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                   <ListTree size={14} className="text-cyan" />
                   <strong>Mindmap (思维导图)</strong>
                 </div>
-                <div className="about-pillar-desc">树状交互导图、无缝双向解析、极速脑暴与高清透明导出</div>
+                <div className="about-pillar-desc">树状交互脑图、文字智能折行、自由拉伸调整大小与四向排版对齐</div>
+              </div>
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
+                  <Layers size={14} className="text-purple" />
+                  <strong>Block Links (块级互联)</strong>
+                </div>
+                <div className="about-pillar-desc">^block-id 精准锚点指纹、跨文档双链跳转与卡片内嵌预览</div>
               </div>
               <div className="about-pillar-item">
                 <div className="about-pillar-head">
                   <Network size={14} className="text-purple" />
                   <strong>Graph (全景图谱)</strong>
                 </div>
-                <div className="about-pillar-desc">文档与块级双向网状拓扑、知识连通度与交互漫游</div>
-              </div>
-              <div className="about-pillar-item">
-                <div className="about-pillar-head">
-                  <BookOpen size={14} className="text-orange" />
-                  <strong>Reader (阅读)</strong>
-                </div>
-                <div className="about-pillar-desc">沉浸纯净排版、仿电子墨水屏护眼与双侧联动高亮</div>
-              </div>
-              <div className="about-pillar-item">
-                <div className="about-pillar-head">
-                  <PenLine size={14} className="text-blue" />
-                  <strong>Editor (编辑)</strong>
-                </div>
-                <div className="about-pillar-desc">CodeMirror 6 极客编辑、双向零延迟同步滚动</div>
+                <div className="about-pillar-desc">文档与块级双向网状拓扑、有机力导向布局与知识漫游</div>
               </div>
               <div className="about-pillar-item">
                 <div className="about-pillar-head">
                   <Zap size={14} className="text-amber" />
                   <strong>Flash (闪念胶囊)</strong>
                 </div>
-                <div className="about-pillar-desc">全局热键随手记、毛玻璃微窗与 Inbox 原子归档</div>
+                <div className="about-pillar-desc">全局热键随手记、毛玻璃微窗、常驻模板与 Space 原子归档</div>
+              </div>
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
+                  <BookOpen size={14} className="text-orange" />
+                  <strong>Reader (阅读引擎)</strong>
+                </div>
+                <div className="about-pillar-desc">沉浸纯净排版、仿电子墨水屏护眼与双侧联动微光高亮</div>
+              </div>
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
+                  <PenLine size={14} className="text-blue" />
+                  <strong>Editor (极客编辑)</strong>
+                </div>
+                <div className="about-pillar-desc">CodeMirror 6 极速编辑、AST 零延迟双向同步滚动与剪贴板图床</div>
+              </div>
+              <div className="about-pillar-item">
+                <div className="about-pillar-head">
+                  <Search size={14} className="text-cyan" />
+                  <strong>Search & TOC (检索大纲)</strong>
+                </div>
+                <div className="about-pillar-desc">全文段落卡片聚合即时检索、多级目录大纲随动追踪与书签记忆</div>
               </div>
               <div className="about-pillar-item">
                 <div className="about-pillar-head">
@@ -367,7 +381,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                   <ShieldCheck size={14} className="text-amber" />
                   <strong>Security (安全基石)</strong>
                 </div>
-                <div className="about-pillar-desc">物理事务原子落盘、UTF-8 换行保真与冲突拦截</div>
+                <div className="about-pillar-desc">物理事务原子落盘、系统托盘后台静默就绪与外部冲突拦截</div>
               </div>
             </div>
           </div>
@@ -432,13 +446,16 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             </div>
             <div className="about-info-list">
               <div className="about-info-row">
-                <span className="about-label">运行架构：</span>
+                <span className="about-label">核心技术栈：</span>
                 <div className="about-tech-badges">
                   <span className="about-tech-tag">Electron 42</span>
                   <span className="about-tech-tag">React 19</span>
                   <span className="about-tech-tag">Vite 7</span>
                   <span className="about-tech-tag">CodeMirror 6</span>
                   <span className="about-tech-tag">TypeScript 5.9</span>
+                  <span className="about-tech-tag">Mermaid 11</span>
+                  <span className="about-tech-tag">KaTeX</span>
+                  <span className="about-tech-tag">Lucide</span>
                 </div>
               </div>
               <div className="about-info-row">
