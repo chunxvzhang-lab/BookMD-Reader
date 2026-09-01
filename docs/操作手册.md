@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.9.1-1D9BF0?style=flat-square" alt="Version 1.9.1" />
+  <img src="https://img.shields.io/badge/Version-v1.9.2-1D9BF0?style=flat-square" alt="Version 1.9.2" />
   <img src="https://img.shields.io/badge/Platform-Windows%20x64-blue?style=flat-square" alt="Platform" />
   <img src="https://img.shields.io/badge/Team-%E6%91%B8%E9%B1%BCLab-orange?style=flat-square" alt="摸鱼Lab" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
@@ -624,7 +624,7 @@ KnowSpace 支持精确到段落和代码块的原子级双向互联：
 
 ## 十四、 安装部署与便携绿色版运行
 
-### 1. Windows MSI 标准安装包 (`KnowSpace-1.9.1.msi`)
+### 1. Windows MSI 标准安装包 (`KnowSpace-1.9.2.msi`)
 - **适用场景**：个人常用工作电脑、企业团队桌面统一交付。
 - **产品特性**：
   - 自动在开始菜单与桌面创建官方品牌图标。

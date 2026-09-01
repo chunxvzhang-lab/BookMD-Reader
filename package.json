@@ -1,7 +1,7 @@
 {
   "name": "knowspace",
   "private": true,
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "KnowSpace - Personal Knowledge Workspace",
   "author": "KnowSpace Team",
   "type": "module",

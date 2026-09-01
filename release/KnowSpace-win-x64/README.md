@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.9.1-1D9BF0?style=flat-square&logo=github" alt="Version 1.9.1" />
+  <img src="https://img.shields.io/badge/Version-v1.9.2-1D9BF0?style=flat-square&logo=github" alt="Version 1.9.2" />
   <img src="https://img.shields.io/badge/Mind_Map-Ctrl%2BM-00BA7C?style=flat-square" alt="Mind Map" />
   <img src="https://img.shields.io/badge/Block_Links-%5Eblock--id-8B5CF6?style=flat-square" alt="Block Links" />
   <img src="https://img.shields.io/badge/Knowledge_Graph-60FPS-00BA7C?style=flat-square" alt="Knowledge Graph" />
@@ -245,7 +245,7 @@
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`KnowSpace-1.9.1.msi`
+- **文件**：`KnowSpace-1.9.2.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版

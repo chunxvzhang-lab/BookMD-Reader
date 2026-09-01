@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
-    tag = "v1.9.1"
-    title = "KnowSpace v1.9.1 - 导图文字边框自适应、自由拖拽调整尺寸与四向排版对齐"
+    tag = "v1.9.2"
+    title = "KnowSpace v1.9.2 - 导图四向排版对齐精准修正与字宽测量增强"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -75,36 +75,31 @@ def main():
             time.sleep(2)
 
     # 3. Create Release Body
-    body_md = """# 🚀 KnowSpace v1.9.1
+    body_md = """# 🚀 KnowSpace v1.9.2
 
 **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次 **v1.9.1** 带来思维导图排版与交互深度升级——**「文字边框自适应、自由拖拽调整尺寸与四向排版对齐 (Auto-wrap & Resizable Mind Map)」**！彻底根除长文本溢出边框痛点，赋能自由灵活的脑图节点排版设计！
+本次 **v1.9.2** 为思维导图排版精准修正版——**「四向排版对齐精准生效与字宽测量引擎增强 (Pixel-Perfect Mind Map Typography)」**！彻底根除节点文字对齐偏移与溢出边框问题，排版所见即所得！
 
 ---
 
-### ✨ v1.9.1 核心更新亮点
+### ✨ v1.9.2 核心更新亮点
 
-1. **📐 边框自适应与智能折行（彻底告别文字溢出）**：
-   - **高精度字符测算**：自主研发多语言字符测算引擎，准确度量全角中文、半角英文、标点与数学符号；
-   - **智能多行拆分**：节点超长文本自动根据节点可用宽度智能自适应折行，边框高度自适应弹性伸展，文本 100% 保持在框内；
-   - **原生换行符支持**：完美兼顾用户显式键入的换行符 `\\n`，多段排版随心所欲。
+1. **🔠 文字对齐彻底修正**：
+   - **修复样式覆盖缺陷**：修复左/右/双边对齐 (Justify) 被全局样式表强制回退为居中，导致文字溢出节点边框的问题；
+   - **内联样式精准生效**：对齐属性改以内联样式渲染，四种对齐模式在所有节点上精准呈现，多节点批量排版同样可靠。
 
-2. **🖱️ 节点大小自由拖动拉伸与排版联动**：
-   - **微型拉手柄**：选中或悬停节点时右下角显示微型拉伸控制柄；
-   - **实时拖拽缩放**：按住控制柄平滑拉动节点宽高，节点内文字随宽度变化即时动态重新折行；
-   - **双击一键复原**：双击控制柄或在右键菜单中点击“恢复自适应大小”，秒级清除自定义尺寸恢复自动自适应；
-   - **Markdown 规范持久化**：自定义尺寸以 `<!-- style: width=280,height=90 -->` 保真落盘。
+2. **🎯 居中排版精准归位**：
+   - **垂直基线重写**：居中文本不再上下偏移，多行文本逐行取行盒中心精准归位；
+   - **图文一致导出**：SVG / PNG 高清导出与屏幕渲染完全一致。
 
-3. **🔠 四种文字对齐模式 (Align Center / Left / Right / Justify)**：
-   - **全场景文字对齐**：支持 **居中**、**左对齐**、**右对齐**、**双边对齐 (Justify)**；
-   - **右键菜单一键切换**：节点右键外观面板中新增文字对齐专属控制组，支持多节点批量统一修改；
-   - **编辑区实时联动**：内联文本编辑区（`<textarea>`）实时同步对齐方式，输入多行文字体验极佳。
+3. **📏 字宽测量引擎升级**：
+   - **粗体加宽因子**：节点粗体排版实测字宽计入加宽因子，粗体英文与符号节点边框自适应更贴合；
+   - **半角字符精修**：ASCII 字符度量系数校准提升，减少长英文文本节点的边框溢出。
 
-4. **🖼️ 高清透明 PNG 导出增强**：
-   - 自动过滤交互式拖拽把手，保留多行文本精准对齐属性；
-   - 100% 透明背景底色，任意尺寸节点均可生成高质量无损脑图图片。
+4. **🛡️ 回归防护**：
+   - 新增排版对齐自动化回归测试，永久守护对齐样式覆盖类缺陷复发。
 
 ---
 
@@ -112,7 +107,7 @@ def main():
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`KnowSpace-1.9.1.msi`** | Windows 标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
+| **`KnowSpace-1.9.2.msi`** | Windows 标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
 | **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 免安装解压即用，解压后双击 `KnowSpace.exe` 即可运行 |
 
 ---
@@ -164,9 +159,9 @@ def main():
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.9.1.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.9.1.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.9.1.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.9.2.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.9.2.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.9.2.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
@@ -178,7 +173,7 @@ def main():
     assets_to_upload = [
         (
             msi_path,
-            "KnowSpace-1.9.1.msi",
+            "KnowSpace-1.9.2.msi",
             "application/x-msi"
         ),
         (
@@ -238,7 +233,7 @@ def main():
                 else:
                     raise
 
-    print("\n[SUCCESS] Release v1.5.1 published successfully!")
+    print(f"\n[SUCCESS] Release {tag} published successfully!")
     print(f"View Release: {html_url}")
 
 if __name__ == "__main__":

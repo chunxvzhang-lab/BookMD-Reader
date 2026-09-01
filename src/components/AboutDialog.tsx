@@ -121,7 +121,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div>
               <div className="about-header-title-row">
                 <span className="about-app-name">KnowSpace</span>
-                <span className="about-version-badge">v1.9.1</span>
+                <span className="about-version-badge">v1.9.2</span>
               </div>
               <p className="about-tagline">Personal Knowledge Workspace · 个人知识工作台</p>
             </div>
@@ -147,21 +147,20 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div className="about-card-title">
               <History size={16} className="about-icon text-blue" />
               <span>版本更新日志 · What&apos;s New</span>
-              <span className="about-changelog-version-badge">v1.9.1</span>
+              <span className="about-changelog-version-badge">v1.9.2</span>
             </div>
             <div className="about-changelog-list">
-              {/* v1.9.1 */}
+              {/* v1.9.2 */}
               <div className="about-changelog-group">
                 <div className="about-changelog-group-label">
                   <ListTree size={12} className="text-cyan" />
-                  <span>v1.9.1 导图文字边框自适应、自由拉伸缩放与四向排版对齐</span>
+                  <span>v1.9.2 导图四向排版对齐精准修正与字宽测量增强</span>
                 </div>
                 <ul className="about-changelog-items">
-                  <li>📐 <strong>边框自适应与智能折行</strong>：彻底解决文字超出节点边框问题，超长文字根据可用宽度自动智能折行，卡片高度随内容弹性伸展。</li>
-                  <li>🖱️ <strong>节点大小自由拖动拉伸</strong>：节点悬停或选中状态提供微型控制拉手，实时拖动调整宽高，文字自动随尺寸重新排版并持久化。</li>
-                  <li>🔄 <strong>一键恢复自适应尺寸</strong>：支持双击手柄或在右键菜单中一键“恢复自适应大小”，快速恢复自适应弹性状态。</li>
-                  <li>🔠 <strong>四种文字对齐模式</strong>：新增文字<strong>居中</strong>、<strong>左对齐</strong>、<strong>右对齐</strong>、<strong>双边对齐 (Justify)</strong>，兼顾排版美感与多行对齐，内联编辑区实时同步。</li>
-                  <li>🖼️ <strong>透明高清 PNG 导出增强</strong>：自动过滤交互控制手柄，保留多行文本精准对齐与透明底色，输出完美矢量级画质。</li>
+                  <li>🔠 <strong>文字对齐彻底修正</strong>：修复左/右/双边对齐被样式表强制回退为居中导致文字溢出节点边框的问题，四种对齐模式精准生效。</li>
+                  <li>🎯 <strong>居中排版精准归位</strong>：重写节点文本垂直基线测算，居中文本不再上下偏移，多行排版行行居中。</li>
+                  <li>📏 <strong>字宽测量引擎升级</strong>：新增粗体字宽加宽因子与更精确的半角字符度量，粗体与英文节点边框自适应更贴合。</li>
+                  <li>🛡️ <strong>回归防护测试</strong>：新增排版对齐自动化测试，永久守护对齐样式覆盖类缺陷复发。</li>
                 </ul>
               </div>
             </div>
