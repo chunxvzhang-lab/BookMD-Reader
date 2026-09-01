@@ -1204,9 +1204,10 @@ export const MindmapView = memo(function MindmapView({
                     const padX = isRoot ? 18 : 12;
                     const innerWidth = Math.max(20, node.width - padX * 2);
 
-                    // Compute start y position so lines are vertically centered in node
+                    // Vertical centering: each line is placed at the center of its
+                    // line box and rendered with dominant-baseline: central.
                     const totalTextHeight = lines.length * lineHeight;
-                    const startY = (node.height - totalTextHeight) / 2 + effectiveFontSize * 0.88;
+                    const firstLineCenterY = (node.height - totalTextHeight) / 2 + lineHeight / 2;
 
                     let textAnchor: "middle" | "start" | "end" = "middle";
                     let xPos = node.width / 2;
@@ -1224,14 +1225,15 @@ export const MindmapView = memo(function MindmapView({
 
                     return (
                       <text
-                        x={xPos}
-                        y={startY}
-                        textAnchor={textAnchor}
                         className={`mindmap-node-title-text ${isRoot ? "root-title" : ""}`}
                         style={{
                           fontSize: `${effectiveFontSize}px`,
                           fontWeight: node.fontWeight ? (node.fontWeight === "bold" ? 700 : 400) : (isRoot ? 700 : 500),
                           fill: resolvedTextColor || undefined,
+                          // Inline styles beat author CSS, guaranteeing the chosen
+                          // alignment actually takes effect on the SVG text.
+                          textAnchor,
+                          dominantBaseline: "central",
                         }}
                       >
                         {lines.map((line, idx) => {
@@ -1242,7 +1244,7 @@ export const MindmapView = memo(function MindmapView({
                             <tspan
                               key={idx}
                               x={xPos}
-                              dy={idx === 0 ? 0 : lineHeight}
+                              y={firstLineCenterY + idx * lineHeight}
                               textLength={isJustified ? innerWidth : undefined}
                               lengthAdjust={isJustified ? "spacing" : undefined}
                             >

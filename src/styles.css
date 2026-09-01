@@ -7916,8 +7916,8 @@ body:has(.flash-capsule-overlay) {
   font-size: 12.5px;
   font-weight: 500;
   fill: var(--text);
-  text-anchor: middle;
-  dominant-baseline: central;
+  /* text-anchor / dominant-baseline are set per-node via inline style in MindmapView
+     (CSS declarations override SVG presentation attributes, so they must NOT live here) */
   pointer-events: none;
   font-family: inherit;
 }
@@ -7926,8 +7926,6 @@ body:has(.flash-capsule-overlay) {
   font-size: 14px;
   font-weight: 700;
   fill: #38bdf8;
-  text-anchor: middle;
-  dominant-baseline: central;
 }
 
 .mindmap-collapse-btn {

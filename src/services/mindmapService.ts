@@ -553,8 +553,10 @@ export const BRANCH_COLORS = [
 
 /**
  * Calculates visual text pixel width based on character codes and font size.
+ * `bold` applies a widening factor because bold glyphs render noticeably wider
+ * than the regular-weight estimate used for node sizing.
  */
-export function measureTextWidth(text: string, fontSize: number): number {
+export function measureTextWidth(text: string, fontSize: number, bold = false): number {
   const charWidth = fontSize * 1.05;
   let w = 0;
   for (let i = 0; i < text.length; i++) {
@@ -564,10 +566,10 @@ export function measureTextWidth(text: string, fontSize: number): number {
     } else if (code > 127) {
       w += charWidth; // CJK and wide characters
     } else {
-      w += charWidth * 0.65; // Latin/ASCII
+      w += charWidth * 0.75; // Latin/ASCII
     }
   }
-  return w;
+  return bold ? w * 1.08 : w;
 }
 
 /**
@@ -601,7 +603,7 @@ export function wrapMindmapText(
           ? fontSize * 0.35
           : code > 127
           ? fontSize * 1.05
-          : fontSize * 0.65;
+          : fontSize * 0.75;
 
       if (currentLineWidth + charW > safeMaxWidth && currentLine.length > 0) {
         resultLines.push(currentLine);
@@ -632,6 +634,8 @@ export function calculateNodeDimensions(
   const basePadY = isRoot ? 14 : 10;
   const effectiveSize = node.fontSize || (isRoot ? 15 : 13);
   const lineHeight = Math.round(effectiveSize * 1.38);
+  // Matches the renderer's default weight: root is bold unless overridden.
+  const isBold = node.fontWeight ? node.fontWeight === "bold" : isRoot;
 
   const minAutoWidth = isRoot ? 72 : 56;
   const maxAutoWidth = isRoot ? 320 : 250;
@@ -647,7 +651,7 @@ export function calculateNodeDimensions(
     // Check if text with manual line breaks already fits within maxAutoWidth
     const rawParagraphs = (node.text || "").split(/\r?\n/);
     const maxParaWidth = Math.max(
-      ...rawParagraphs.map((p) => measureTextWidth(p, effectiveSize)),
+      ...rawParagraphs.map((p) => measureTextWidth(p, effectiveSize, isBold)),
       0
     );
 
@@ -658,7 +662,7 @@ export function calculateNodeDimensions(
       const innerWidth = maxAutoWidth - basePadX;
       lines = wrapMindmapText(node.text, innerWidth, effectiveSize);
       const maxLineWidth = Math.max(
-        ...lines.map((l) => measureTextWidth(l, effectiveSize)),
+        ...lines.map((l) => measureTextWidth(l, effectiveSize, isBold)),
         0
       );
       width = Math.max(minAutoWidth, Math.min(maxAutoWidth, Math.round(maxLineWidth + basePadX)));
