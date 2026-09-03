@@ -36,7 +36,7 @@ def main():
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
     tag = "v1.9.2"
-    title = "KnowSpace v1.9.2 - 导图四向排版对齐精准修正与字宽测量增强"
+    title = "KnowSpace v1.9.2 - 导图四向排版对齐修正与文档静默恢复优化"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -80,7 +80,7 @@ def main():
 **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次 **v1.9.2** 为思维导图排版精准修正版——**「四向排版对齐精准生效与字宽测量引擎增强 (Pixel-Perfect Mind Map Typography)」**！彻底根除节点文字对齐偏移与溢出边框问题，排版所见即所得！
+本次 **v1.9.2** 包含思维导图排版精准修正与文档纯净阅读体验优化——**「四向排版对齐精准生效与文档静默恢复体验 (Pixel-Perfect Mindmap Typography & Pure Reading Experience)」**！
 
 ---
 
@@ -98,8 +98,12 @@ def main():
    - **粗体加宽因子**：节点粗体排版实测字宽计入加宽因子，粗体英文与符号节点边框自适应更贴合；
    - **半角字符精修**：ASCII 字符度量系数校准提升，减少长英文文本节点的边框溢出。
 
-4. **🛡️ 回归防护**：
-   - 新增排版对齐自动化回归测试，永久守护对齐样式覆盖类缺陷复发。
+4. **✨ 文档打开纯净静默无闪烁**：
+   - **消除多余高亮光晕**：修复打开 Markdown 文档或切换文档标签恢复阅读进度时触发的无意天蓝色高亮呼吸灯边框，恢复清爽纯净的阅读视觉；
+   - **优化交互引导**：保留并在用户显式跳转（思维导图回跳正文、双链块引用锚点、书签跳转）时提供更柔和精准的定位光晕提示。
+
+5. **🛡️ 质量防护与稳定性**：
+   - 110 项自动化测试套件持续守护，确保排版测量与锚点导航长期稳定。
 
 ---
 
