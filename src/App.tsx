@@ -307,7 +307,7 @@ export function App() {
   }, []);
 
   const jumpToHeading = useCallback(
-    (headingId: string, behavior: ScrollBehavior = "smooth") => {
+    (headingId: string, behavior: ScrollBehavior = "smooth", highlight: boolean = false) => {
       setActiveHeadingId(headingId);
 
       // Lock sync-scroll and reading tracker during navigation animation to eliminate jitter and feedback loops
@@ -363,11 +363,14 @@ export function App() {
             behavior,
           });
 
-          // Focus pulse glow animation on target element
-          target.classList.add("jump-target-pulse");
-          window.setTimeout(() => {
-            target?.classList.remove("jump-target-pulse");
-          }, 1800);
+          // Focus pulse glow animation only when explicitly requested (e.g. jumping to a block or wikilink anchor)
+          // Never trigger on document open or silent reading position restoration
+          if (highlight) {
+            target.classList.add("jump-target-pulse");
+            window.setTimeout(() => {
+              target?.classList.remove("jump-target-pulse");
+            }, 1400);
+          }
         }
       }
 
@@ -1291,7 +1294,7 @@ export function App() {
       const resolution = resolveBookmark(bookmark, renderedChapter.headings, renderedChapter.checksum);
       if (resolution.message) setNotice(resolution.message);
       if (resolution.targetHeadingId) {
-        jumpToHeading(resolution.targetHeadingId);
+        jumpToHeading(resolution.targetHeadingId, "smooth", true);
       } else {
         jumpToRatio(resolution.scrollRatio);
       }
@@ -1583,7 +1586,7 @@ export function App() {
       if (resolution.message) setNotice(resolution.message);
       requestAnimationFrame(() => {
         if (resolution.targetHeadingId) {
-          jumpToHeading(resolution.targetHeadingId);
+          jumpToHeading(resolution.targetHeadingId, "smooth", true);
         } else {
           jumpToRatio(resolution.scrollRatio);
         }
@@ -1595,7 +1598,7 @@ export function App() {
     if (saved?.chapterId === chapterId) {
       requestAnimationFrame(() => {
         if (saved.headingId && renderedChapter.headings.some((heading) => heading.id === saved.headingId)) {
-          jumpToHeading(saved.headingId, "auto");
+          jumpToHeading(saved.headingId, "auto", false);
         } else {
           jumpToRatio(saved.scrollRatio);
         }
@@ -1834,7 +1837,7 @@ export function App() {
       const cleanTarget = (docPart || "").trim().replace(/\.md$/i, "");
       if (!cleanTarget) {
         if (anchorPart) {
-          jumpToHeading(anchorPart.trim());
+          jumpToHeading(anchorPart.trim(), "smooth", true);
           setNotice(`已跳转至锚点/块引用：#${anchorPart.trim()}`);
         }
         return;
@@ -1853,7 +1856,7 @@ export function App() {
           selectChapter(found.id);
           if (anchorPart) {
             window.setTimeout(() => {
-              jumpToHeading(anchorPart.trim());
+              jumpToHeading(anchorPart.trim(), "smooth", true);
             }, 150);
           }
           setNotice(`已跳转至双链文档：${found.title}${anchorPart ? ` #${anchorPart}` : ""}`);
@@ -2475,7 +2478,7 @@ export function App() {
                 onJumpToHeading={(headingId, _line) => {
                   setViewMode("split");
                   window.setTimeout(() => {
-                    jumpToHeading(headingId);
+                    jumpToHeading(headingId, "smooth", true);
                   }, 80);
                 }}
                 onClose={() => setViewMode("split")}

@@ -8402,18 +8402,19 @@ body:has(.flash-capsule-overlay) {
 
 /* Golden / Cyan pulse animation when jumping to a block or heading */
 .jump-target-pulse {
-  animation: jumpPulseGlow 1.8s ease-out forwards;
+  animation: jumpPulseGlow 1.4s ease-out forwards;
+  border-radius: 4px;
 }
 
 @keyframes jumpPulseGlow {
   0% {
-    background-color: rgba(56, 189, 248, 0.35);
+    background-color: rgba(56, 189, 248, 0.28);
     outline: 2px solid #38bdf8;
-    box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
   }
   60% {
-    background-color: rgba(56, 189, 248, 0.15);
-    outline: 1.5px solid rgba(56, 189, 248, 0.4);
+    background-color: rgba(56, 189, 248, 0.10);
+    outline: 1.5px solid rgba(56, 189, 248, 0.25);
   }
   100% {
     background-color: transparent;

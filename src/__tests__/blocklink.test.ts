@@ -39,4 +39,14 @@ describe("blocklink & embedding", () => {
     expect(rendered.html).toContain("块级内联引用");
     expect(rendered.html).toContain('class="embed-source-link"');
   });
+
+  it("defines jump-target-pulse animation with smooth duration and rounded border", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const css = fs.readFileSync(path.resolve(__dirname, "../styles.css"), "utf-8");
+
+    expect(css).toContain(".jump-target-pulse");
+    expect(css).toContain("animation: jumpPulseGlow 1.4s ease-out forwards;");
+    expect(css).toContain("border-radius: 4px;");
+  });
 });
