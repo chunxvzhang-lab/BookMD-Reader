@@ -26,4 +26,19 @@ describe("printToPDF options & filename sanitization", () => {
     expect(options.pageSize).toBe("A4");
     expect(options.margins.top).toBe(0.4);
   });
+
+  it("verifies required selectors and break-inside avoidance in styles.css", async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const cssPath = path.resolve(__dirname, "../styles.css");
+    const cssContent = await fs.readFile(cssPath, "utf8");
+
+    expect(cssContent).toContain("@media print");
+    expect(cssContent).toContain(".editor-section");
+    expect(cssContent).toContain(".pane-header-bar");
+    expect(cssContent).toContain(".dual-pane-header");
+    expect(cssContent).toContain(".dual-splitter");
+    expect(cssContent).toContain("break-inside: avoid");
+    expect(cssContent).toContain("break-after: avoid");
+  });
 });

@@ -664,8 +664,12 @@ export function EditorPane({
         const view = viewRef.current;
         if (view) {
           const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
-          if (pos !== null && view.state.selection.main.empty) {
-            view.dispatch({ selection: { anchor: pos, head: pos } });
+          if (pos !== null) {
+            const sel = view.state.selection.main;
+            const isInsideSelection = !sel.empty && pos >= sel.from && pos <= sel.to;
+            if (!isInsideSelection) {
+              view.dispatch({ selection: { anchor: pos, head: pos } });
+            }
           }
         }
         setContextMenuPos({ x: e.clientX, y: e.clientY });

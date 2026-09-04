@@ -59,6 +59,11 @@ describe("mindmap reparenting and search algorithms", () => {
     expect(updated).toEqual(sampleTree);
   });
 
+  it("prevents moving a node to itself", () => {
+    const updated = reparentNode(sampleTree, "node-a", "node-a");
+    expect(updated).toEqual(sampleTree);
+  });
+
   it("searches and finds matching nodes in the tree", () => {
     const resA = searchMindmapNodes(sampleTree, "A");
     expect(resA).toContain("node-a");

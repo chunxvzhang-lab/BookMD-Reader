@@ -8735,11 +8735,16 @@ body:has(.flash-capsule-overlay) {
   .workspace-splitter,
   .splitter-handle,
   .mindmap-toolbar,
+  .editor-section,
   .editor-pane-container,
+  .pane-header-bar,
+  .large-doc-notice,
   .code-copy-btn,
   .wikilink-preview-popover,
   .flash-capsule-overlay,
   .editor-context-menu,
+  .dual-pane-header,
+  .dual-splitter,
   .tab-graph-toggle-btn {
     display: none !important;
   }
@@ -8752,6 +8757,7 @@ body:has(.flash-capsule-overlay) {
   .main-viewport-container,
   .workspace,
   .document-workspace,
+  .reader-section,
   .reader-pane,
   .reader-scroll-container,
   .markdown-body {

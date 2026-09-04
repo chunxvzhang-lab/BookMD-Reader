@@ -38,4 +38,44 @@ describe("editorContextMenu utilities & transformations", () => {
 
     expect(defaultTitle).toBe("敏捷开发规范");
   });
+
+  it("calculates accurate word and character statistics for document and selection", () => {
+    const docText = "KnowSpace 个人知识工作台 2026";
+    const totalChars = docText.length;
+    const words = docText.match(/[\u4e00-\u9fa5]|[a-zA-Z0-9_-]+/g) || [];
+    expect(totalChars).toBe(22);
+    // "KnowSpace", "个", "人", "知", "识", "工", "作", "台", "2026"
+    expect(words.length).toBe(9);
+  });
+
+  it("handles right-click cursor repositioning: keeps selection if inside, repositions if outside", () => {
+    const selection = { from: 10, to: 25, empty: false };
+
+    const checkClick = (pos: number) => {
+      const isInside = !selection.empty && pos >= selection.from && pos <= selection.to;
+      return isInside ? "keep_selection" : "move_cursor";
+    };
+
+    expect(checkClick(15)).toBe("keep_selection");
+    expect(checkClick(10)).toBe("keep_selection");
+    expect(checkClick(25)).toBe("keep_selection");
+    expect(checkClick(5)).toBe("move_cursor");
+    expect(checkClick(30)).toBe("move_cursor");
+  });
+
+  it("guards extract-to-note against dialog cancellation", () => {
+    let textReplaced = false;
+    const onExtract = (res: { canceled: boolean; success: boolean; title?: string }) => {
+      if (res.canceled || !res.success) {
+        return; // aborted
+      }
+      textReplaced = true;
+    };
+
+    onExtract({ canceled: true, success: false });
+    expect(textReplaced).toBe(false);
+
+    onExtract({ canceled: false, success: true, title: "有效笔记" });
+    expect(textReplaced).toBe(true);
+  });
 });

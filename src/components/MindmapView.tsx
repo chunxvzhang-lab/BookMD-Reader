@@ -575,16 +575,30 @@ export const MindmapView = memo(function MindmapView({
         return;
       }
 
+      // Ctrl+F In-Canvas Search
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+        setTimeout(() => searchInputRef.current?.focus(), 60);
+        return;
+      }
+
       // Ctrl+A Select All
-      if (e.ctrlKey && e.key.toLowerCase() === "a") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
         e.preventDefault();
         handleSelectAll();
         return;
       }
 
-      // Escape deselects nodes or closes context menu
+      // Escape closes search, context menu, deselects nodes, or closes view
       if (e.key === "Escape") {
         e.preventDefault();
+        if (isSearchOpen) {
+          setIsSearchOpen(false);
+          setSearchQuery("");
+          setSearchMatchIds([]);
+          return;
+        }
         if (contextMenu) {
           setContextMenu(null);
           return;
@@ -598,14 +612,6 @@ export const MindmapView = memo(function MindmapView({
           return;
         }
         return;
-      }
-
-      if (contextMenu) {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          setContextMenu(null);
-          return;
-        }
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "z") {
@@ -681,6 +687,7 @@ export const MindmapView = memo(function MindmapView({
     startEditing,
     handleNavigate,
     onClose,
+    isSearchOpen,
   ]);
 
   // Focus and select input on entering edit mode

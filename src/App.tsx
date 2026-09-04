@@ -1662,16 +1662,25 @@ export function App() {
             defaultName: cleanTitle,
             initialContent: `# ${cleanTitle}\n\n${selectedText}\n`,
           });
-          if (!res.canceled && res.success && manifest?.rootPath && desktop.refreshDirectory) {
+          if (res.canceled || !res.success) {
+            return;
+          }
+          if (manifest?.rootPath && desktop.refreshDirectory) {
             const next = await desktop.refreshDirectory(manifest.rootPath);
             setManifest(next);
+          }
+          const finalTitle = res.chapter?.title || cleanTitle;
+          if (editorViewRef.current) {
+            const sel = editorViewRef.current.state.selection.main;
+            editorViewRef.current.dispatch({
+              changes: { from: sel.from, to: sel.to, insert: `[[${finalTitle}]]` },
+              selection: { anchor: sel.from + finalTitle.length + 4 },
+            });
           }
         } catch (err) {
           console.error("Failed to extract selection to note:", err);
         }
-      }
-
-      if (editorViewRef.current) {
+      } else if (editorViewRef.current) {
         const sel = editorViewRef.current.state.selection.main;
         editorViewRef.current.dispatch({
           changes: { from: sel.from, to: sel.to, insert: `[[${cleanTitle}]]` },
