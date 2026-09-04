@@ -35,8 +35,8 @@ def main():
     
     owner = "chunxvzhang-lab"
     repo = "KnowSpace"
-    tag = "v1.9.2"
-    title = "KnowSpace v1.9.2 - 导图四向排版对齐修正与文档静默恢复优化"
+    tag = "v1.10.0"
+    title = "KnowSpace v1.10.0 - 斜杠命令、Obsidian级右键上下文菜单、专业PDF打印与导图重排深化"
     
     # 1. Create and push git tag
     print("1. Ensuring git tag exists and is pushed...")
@@ -75,35 +75,42 @@ def main():
             time.sleep(2)
 
     # 3. Create Release Body
-    body_md = """# 🚀 KnowSpace v1.9.2
+    body_md = """# 🚀 KnowSpace v1.10.0
 
 **KnowSpace · Personal Knowledge Workspace (个人知识工作台)**  
 > **Write. Read. Connect. Know.（记录 · 阅读 · 连接 · 认知）**
 
-本次 **v1.9.2** 包含思维导图排版精准修正与文档纯净阅读体验优化——**「四向排版对齐精准生效与文档静默恢复体验 (Pixel-Perfect Mindmap Typography & Pure Reading Experience)」**！
+本次 **v1.10.0** 迎来四大重量级生产力革新——**「全键盘斜杠命令菜单、Obsidian级情境感知右键上下文、高保真专业PDF打印与导图跨层级拖拽重排 (Slash Commands, Context Menu, High-Fidelity PDF Print & Mindmap Reparenting)」**！
 
 ---
 
-### ✨ v1.9.2 核心更新亮点
+### ✨ v1.10.0 核心更新亮点
 
-1. **🔠 文字对齐彻底修正**：
-   - **修复样式覆盖缺陷**：修复左/右/双边对齐 (Justify) 被全局样式表强制回退为居中，导致文字溢出节点边框的问题；
-   - **内联样式精准生效**：对齐属性改以内联样式渲染，四种对齐模式在所有节点上精准呈现，多节点批量排版同样可靠。
+1. **⌨️ 全键盘斜杠命令菜单 (`/` Slash Commands)**：
+   - **极速呼出**：在编辑器行首或空格后键入 `/`（或拼音首字母缩写），毫秒级弹出交互式下拉补全菜单；
+   - **20+ 原生排版构件模版**：支持 H1~H6 标题、待办清单 `- [ ]`、GFM 智能表格、多语言代码块、LaTeX 数学公式、Mermaid 架构流程图，以及 Note/Tip/Warning/Important/Caution 提示框；
+   - **智能光标定位**：模版插入后光标自动移至最佳输入焦点，全键盘上下键极速选择，写作心流丝滑无阻。
 
-2. **🎯 居中排版精准归位**：
-   - **垂直基线重写**：居中文本不再上下偏移，多行文本逐行取行盒中心精准归位；
-   - **图文一致导出**：SVG / PNG 高清导出与屏幕渲染完全一致。
+2. **📑 Obsidian 级情境感知右键上下文菜单 (Context Menu)**：
+   - **选区一键提取为新笔记**：提取当前选区创建独立 Markdown 文档，并在原文原地无缝替换为 `[[新笔记名]]` 双链；
+   - **创建段落块引用锚点**：提取并就地生成标准 `^block-id` 唯一指纹，一键复制与插入引用；
+   - **存入 Space 闪记箱**：随时将正文灵感片段一键存入闪念收集箱归档；
+   - **快捷行样式转换与格式化**：选区加粗、斜体、代码、高亮（`==`）、删除线，多行批量转为标题、待办清单或引用块；
+   - **文档统计卡片**：菜单底部内嵌轻量统计面板，实时展示选中字符数、词数、行数与预估阅读时长；
+   - **全主题美学适配**：完美适配日光浅色、墨水屏与极客暗黑主题的毛玻璃微光质感。
 
-3. **📏 字宽测量引擎升级**：
-   - **粗体加宽因子**：节点粗体排版实测字宽计入加宽因子，粗体英文与符号节点边框自适应更贴合；
-   - **半角字符精修**：ASCII 字符度量系数校准提升，减少长英文文本节点的边框溢出。
+3. **🖨️ 高保真专业 PDF 矢量打印与导出 (`Ctrl + P`)**：
+   - **Chromium 原生矢量输出**：集成 Electron `webContents.printToPDF` 与原生打印通道，一键输出标准 A4 矢量 PDF；
+   - **印刷级跨页防截断规则**：注入 `@media print` 样式表，正文一级/二级标题、代码块、Mermaid 架构图与 GFM 表格自动施加 `break-inside: avoid` 保护，彻底告别跨页文字图表腰斩断裂；
+   - **便捷全局入口**：顶部工具栏常驻 `🖨️ 打印` 导出按钮，同时支持 `Ctrl + P` 全局快捷键。
 
-4. **✨ 文档打开纯净静默无闪烁**：
-   - **消除多余高亮光晕**：修复打开 Markdown 文档或切换文档标签恢复阅读进度时触发的无意天蓝色高亮呼吸灯边框，恢复清爽纯净的阅读视觉；
-   - **优化交互引导**：保留并在用户显式跳转（思维导图回跳正文、双链块引用锚点、书签跳转）时提供更柔和精准的定位光晕提示。
+4. **🧠 思维导图跨层级拖拽重排与画布搜索聚焦**：
+   - **拖拽重组分支归属 (Drag-and-Drop Reparenting)**：鼠标自由抓取任意分支拖放至目标节点，即可变更为子节点或同级重排；
+   - **自闭环防环保护**：算法严格阻止将父节点拖入自身子孙分支，杜绝拓扑环路死循环；
+   - **实时搜索与运镜平滑聚焦**：画布顶部微型搜索栏实时高亮所有匹配节点，支持回车一键运镜（`Smooth Pan`）居中定位高亮目标。
 
-5. **🛡️ 质量防护与稳定性**：
-   - 110 项自动化测试套件持续守护，确保排版测量与锚点导航长期稳定。
+5. **🛡️ 质量防护与自动化测试**：
+   - 24 个自动化测试套件、122 项单元测试 100% 全部通过，全方位守护系统稳定性。
 
 ---
 
@@ -111,7 +118,7 @@ def main():
 
 | 文件名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| **`KnowSpace-1.9.2.msi`** | Windows 标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
+| **`KnowSpace-1.10.0.msi`** | Windows 标准安装包 | Windows Installer 官方安装格式，自动创建桌面与开始菜单快捷方式（推荐） |
 | **`KnowSpace-win-x64-portable.zip`** | Windows 便携绿色版 | 免安装解压即用，解压后双击 `KnowSpace.exe` 即可运行 |
 
 ---
@@ -163,9 +170,9 @@ def main():
     # 4. Upload Assets
     msi_path = None
     msi_candidates = [
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.9.2.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.9.2.msi",
-        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.9.2.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-1.10.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace 1.10.0.msi",
+        r"C:\Users\chunxvzhang\Desktop\codex\release\KnowSpace-win-x64\release\KnowSpace-1.10.0.msi",
     ]
     for p in msi_candidates:
         if os.path.exists(p):
@@ -177,7 +184,7 @@ def main():
     assets_to_upload = [
         (
             msi_path,
-            "KnowSpace-1.9.2.msi",
+            "KnowSpace-1.10.0.msi",
             "application/x-msi"
         ),
         (

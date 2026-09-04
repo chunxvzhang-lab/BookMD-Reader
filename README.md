@@ -10,7 +10,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.9.2-1D9BF0?style=flat-square&logo=github" alt="Version 1.9.2" />
+  <img src="https://img.shields.io/badge/Version-v1.10.0-1D9BF0?style=flat-square&logo=github" alt="Version 1.10.0" />
+  <img src="https://img.shields.io/badge/Slash_Commands-%2F-00BA7C?style=flat-square" alt="Slash Commands" />
+  <img src="https://img.shields.io/badge/PDF_Print-Ctrl%2BP-8B5CF6?style=flat-square" alt="PDF Print" />
   <img src="https://img.shields.io/badge/Mind_Map-Ctrl%2BM-00BA7C?style=flat-square" alt="Mind Map" />
   <img src="https://img.shields.io/badge/Block_Links-%5Eblock--id-8B5CF6?style=flat-square" alt="Block Links" />
   <img src="https://img.shields.io/badge/Knowledge_Graph-60FPS-00BA7C?style=flat-square" alt="Knowledge Graph" />
@@ -44,12 +46,13 @@
 
 ## 🏛️ 核心能力体系
 
-- **🧠 Mind Map View（双向思维导图）**：Markdown 大纲一键转化为交互式多叉树脑图（`Ctrl+M`），节点双向定位正文微光脉冲、子树折叠收缩、鼠标滚轮漫游缩放与矢量 SVG/PNG 高清导出。
+- **🧠 Mind Map View（双向思维导图）**：Markdown 大纲一键转化为交互式多叉树脑图（`Ctrl+M`），**支持分支自由拖拽改变父子层级与同级重排（带自闭环防环保护与吸附光晕）**、**导图内实时搜索与平滑运镜聚焦**、节点双向定位正文微光脉冲、子树折叠收缩、鼠标滚轮漫游缩放与矢量 SVG/PNG 高清导出。
+- **✍️ Editor & Slash Commands（编辑、斜杠命令与右键菜单）**：基于 CodeMirror 6 的现代编辑体验，毫秒级实时防抖渲染与零延迟双向同步滚动。**内置全键盘斜杠命令补全（`/`）与 Obsidian 级情境感知右键上下文菜单**，支持划词提取新笔记、块引用锚点生成、格式快速转换与文档字数统计。
+- **🖨️ High-Fidelity PDF Print（专业高保真打印）**：集成 Chromium 原生打印引擎，支持 `Ctrl+P` 全局快捷键与工具栏一键导出标准 A4 矢量 PDF，注入印刷级 `@media print` 样式，正文标题、表格、代码块与架构图跨页自动防截断。
 - **⚓ Block-Level Linking & Embedding（块级原子互联）**：`^block-id` 段落指纹标记、`[[doc#^block]]` 块引用跳转与 `![[doc#^block]]` 块级卡片内联嵌入，配合 CodeMirror 极速块补全。
 - **🌐 Graph & Backlinks（知识图谱与双链）**：60FPS 极速全景拓扑图谱、2.2ms 黄金螺旋 2D 有机力导向布局、[[Wikilink]] 实时补全与全局级联重构。
 - **⚡ Flash Capsule（闪念胶囊）**：全局热键秒级呼出毛玻璃微窗，随叫随到，原子归档落盘至 `Inbox/` 收集箱。
 - **📖 Reader（阅读）**：纯净沉浸的 Markdown 排版阅读引擎，支持正文源码行号自动映射与双侧联动高亮。
-- **✍️ Editor（编辑）**：基于 CodeMirror 6 的现代编辑体验，毫秒级实时防抖渲染与零延迟双向同步滚动。
 - **📚 Library（知识库）**：多级文档目录树折叠展开、展开状态持久化记忆、单文档与多层级知识库智能载入。
 - **🔍 Search（检索与大纲）**：全文段落卡片聚合即时检索、多级目录大纲（TOC）随动追踪与书签记忆。
 - **🎨 Visual & Lightbox（视觉与导出）**：仿电子墨水屏纸质主题、Mermaid 架构图 3× 超清导出、毛玻璃全屏灯箱。
@@ -78,9 +81,15 @@
 
 ---
 
-### 2. ✍️ 现代化极客编辑与媒体直插 (Modern Editor & Instant Media)
-*基于 CodeMirror 6 深度打造，毫秒级实时防抖渲染，零阻滞写作与代码编写。*
+### 2. ✍️ 现代化极客编辑、斜杠命令与上下文菜单 (Modern Editor & Smart Interactions)
+*基于 CodeMirror 6 深度打造，毫秒级实时防抖渲染，融入全键盘命令与情境感知上下文操作。*
 
+- **⌨️ 全键盘斜杠命令补全菜单 (`/` Slash Commands)**：在行首或空格后键入 `/`（或拼音首字母），极速弹出交互式下拉建议框。内置 20+ 项原生排版模版（H1~H6 标题、待办清单 `- [ ]`、GFM 智能表格、多语言代码块、LaTeX 数学公式、Mermaid 流程架构图，以及 Note/Tip/Warning/Important/Caution 提示框），回车即填入并自动定位光标。
+- **📑 Obsidian 级情境感知右键菜单 (Context-Aware Editor Menu)**：
+  - **有选区时**：一键提取当前划词创建独立 Markdown 新笔记（并在原文原地替换为 `[[新笔记名]]` 双链）；一键提取生成标准段落块引用（`^block-id`）；一键归档存入 Space 闪记箱；快速应用加粗、斜体、代码、高亮（`==`）、删除线；选区各行批量转为标题、清单或引用块。
+  - **无选区时**：一键插入标准三线表格、代码块、数学公式、架构图模版或 Callout 提示框。
+  - **实时文档统计卡片**：菜单底部内嵌轻量统计面板，实时显示选中字符数、词数、行数与预估阅读耗时。
+  - **三套主题深度适配**：在日光浅色、墨水屏、极客暗黑主题下均呈现精致的毛玻璃微光与高对比度交互。
 - **🖼️ 剪贴板截图一键直接粘贴落盘 (`Ctrl + V`)**：截取微信、QQ、Snipaste 截图或网页图片后，在编辑器内直接粘贴，系统自动落盘至当前文档同级的 `assets/` 目录并插入 Markdown 相对路径，双栏即时渲染可见。
 - **📂 本地图片自由拖拽 (`Drop`)**：从桌面或资源管理器拖拽图片直接插入正文并自动存入 `assets/`。
 - **🔗 AST 零延迟双向高精度同步滚动**：基于源码 AST 块级行号与线性插值算法，富文本与源码高度差异无论多大均严丝合缝、彻底告别偏移。
@@ -92,13 +101,14 @@
 
 ---
 
-### 3. 📖 沉浸排版阅读与科学图表渲染 (Reader & Scientific Rendering)
-*专为中文与西文混合长篇知识阅读打磨的排版艺术，兼具科学工程制图能力。*
+### 3. 📖 沉浸排版阅读、科学渲染与专业 PDF 打印 (Reader, Rendering & PDF Print)
+*专为中文与西文混合长篇知识阅读打磨的排版艺术，兼具科学工程制图与印刷级导出能力。*
 
 <p align="center">
   <img src="docs/manual-images/14-media-lightbox.png" alt="媒体与架构图全屏灯箱" width="90%" style="border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);" />
 </p>
 
+- **🖨️ 高保真专业 PDF 矢量打印与导出 (`Ctrl + P`)**：原生集成 Chromium 打印引擎与 Electron `webContents.printToPDF` 管道，支持一键导出标准 A4 矢量 PDF；注入印刷级 `@media print` 样式表，正文标题、多语言代码块、Mermaid 架构图与 GFM 表格自动开启跨页防截断保护（`break-inside: avoid`），彻底告别文字图表腰斩断裂。
 - **纯净阅读排版**：960px 黄金视宽、精调字间距与段落呼吸感，沉浸阅读无打扰。
 - **📊 Mermaid 架构图实时矢量渲染与 3× 超清导出**：实时渲染流程图、序列图、类图、思维导图、甘特图与状态图；支持以 3× Retina 超高清分辨率无裁切一键导出高质量透明或主题底色 PNG 图片。
 - **📐 LaTeX / KaTeX 科学公式支持**：行内公式 `\(...\)` 与独立大公式块 `\[...\]` 毫秒级原生渲染。
@@ -180,6 +190,12 @@
   - `F2` / `Space` / 双击：就地呼出悬浮输入框修改文字，完美支持中文输入法（IME）。
   - `方向键 (↑ ↓ ← →)`：在父子层级与同级兄弟分支之间流畅跳动导航。
   - `Ctrl + Z` / `Ctrl + Y`：完整的树结构历史快照堆栈，改动随心撤销与重做。
+- **🔀 节点跨层级与同级拖拽重排 (Drag-and-Drop Reparenting)**：
+  - **自由抓取重构**：鼠标按住任意分支节点拖动，移至目标节点上方即呈现绿色吸附指示光晕与半透明拖拽影子，释放即可改变父子层级关系或同级重排。
+  - **自闭环防环保护**：算法严格阻止将父节点拖入自身子孙分支，杜绝拓扑环路与逻辑死循环。
+- **🔍 导图内实时搜索与平滑运镜聚焦 (In-Canvas Search & Smooth Focus)**：
+  - **画布顶部常驻微型搜索栏**：输入关键词实时高亮所有匹配节点并显示匹配计数。
+  - **平滑运镜定位**：按回车或点击跳转箭头，视口自动平滑平移居中定位至目标节点，并激发出黄色呼吸发光光晕。
 - **🎨 节点外观与文本深度定制 (Deep Visual & Typography Customization)**：
   - **边框自适应与智能折行（彻底告别溢出）**：多语言字符测算引擎，超长文字根据节点宽度智能自适应折行，边框弹性纵向扩展，确保文字 100% 保持在框内。
   - **自由拖拽调整大小与联动排版**：悬浮或选中节点时，右下角提供直观微型控制拉手，按住即可任意拉伸宽高；文字随宽度即时重排，双击或右键随时一键“恢复自适应大小”。
@@ -212,6 +228,9 @@
 | 快捷键 | 功能 | 说明 |
 | :--- | :--- | :--- |
 | `Alt + Space` | **呼出/隐藏闪念胶囊** | 全局秒级唤起毛玻璃速记微窗（可在软件内自由自定义） |
+| `Ctrl + P` | **打印 / 导出 PDF** | 呼出 Chromium 原生高保真打印与 A4 矢量 PDF 导出（跨页防截断） |
+| `/` | **斜杠命令补全菜单** | (编辑器行首或空格后) 呼出 20+ 项排版、表格、代码、公式与 Callout 模板 |
+| `右键` | **情境感知右键菜单** | (编辑器选区/正文) 提取为新笔记、生成块引用、存入闪念、富文本排版转换 |
 | `Ctrl + M` | **思维导图视图** | 一键在 Markdown 读写与交互式思维导图间切换 |
 | `Tab` / `Insert` | **(导图中) 添加子主题** | 为当前选中的脑图节点创建下一级子分支并就地命名 |
 | `Enter` | **(导图中) 添加同级主题** | 为当前选中的脑图节点创建同级分支 |
@@ -245,7 +264,7 @@
 本项目提供两种 Windows 运行与安装形式：
 
 ### 1. Windows MSI 标准安装包
-- **文件**：`KnowSpace-1.9.2.msi`
+- **文件**：`KnowSpace-1.10.0.msi`
 - **特点**：双击即可安装至 Windows 系统，自动创建桌面快捷方式与开始菜单官方品牌图标，支持标准控制面板卸载与静默安装。
 
 ### 2. Windows 绿色免安装便携版

@@ -121,7 +121,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div>
               <div className="about-header-title-row">
                 <span className="about-app-name">KnowSpace</span>
-                <span className="about-version-badge">v1.9.2</span>
+                <span className="about-version-badge">v1.10.0</span>
               </div>
               <p className="about-tagline">Personal Knowledge Workspace · 个人知识工作台</p>
             </div>
@@ -147,20 +147,20 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
             <div className="about-card-title">
               <History size={16} className="about-icon text-blue" />
               <span>版本更新日志 · What&apos;s New</span>
-              <span className="about-changelog-version-badge">v1.9.2</span>
+              <span className="about-changelog-version-badge">v1.10.0</span>
             </div>
             <div className="about-changelog-list">
-              {/* v1.9.2 */}
+              {/* v1.10.0 */}
               <div className="about-changelog-group">
                 <div className="about-changelog-group-label">
-                  <ListTree size={12} className="text-cyan" />
-                  <span>v1.9.2 导图四向排版对齐精准修正与字宽测量增强</span>
+                  <Sparkles size={12} className="text-cyan" />
+                  <span>v1.10.0 斜杠命令、右键上下文感知、专业PDF打印与导图重排</span>
                 </div>
                 <ul className="about-changelog-items">
-                  <li>🔠 <strong>文字对齐彻底修正</strong>：修复左/右/双边对齐被样式表强制回退为居中导致文字溢出节点边框的问题，四种对齐模式精准生效。</li>
-                  <li>🎯 <strong>居中排版精准归位</strong>：重写节点文本垂直基线测算，居中文本不再上下偏移，多行排版行行居中。</li>
-                  <li>📏 <strong>字宽测量引擎升级</strong>：新增粗体字宽加宽因子与更精确的半角字符度量，粗体与英文节点边框自适应更贴合。</li>
-                  <li>🛡️ <strong>回归防护测试</strong>：新增排版对齐自动化测试，永久守护对齐样式覆盖类缺陷复发。</li>
+                  <li>⌨️ <strong>全键盘斜杠命令菜单 (`/`)</strong>：行首或空格后输入 <code>/</code> 极速呼出补全菜单，支持 20+ 项原生排版、GFM 智能表格、代码块、LaTeX 公式、Mermaid 图表与 Callout 模版，支持拼音与模糊匹配。</li>
+                  <li>📑 <strong>Obsidian 级情境感知右键菜单</strong>：划词提取为新独立笔记（原地双链链接）、生成段落块引用（<code>^block-id</code>）、存入闪念收集箱、行样式与富文本格式化转换，并附带选区与文档字数统计卡片。</li>
+                  <li>🖨️ <strong>高保真专业 PDF 矢量打印与导出</strong>：集成 Chromium 原生打印引擎，支持 <code>Ctrl+P</code> 全局快捷键与工具栏一键打印，配套 <code>@media print</code> 跨页防截断规则（标题、表格、代码块与 Mermaid 图表不腰斩）。</li>
+                  <li>🧠 <strong>思维导图跨层级拖拽重排与画布搜索</strong>：支持分支拖拽改变父子层级与同级重排（带自闭环防环保护与目标吸附光晕），顶部悬浮搜索条支持节点内容实时匹配高亮与平滑运镜聚焦。</li>
                 </ul>
               </div>
             </div>
