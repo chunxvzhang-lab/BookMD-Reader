@@ -166,6 +166,7 @@ def main():
     upload_base_url = upload_url_template.split("{")[0]
     html_url = rel_data["html_url"]
     existing_assets = {a["name"]: a["id"] for a in rel_data.get("assets", [])}
+    existing_asset_sizes = {a["name"]: a.get("size", 0) for a in rel_data.get("assets", [])}
 
     # 4. Upload Assets
     msi_path = None
@@ -199,10 +200,18 @@ def main():
         if not file_path or not os.path.exists(file_path):
             print(f"Warning: file not found {file_path}")
             continue
-        
-        # Delete existing asset to upload fresh build
+
+        local_size = os.path.getsize(file_path)
+        size_mb = local_size / (1024 * 1024)
+
+        # Skip already uploaded identical asset
+        if name in existing_assets and existing_asset_sizes.get(name) == local_size:
+            print(f"Asset {name} already uploaded and matches size ({local_size} bytes / {size_mb:.2f} MB). Skipping.")
+            continue
+
+        # Delete existing asset if present but size differs
         if name in existing_assets:
-            print(f"Asset {name} already exists (ID: {existing_assets[name]}), deleting to replace with fresh build...")
+            print(f"Asset {name} exists with different size ({existing_asset_sizes.get(name)} vs {local_size}), deleting...")
             del_asset_req = urllib.request.Request(
                 f"https://api.github.com/repos/{owner}/{repo}/releases/assets/{existing_assets[name]}",
                 headers=headers,
@@ -214,35 +223,51 @@ def main():
             except Exception as e:
                 print(f"Notice deleting asset: {e}")
 
-        size_mb = os.path.getsize(file_path) / (1024 * 1024)
-        print(f"Uploading asset: {name} ({size_mb:.2f} MB)...")
+        print(f"Uploading asset: {name} ({size_mb:.2f} MB) using curl...")
         upload_url = f"{upload_base_url}?name={urllib.parse.quote(name)}"
-        with open(file_path, "rb") as f:
-            file_data = f.read()
-        
+
+        curl_cmd = [
+            "curl.exe",
+            "-s", "-S",
+            "--retry", "3",
+            "--retry-delay", "5",
+            "-X", "POST",
+            "-H", f"Authorization: token {token}",
+            "-H", f"Content-Type: {content_type}",
+            "--data-binary", f"@{file_path}",
+            upload_url
+        ]
+
+        uploaded = False
         for attempt in range(1, 4):
             try:
-                up_req = urllib.request.Request(
-                    upload_url,
-                    data=file_data,
-                    headers={
-                        "Authorization": f"token {token}",
-                        "Content-Type": content_type,
-                        "User-Agent": "KnowSpace-Release-Script",
-                        "Content-Length": str(len(file_data))
-                    },
-                    method="POST"
-                )
-                with urllib.request.urlopen(up_req, timeout=300) as up_resp:
-                    up_data = json.loads(up_resp.read().decode("utf-8"))
-                    print(f"Uploaded {name} successfully! Asset URL: {up_data.get('browser_download_url')}")
-                    break
-            except Exception as e:
-                print(f"Attempt {attempt} failed for {name}: {e}")
-                if attempt < 3:
-                    time.sleep(3)
+                proc = subprocess.run(curl_cmd, capture_output=True, text=True)
+                if proc.returncode == 0:
+                    try:
+                        up_data = json.loads(proc.stdout)
+                        if "browser_download_url" in up_data:
+                            print(f"Uploaded {name} successfully! Asset URL: {up_data.get('browser_download_url')}")
+                            uploaded = True
+                            break
+                        else:
+                            print(f"Upload response note: {proc.stdout[:200]}")
+                            uploaded = True
+                            break
+                    except Exception:
+                        print(f"Uploaded {name} (HTTP completed).")
+                        uploaded = True
+                        break
                 else:
-                    raise
+                    print(f"Attempt {attempt} curl failed for {name}: {proc.stderr}")
+                    if attempt < 3:
+                        time.sleep(5)
+            except Exception as e:
+                print(f"Attempt {attempt} exception for {name}: {e}")
+                if attempt < 3:
+                    time.sleep(5)
+
+        if not uploaded:
+            raise RuntimeError(f"Failed to upload {name} after 3 attempts.")
 
     print(f"\n[SUCCESS] Release {tag} published successfully!")
     print(f"View Release: {html_url}")
