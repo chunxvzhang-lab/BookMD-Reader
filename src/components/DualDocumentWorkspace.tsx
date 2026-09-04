@@ -35,6 +35,11 @@ type DualDocumentWorkspaceProps = {
   onWikiLinkClick?: (target: string) => void;
   backlinksCount?: number;
   onOpenBacklinks?: () => void;
+  onExtractToNote?: (selectedText: string, suggestedTitle: string) => void;
+  onSendToFlash?: (text: string) => void;
+  onPrint?: () => void;
+  onToggleMindmap?: () => void;
+  onRevealInToc?: () => void;
 
   // Secondary (Right) Document
   secondaryTitle: string;
@@ -72,6 +77,11 @@ export function DualDocumentWorkspace({
   secondaryTitle,
   secondaryRenderedChapter,
   secondaryContainerRef,
+  onExtractToNote,
+  onSendToFlash,
+  onPrint,
+  onToggleMindmap,
+  onRevealInToc,
   onCloseSecondary,
 }: DualDocumentWorkspaceProps) {
   const [dualRatio, setDualRatio] = useState<number>(() => {
@@ -170,6 +180,11 @@ export function DualDocumentWorkspace({
             onWikiLinkClick={onWikiLinkClick}
             backlinksCount={backlinksCount}
             onOpenBacklinks={onOpenBacklinks}
+            onExtractToNote={onExtractToNote}
+            onSendToFlash={onSendToFlash}
+            onPrint={onPrint}
+            onToggleMindmap={onToggleMindmap}
+            onRevealInToc={onRevealInToc}
           />
         </div>
       </div>

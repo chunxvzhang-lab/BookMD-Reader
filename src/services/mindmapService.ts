@@ -906,3 +906,108 @@ export function updateNodesStyle(
   return nextTree;
 }
 
+/**
+ * Moves a node (and all its descendants) to become a child of newParentId,
+ * or reorders it among newParent's children.
+ * Includes cycle prevention (cannot move a node into itself or any of its descendants).
+ */
+export function reparentNode(
+  root: MindmapNode,
+  movingNodeId: string,
+  newParentId: string,
+  targetIndex?: number
+): MindmapNode {
+  // Root node cannot be moved, and cannot move node to itself
+  if (movingNodeId === root.id || movingNodeId === newParentId) {
+    return root;
+  }
+
+  const clone = cloneTree(root);
+
+  // Helper: find node by id
+  const findNode = (n: MindmapNode, id: string): MindmapNode | null => {
+    if (n.id === id) return n;
+    for (const child of n.children) {
+      const res = findNode(child, id);
+      if (res) return res;
+    }
+    return null;
+  };
+
+  // Helper: check if targetId is inside node's subtree (cycle prevention)
+  const isDescendant = (parent: MindmapNode, targetId: string): boolean => {
+    for (const child of parent.children) {
+      if (child.id === targetId) return true;
+      if (isDescendant(child, targetId)) return true;
+    }
+    return false;
+  };
+
+  const movingNode = findNode(clone, movingNodeId);
+  if (!movingNode) return root;
+
+  // Prevent dragging into own descendant (would cause loop)
+  if (isDescendant(movingNode, newParentId)) {
+    return root;
+  }
+
+  const newParent = findNode(clone, newParentId);
+  if (!newParent) return root;
+
+  // Remove movingNode from its old parent
+  const removeNode = (parent: MindmapNode, id: string): MindmapNode | null => {
+    const idx = parent.children.findIndex((c) => c.id === id);
+    if (idx !== -1) {
+      return parent.children.splice(idx, 1)[0];
+    }
+    for (const child of parent.children) {
+      const found = removeNode(child, id);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  const detachedNode = removeNode(clone, movingNodeId);
+  if (!detachedNode) return root;
+
+  // Update level of detachedNode and its descendants
+  const updateLevels = (node: MindmapNode, level: number) => {
+    node.level = level;
+    for (const child of node.children) {
+      updateLevels(child, level + 1);
+    }
+  };
+  updateLevels(detachedNode, newParent.level + 1);
+
+  // Insert into newParent's children
+  if (typeof targetIndex === "number" && targetIndex >= 0 && targetIndex <= newParent.children.length) {
+    newParent.children.splice(targetIndex, 0, detachedNode);
+  } else {
+    newParent.children.push(detachedNode);
+  }
+
+  return clone;
+}
+
+/**
+ * Finds all node IDs that contain the search query
+ */
+export function searchMindmapNodes(root: MindmapNode, query: string): string[] {
+  const clean = (query || "").trim().toLowerCase();
+  if (!clean) return [];
+
+  const matches: string[] = [];
+  const traverse = (node: MindmapNode) => {
+    if (node.text.toLowerCase().includes(clean)) {
+      matches.push(node.id);
+    }
+    if (node.children) {
+      for (const child of node.children) {
+        traverse(child);
+      }
+    }
+  };
+  traverse(root);
+  return matches;
+}
+

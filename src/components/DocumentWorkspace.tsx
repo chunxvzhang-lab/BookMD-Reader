@@ -36,6 +36,11 @@ type DocumentWorkspaceProps = {
   onWikiLinkClick?: (target: string) => void;
   backlinksCount?: number;
   onOpenBacklinks?: () => void;
+  onExtractToNote?: (selectedText: string, suggestedTitle: string) => void;
+  onSendToFlash?: (text: string) => void;
+  onPrint?: () => void;
+  onToggleMindmap?: () => void;
+  onRevealInToc?: () => void;
 };
 
 export function DocumentWorkspace({
@@ -63,6 +68,11 @@ export function DocumentWorkspace({
   onWikiLinkClick,
   backlinksCount,
   onOpenBacklinks,
+  onExtractToNote,
+  onSendToFlash,
+  onPrint,
+  onToggleMindmap,
+  onRevealInToc,
 }: DocumentWorkspaceProps) {
   const [splitRatio, setSplitRatio] = useState(() => {
     try {
@@ -185,6 +195,11 @@ export function DocumentWorkspace({
               editorViewRef.current = view;
               onEditorViewReady?.(view);
             }}
+            onExtractToNote={onExtractToNote}
+            onSendToFlash={onSendToFlash}
+            onPrint={onPrint}
+            onToggleMindmap={onToggleMindmap}
+            onRevealInToc={onRevealInToc}
           />
         </div>
       )}

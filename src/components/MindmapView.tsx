@@ -16,6 +16,7 @@ import {
   AlignRight,
   AlignJustify,
   RotateCcw,
+  Search,
 } from "lucide-react";
 import type { Heading, ThemeMode, MindmapNodeShape, MindmapLineStyle, MindmapTextAlign } from "../core/types";
 import {
@@ -33,6 +34,8 @@ import {
   findNode,
   findParent,
   findSibling,
+  reparentNode,
+  searchMindmapNodes,
   type MindmapLayoutNode,
 } from "../services/mindmapService";
 import type { MindmapNode } from "../core/types";
@@ -277,6 +280,69 @@ export const MindmapView = memo(function MindmapView({
   const layout = useMemo(() => {
     return layoutMindmap(tree, collapsedIds);
   }, [tree, collapsedIds]);
+
+  // Drag-and-drop reparenting state
+  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
+  const [dragGhostPos, setDragGhostPos] = useState<{ x: number; y: number } | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const nodeDragStartRef = useRef<{
+    nodeId: string;
+    startX: number;
+    startY: number;
+    hasMoved: boolean;
+  } | null>(null);
+
+  // In-canvas search state
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMatchIds, setSearchMatchIds] = useState<string[]>([]);
+  const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const focusOnNode = useCallback((nodeId: string) => {
+    if (!layout || !containerRef.current) return;
+    const target = layout.nodes.find((n) => n.id === nodeId);
+    if (!target) return;
+    const cWidth = containerRef.current.clientWidth;
+    const cHeight = containerRef.current.clientHeight;
+    const targetCenterX = target.x + target.width / 2;
+    const targetCenterY = target.y + target.height / 2;
+    setTransform((prev) => ({
+      ...prev,
+      x: Math.round(cWidth / 2 - targetCenterX * prev.scale),
+      y: Math.round(cHeight / 2 - targetCenterY * prev.scale),
+    }));
+    setSelectedNodeIds(new Set([nodeId]));
+  }, [layout]);
+
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+    if (!q.trim()) {
+      setSearchMatchIds([]);
+      setCurrentSearchIndex(0);
+      return;
+    }
+    const matches = searchMindmapNodes(tree, q);
+    setSearchMatchIds(matches);
+    setCurrentSearchIndex(0);
+    if (matches.length > 0) {
+      focusOnNode(matches[0]);
+    }
+  }, [focusOnNode, tree]);
+
+  const handleNextSearch = useCallback(() => {
+    if (searchMatchIds.length === 0) return;
+    const nextIdx = (currentSearchIndex + 1) % searchMatchIds.length;
+    setCurrentSearchIndex(nextIdx);
+    focusOnNode(searchMatchIds[nextIdx]);
+  }, [currentSearchIndex, focusOnNode, searchMatchIds]);
+
+  const handlePrevSearch = useCallback(() => {
+    if (searchMatchIds.length === 0) return;
+    const prevIdx = (currentSearchIndex - 1 + searchMatchIds.length) % searchMatchIds.length;
+    setCurrentSearchIndex(prevIdx);
+    focusOnNode(searchMatchIds[prevIdx]);
+  }, [currentSearchIndex, focusOnNode, searchMatchIds]);
 
   // Select all nodes handler
   const handleSelectAll = useCallback(() => {
@@ -669,6 +735,40 @@ export const MindmapView = memo(function MindmapView({
         return;
       }
 
+      if (nodeDragStartRef.current) {
+        const dx = e.clientX - nodeDragStartRef.current.startX;
+        const dy = e.clientY - nodeDragStartRef.current.startY;
+        if (!nodeDragStartRef.current.hasMoved && Math.hypot(dx, dy) > 8) {
+          nodeDragStartRef.current.hasMoved = true;
+          setDraggingNodeId(nodeDragStartRef.current.nodeId);
+        }
+        if (nodeDragStartRef.current.hasMoved) {
+          setDragGhostPos({ x: e.clientX, y: e.clientY });
+
+          const containerRect = containerRef.current?.getBoundingClientRect();
+          if (containerRect && layout) {
+            const canvasX = (e.clientX - containerRect.left - transform.x) / transform.scale;
+            const canvasY = (e.clientY - containerRect.top - transform.y) / transform.scale;
+
+            let targetFound: string | null = null;
+            for (const node of layout.nodes) {
+              if (node.id === nodeDragStartRef.current.nodeId) continue;
+              if (
+                canvasX >= node.x - 25 &&
+                canvasX <= node.x + node.width + 25 &&
+                canvasY >= node.y - 25 &&
+                canvasY <= node.y + node.height + 25
+              ) {
+                targetFound = node.id;
+                break;
+              }
+            }
+            setDropTargetId(targetFound);
+          }
+          return;
+        }
+      }
+
       if (!isDragging) return;
       const dx = e.clientX - dragStartRef.current.x;
       const dy = e.clientY - dragStartRef.current.y;
@@ -678,15 +778,25 @@ export const MindmapView = memo(function MindmapView({
         y: Math.round(dragStartRef.current.startTransformY + dy),
       }));
     },
-    [isDragging, resizingNode, transform.scale, handleUpdateStyle]
+    [isDragging, resizingNode, transform.scale, transform.x, transform.y, layout, handleUpdateStyle]
   );
 
   const handleMouseUp = useCallback(() => {
     if (resizingNode) {
       setResizingNode(null);
     }
+    if (nodeDragStartRef.current) {
+      if (nodeDragStartRef.current.hasMoved && draggingNodeId && dropTargetId) {
+        const nextTree = reparentNode(tree, draggingNodeId, dropTargetId);
+        applyTreeChange(nextTree);
+      }
+      nodeDragStartRef.current = null;
+      setDraggingNodeId(null);
+      setDropTargetId(null);
+      setDragGhostPos(null);
+    }
     setIsDragging(false);
-  }, [resizingNode]);
+  }, [applyTreeChange, draggingNodeId, dropTargetId, resizingNode, tree]);
 
   // Wheel zoom handler
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -955,6 +1065,84 @@ export const MindmapView = memo(function MindmapView({
               <span>全部展开</span>
             </button>
           </div>
+
+          <div className="mindmap-toolbar-divider" />
+
+          {/* In-Canvas Search Toolbar Group */}
+          <div className="mindmap-toolbar-btn-group mindmap-search-group">
+            <button
+              type="button"
+              className={`mindmap-tool-btn text-btn ${isSearchOpen ? "highlight-btn" : ""}`}
+              onClick={() => {
+                setIsSearchOpen((prev) => {
+                  const next = !prev;
+                  if (next) setTimeout(() => searchInputRef.current?.focus(), 60);
+                  return next;
+                });
+              }}
+              title="搜索导图节点"
+            >
+              <Search size={13} className="text-cyan" />
+              <span>搜索</span>
+            </button>
+            {isSearchOpen && (
+              <div className="mindmap-search-box">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  placeholder="搜索导图节点..."
+                  className="mindmap-search-input"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      if (e.shiftKey) handlePrevSearch();
+                      else handleNextSearch();
+                    } else if (e.key === "Escape") {
+                      setIsSearchOpen(false);
+                      setSearchQuery("");
+                      setSearchMatchIds([]);
+                    }
+                  }}
+                />
+                {searchMatchIds.length > 0 && (
+                  <span className="mindmap-search-count">
+                    {currentSearchIndex + 1}/{searchMatchIds.length}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="mindmap-search-nav-btn"
+                  onClick={handlePrevSearch}
+                  disabled={searchMatchIds.length === 0}
+                  title="上一个 (Shift+Enter)"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-search-nav-btn"
+                  onClick={handleNextSearch}
+                  disabled={searchMatchIds.length === 0}
+                  title="下一个 (Enter)"
+                >
+                  ▼
+                </button>
+                <button
+                  type="button"
+                  className="mindmap-search-nav-btn close-btn"
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setSearchQuery("");
+                    setSearchMatchIds([]);
+                  }}
+                  title="关闭搜索 (Esc)"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mindmap-toolbar-right">
@@ -1056,10 +1244,23 @@ export const MindmapView = memo(function MindmapView({
                   key={node.id}
                   className={`mindmap-node-interactive ${isRoot ? "is-root" : ""} ${
                     isSelected ? "is-selected" : ""
-                  } ${isHovered ? "is-hovered" : ""}`}
+                  } ${isHovered ? "is-hovered" : ""} ${dropTargetId === node.id ? "is-drop-target" : ""} ${
+                    searchMatchIds.includes(node.id) ? "is-search-match" : ""
+                  }`}
                   transform={`translate(${node.x}, ${node.y})`}
                   onMouseEnter={() => setHoveredNodeId(node.id)}
                   onMouseLeave={() => setHoveredNodeId(null)}
+                  onMouseDown={(e) => {
+                    if (e.button !== 0) return;
+                    if (!isRoot && editable) {
+                      nodeDragStartRef.current = {
+                        nodeId: node.id,
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        hasMoved: false,
+                      };
+                    }
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (e.shiftKey || e.ctrlKey) {
@@ -1097,8 +1298,52 @@ export const MindmapView = memo(function MindmapView({
                   <title>
                     {isRoot
                       ? "中心主题 (右键设置样式，按 Tab 添加子主题)"
-                      : `${node.text} (双击编辑，右键修改背景与边框，Tab 添加子主题，Enter 添加同级主题)`}
+                      : `${node.text} (可按住拖拽至其他主题移为子分支，双击编辑，右键设置样式)`}
                   </title>
+
+                  {/* Drop Target Adsorption Glowing Ring */}
+                  {dropTargetId === node.id && (
+                    <g className="mindmap-drop-target-indicator">
+                      <rect
+                        x={-7}
+                        y={-7}
+                        width={node.width + 14}
+                        height={node.height + 14}
+                        rx={12}
+                        ry={12}
+                        fill="rgba(56, 189, 248, 0.22)"
+                        stroke="#38bdf8"
+                        strokeWidth={2.5}
+                        strokeDasharray="5 3"
+                      />
+                      <text
+                        x={node.width / 2}
+                        y={-10}
+                        textAnchor="middle"
+                        fill="#38bdf8"
+                        fontSize={11}
+                        fontWeight="bold"
+                      >
+                        + 移为子主题
+                      </text>
+                    </g>
+                  )}
+
+                  {/* In-Canvas Search Match Ring */}
+                  {searchMatchIds.includes(node.id) && (
+                    <rect
+                      x={-5}
+                      y={-5}
+                      width={node.width + 10}
+                      height={node.height + 10}
+                      rx={10}
+                      ry={10}
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth={searchMatchIds[currentSearchIndex] === node.id ? 3 : 1.8}
+                      strokeDasharray={searchMatchIds[currentSearchIndex] === node.id ? "none" : "4 2"}
+                    />
+                  )}
 
                   {/* Selection Glow Outline */}
                   {isSelected && (
@@ -1395,6 +1640,26 @@ export const MindmapView = memo(function MindmapView({
           </g>
         </g>
       </svg>
+
+      {/* Dragging Ghost Node Badge Following Cursor */}
+      {draggingNodeId && dragGhostPos && (
+        <div
+          className="mindmap-drag-ghost"
+          style={{
+            position: "fixed",
+            left: dragGhostPos.x + 14,
+            top: dragGhostPos.y + 14,
+            pointerEvents: "none",
+            zIndex: 9999,
+          }}
+        >
+          <span className="ghost-icon">📦</span>
+          <span className="ghost-text">
+            {layout.nodes.find((n) => n.id === draggingNodeId)?.text || "主题"}
+          </span>
+          {dropTargetId && <span className="ghost-target-hint">➔ 移为子主题</span>}
+        </div>
+      )}
 
       {/* Inline Text Editing Overlay Input */}
       {editingNode && (

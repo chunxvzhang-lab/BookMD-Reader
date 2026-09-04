@@ -8423,6 +8423,388 @@ body:has(.flash-capsule-overlay) {
   }
 }
 
+/* ==========================================================================
+   Obsidian-Grade Context-Aware Editor Context Menu
+   ========================================================================== */
+.editor-context-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 250px;
+  max-width: 320px;
+  border-radius: 10px;
+  padding: 6px;
+  background: rgba(22, 27, 34, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+  font-size: 13px;
+  user-select: none;
+  animation: contextMenuFadeIn 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+[data-theme="light"] .editor-context-menu,
+.theme-light .editor-context-menu {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.06);
+  color: #1e293b;
+}
+
+[data-theme="eink"] .editor-context-menu,
+.theme-eink .editor-context-menu {
+  background: #f4f1ea;
+  border: 2px solid #222222;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+  color: #111111;
+}
+
+.editor-context-menu .menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.editor-context-menu .menu-divider {
+  height: 1px;
+  margin: 5px 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .editor-context-menu .menu-divider,
+.theme-light .editor-context-menu .menu-divider {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="eink"] .editor-context-menu .menu-divider,
+.theme-eink .editor-context-menu .menu-divider {
+  background: #222222;
+}
+
+.editor-context-menu .context-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.editor-context-menu .context-menu-item:hover {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+}
+
+[data-theme="light"] .editor-context-menu .context-menu-item:hover,
+.theme-light .editor-context-menu .context-menu-item:hover {
+  background: rgba(217, 119, 6, 0.14);
+  color: #d97706;
+}
+
+[data-theme="eink"] .editor-context-menu .context-menu-item:hover,
+.theme-eink .editor-context-menu .context-menu-item:hover {
+  background: #111111;
+  color: #ffffff;
+}
+
+.editor-context-menu .context-menu-item:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.editor-context-menu .menu-icon {
+  margin-right: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+}
+
+.editor-context-menu .menu-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-context-menu .menu-shortcut {
+  margin-left: 12px;
+  font-size: 11px;
+  opacity: 0.55;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.editor-context-menu .submenu-arrow {
+  margin-left: 8px;
+  opacity: 0.6;
+}
+
+.editor-context-menu .context-submenu {
+  position: absolute;
+  top: -4px;
+  left: calc(100% + 4px);
+  min-width: 170px;
+  border-radius: 9px;
+  padding: 5px;
+  background: rgba(22, 27, 34, 0.96);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 10000;
+}
+
+[data-theme="light"] .editor-context-menu .context-submenu,
+.theme-light .editor-context-menu .context-submenu {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="eink"] .editor-context-menu .context-submenu,
+.theme-eink .editor-context-menu .context-submenu {
+  background: #f4f1ea;
+  border: 2px solid #222222;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+}
+
+.editor-context-menu .context-menu-footer {
+  margin-top: 5px;
+  padding: 5px 8px 3px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  opacity: 0.72;
+  text-align: center;
+}
+
+[data-theme="light"] .editor-context-menu .context-menu-footer,
+.theme-light .editor-context-menu .context-menu-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="eink"] .editor-context-menu .context-menu-footer,
+.theme-eink .editor-context-menu .context-menu-footer {
+  border-top: 1px solid #222222;
+}
+
+/* ==========================================================================
+   Mindmap In-Canvas Search & Drag Reparenting
+   ========================================================================== */
+.mindmap-search-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mindmap-search-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: rgba(24, 28, 36, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 6px;
+  margin-left: 6px;
+  backdrop-filter: blur(12px);
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+[data-theme="light"] .mindmap-search-box,
+.theme-light .mindmap-search-box {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(217, 119, 6, 0.35);
+}
+
+[data-theme="eink"] .mindmap-search-box,
+.theme-eink .mindmap-search-box {
+  background: #f4f1ea;
+  border: 1.5px solid #222222;
+}
+
+.mindmap-search-input {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  width: 140px;
+  outline: none;
+  padding: 2px 4px;
+}
+
+.mindmap-search-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #38bdf8;
+  margin: 0 4px;
+}
+
+[data-theme="light"] .mindmap-search-count,
+.theme-light .mindmap-search-count {
+  color: #d97706;
+}
+
+[data-theme="eink"] .mindmap-search-count,
+.theme-eink .mindmap-search-count {
+  color: #111111;
+}
+
+.mindmap-search-nav-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.12s, background 0.12s;
+}
+
+.mindmap-search-nav-btn:hover:not(:disabled) {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mindmap-search-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Floating Drag Ghost Badge */
+.mindmap-drag-ghost {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1.5px dashed #38bdf8;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  color: #38bdf8;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+[data-theme="light"] .mindmap-drag-ghost,
+.theme-light .mindmap-drag-ghost {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #d97706;
+  color: #d97706;
+}
+
+.mindmap-drag-ghost .ghost-target-hint {
+  color: #4ade80;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   High-Fidelity Professional Print & PDF Export Stylesheet
+   ========================================================================== */
+@media print {
+  /* 隐藏所有界面外壳控件 */
+  .activity-bar,
+  .sidebar,
+  .tab-bar-container,
+  .toolbar,
+  .status-bar,
+  .workspace-splitter,
+  .splitter-handle,
+  .mindmap-toolbar,
+  .editor-pane-container,
+  .code-copy-btn,
+  .wikilink-preview-popover,
+  .flash-capsule-overlay,
+  .editor-context-menu,
+  .tab-graph-toggle-btn {
+    display: none !important;
+  }
+
+  /* 充满纸张宽度并消除深色底色 */
+  html,
+  body,
+  #root,
+  .app-layout,
+  .main-viewport-container,
+  .workspace,
+  .document-workspace,
+  .reader-pane,
+  .reader-scroll-container,
+  .markdown-body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .markdown-body {
+    padding: 15mm 12mm !important;
+    font-size: 11.5pt !important;
+    line-height: 1.65 !important;
+  }
+
+  /* 打印分页保护：避免标题、代码块、表格、图表跨页截断 */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    color: #000000 !important;
+  }
+
+  pre,
+  code,
+  table,
+  blockquote,
+  .wikilink-embed-card,
+  svg,
+  .mermaid-wrapper {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* 代码块在打印时保持清新边框与浅色底 */
+  pre {
+    background: #f6f8fa !important;
+    border: 1px solid #d0d7de !important;
+    color: #24292f !important;
+  }
+
+  /* 超链接打印优化 */
+  a {
+    color: #0969da !important;
+    text-decoration: underline !important;
+  }
+}
+
 
 
 

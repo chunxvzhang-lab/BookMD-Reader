@@ -1634,6 +1634,77 @@ export function App() {
     window.bookMDDesktop?.setNativeTheme?.(preferences.theme);
   }, [preferences]);
 
+  const handlePrintDocument = useCallback(async () => {
+    const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+    const title = activeChapter?.title || session?.fileName || "KnowSpace_文档";
+    if (desktop?.printToPdf) {
+      try {
+        await desktop.printToPdf({ title });
+      } catch (err) {
+        console.error("Print to PDF failed:", err);
+      }
+    } else {
+      window.print();
+    }
+  }, [activeChapter?.title, session?.fileName]);
+
+  const handleExtractSelectionToNote = useCallback(
+    async (selectedText: string, suggestedTitle: string) => {
+      if (!session) return;
+      const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+      const cleanTitle = suggestedTitle.replace(/[\\/:*?"<>|]/g, "").trim() || "未命名笔记";
+
+      if (desktop?.createMarkdownFile && session.absolutePath) {
+        const parentDir = session.absolutePath.replace(/[\\/][^\\/]+$/, "");
+        try {
+          const res = await desktop.createMarkdownFile({
+            rootPath: parentDir,
+            defaultName: cleanTitle,
+            initialContent: `# ${cleanTitle}\n\n${selectedText}\n`,
+          });
+          if (!res.canceled && res.success && manifest?.rootPath && desktop.refreshDirectory) {
+            const next = await desktop.refreshDirectory(manifest.rootPath);
+            setManifest(next);
+          }
+        } catch (err) {
+          console.error("Failed to extract selection to note:", err);
+        }
+      }
+
+      if (editorViewRef.current) {
+        const sel = editorViewRef.current.state.selection.main;
+        editorViewRef.current.dispatch({
+          changes: { from: sel.from, to: sel.to, insert: `[[${cleanTitle}]]` },
+          selection: { anchor: sel.from + cleanTitle.length + 4 },
+        });
+      }
+    },
+    [manifest?.rootPath, session]
+  );
+
+  const handleSendSelectionToFlash = useCallback(async (text: string) => {
+    const desktop = typeof window !== "undefined" ? window.knowSpaceDesktop || window.bookMDDesktop : undefined;
+    if (desktop?.saveFlashNote && text.trim()) {
+      try {
+        await desktop.saveFlashNote({
+          content: text.trim(),
+          tags: ["正文摘录"],
+        });
+      } catch (err) {
+        console.error("Failed to send selection to flash:", err);
+      }
+    }
+  }, []);
+
+  const handleToggleMindmap = useCallback(() => {
+    setViewMode((prev) => (prev === "mindmap" ? "split" : "mindmap"));
+  }, []);
+
+  const handleRevealInToc = useCallback(() => {
+    setSidebarTab("toc");
+    setSidebarOpen(true);
+  }, []);
+
   // Global keybindings
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -1727,6 +1798,12 @@ export function App() {
         return;
       }
 
+      if (event.ctrlKey && event.key.toLowerCase() === "p") {
+        event.preventDefault();
+        handlePrintDocument();
+        return;
+      }
+
       if (isEditing) return;
 
       if (event.ctrlKey && event.key.toLowerCase() === "b") {
@@ -1770,6 +1847,7 @@ export function App() {
     goPrevious,
     handleCloseDualSplit,
     handleCloseTab,
+    handlePrintDocument,
     handleToggleGraphPane,
     isFullscreen,
     lightboxMedia,
@@ -2257,6 +2335,7 @@ export function App() {
                 return next;
               });
             }}
+            onPrint={handlePrintDocument}
           />
         )}
 
@@ -2466,6 +2545,11 @@ export function App() {
                   setSidebarTab("backlinks");
                   setSidebarOpen(true);
                 }}
+                onExtractToNote={handleExtractSelectionToNote}
+                onSendToFlash={handleSendSelectionToFlash}
+                onPrint={handlePrintDocument}
+                onToggleMindmap={handleToggleMindmap}
+                onRevealInToc={handleRevealInToc}
               />
             ) : viewMode === "mindmap" && session ? (
               <MindmapView
@@ -2514,6 +2598,11 @@ export function App() {
                   setSidebarTab("backlinks");
                   setSidebarOpen(true);
                 }}
+                onExtractToNote={handleExtractSelectionToNote}
+                onSendToFlash={handleSendSelectionToFlash}
+                onPrint={handlePrintDocument}
+                onToggleMindmap={handleToggleMindmap}
+                onRevealInToc={handleRevealInToc}
               />
             ) : (
               <main className="empty-reader" ref={readerRef}>

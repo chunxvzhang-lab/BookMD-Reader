@@ -1778,4 +1778,64 @@ ipcMain.handle("bookmd:export-svg-as-png", async (event, request = {}) => {
   }
 });
 
+ipcMain.handle("bookmd:print-to-pdf", async (event, request = {}) => {
+  const targetWin = getWindowFromEvent(event) || mainWindow;
+  if (!targetWin || targetWin.isDestroyed()) {
+    return { success: false, message: "未找到活动窗口" };
+  }
+
+  const { title = "文档", landscape = false, pageSize = "A4" } = request;
+  const cleanTitle = (title || "文档").replace(/[\\/:*?"<>|]/g, "_").trim();
+  const defaultPath = path.join(app.getPath("downloads"), `${cleanTitle}.pdf`);
+
+  const saveResult = await dialog.showSaveDialog(targetWin || undefined, {
+    title: "导出为高保真专业 PDF",
+    defaultPath,
+    filters: [
+      { name: "PDF 文档 (*.pdf)", extensions: ["pdf"] },
+      { name: "所有文件 (*.*)", extensions: ["*"] },
+    ],
+  });
+
+  if (saveResult.canceled || !saveResult.filePath) {
+    return { canceled: true };
+  }
+
+  try {
+    const pdfBuffer = await targetWin.webContents.printToPDF({
+      printBackground: true,
+      pageSize: pageSize || "A4",
+      landscape: Boolean(landscape),
+      margins: {
+        marginType: "custom",
+        top: 0.4,
+        bottom: 0.4,
+        left: 0.5,
+        right: 0.5,
+      },
+      preferCSSPageSize: true,
+    });
+
+    await fs.promises.writeFile(saveResult.filePath, pdfBuffer);
+    return { success: true, filePath: saveResult.filePath };
+  } catch (err) {
+    console.error("Failed to generate PDF:", err);
+    return { success: false, message: err.message };
+  }
+});
+
+ipcMain.handle("bookmd:print-document", async (event) => {
+  const targetWin = getWindowFromEvent(event) || mainWindow;
+  if (!targetWin || targetWin.isDestroyed()) {
+    return { success: false, message: "未找到活动窗口" };
+  }
+  try {
+    targetWin.webContents.print({ silent: false, printBackground: true });
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to invoke print:", err);
+    return { success: false, message: err.message };
+  }
+});
+
 

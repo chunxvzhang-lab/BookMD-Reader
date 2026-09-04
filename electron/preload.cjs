@@ -25,6 +25,8 @@ const desktopApi = {
   exportSvgAsPng: (params) => ipcRenderer.invoke("bookmd:export-svg-as-png", params),
   savePngData: (params) => ipcRenderer.invoke("bookmd:save-png-data", params),
   openInNewWindow: (absolutePath) => ipcRenderer.invoke("bookmd:open-in-new-window", absolutePath),
+  printToPdf: (options) => ipcRenderer.invoke("bookmd:print-to-pdf", options),
+  printDocument: () => ipcRenderer.invoke("bookmd:print-document"),
 
   // Flash Capsule APIs
   openFlashCapsule: () => ipcRenderer.invoke("bookmd:open-flash-capsule"),

@@ -119,6 +119,12 @@ export type KnowSpaceDesktopAPI = {
     filename?: string;
   }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
   openInNewWindow?: (absolutePath: string) => Promise<boolean>;
+  printToPdf?: (params?: {
+    title?: string;
+    landscape?: boolean;
+    pageSize?: string;
+  }) => Promise<{ success?: boolean; canceled?: boolean; filePath?: string; message?: string }>;
+  printDocument?: () => Promise<{ success?: boolean; message?: string }>;
   openFlashCapsule?: () => Promise<boolean>;
   hideFlashCapsule?: () => Promise<boolean>;
   getFlashShortcut?: () => Promise<string>;

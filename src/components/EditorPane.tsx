@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorState, Compartment, type Extension } from "@codemirror/state";
 import {
   EditorView,
@@ -25,15 +25,11 @@ import {
 import { tags } from "@lezer/highlight";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
-import {
-  autocompletion,
-  closeBrackets,
-  closeBracketsKeymap,
-  type CompletionContext,
-  type CompletionResult,
-} from "@codemirror/autocomplete";
+import { autocompletion, closeBrackets, closeBracketsKeymap, type CompletionContext, type CompletionResult } from "@codemirror/autocomplete";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import type { ThemeMode } from "../core/types";
+import { matchSlashCommands, getCommandTemplate } from "../services/slashCommands";
+import { EditorContextMenu } from "./EditorContextMenu";
 
 export type WikiLinkTarget = {
   id?: string;
@@ -55,6 +51,11 @@ type EditorPaneProps = {
   onScroll?: (view: EditorView) => void;
   onSelectionChange?: (view: EditorView) => void;
   onEditorViewReady?: (view: EditorView | null) => void;
+  onExtractToNote?: (selectedText: string, suggestedTitle: string) => void;
+  onSendToFlash?: (text: string) => void;
+  onPrint?: () => void;
+  onToggleMindmap?: () => void;
+  onRevealInToc?: () => void;
 };
 
 // Rich, high-contrast syntax highlighting for Light Theme (Warm Orange-Yellow Accent)
@@ -234,9 +235,15 @@ export function EditorPane({
   onScroll,
   onSelectionChange,
   onEditorViewReady,
+  onExtractToNote,
+  onSendToFlash,
+  onPrint,
+  onToggleMindmap,
+  onRevealInToc,
 }: EditorPaneProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const themeCompartment = useRef(new Compartment());
   const readOnlyCompartment = useRef(new Compartment());
   const fontSizeCompartment = useRef(new Compartment());
@@ -437,6 +444,41 @@ export function EditorPane({
       };
     };
 
+    const slashCommandCompletionSource = (context: CompletionContext): CompletionResult | null => {
+      // Trigger when user types / at line start or after space/newline
+      const word = context.matchBefore(/(?:^|[\r\n\s])\/([a-zA-Z0-9_\u4e00-\u9fa5-]*)$/);
+      if (!word) return null;
+
+      const slashIndex = word.text.lastIndexOf("/");
+      const query = word.text.slice(slashIndex + 1);
+      const fromPos = word.from + slashIndex;
+
+      const matchedCommands = matchSlashCommands(query);
+      if (matchedCommands.length === 0) return null;
+
+      return {
+        from: fromPos,
+        to: context.pos,
+        options: matchedCommands.map((cmd) => {
+          const { text, cursorOffset } = getCommandTemplate(cmd);
+          return {
+            label: `/${cmd.keywords[0] || cmd.id}`,
+            displayLabel: `${cmd.icon} ${cmd.title}`,
+            detail: cmd.description,
+            type: "keyword",
+            boost: cmd.category === "排版与标题" ? 99 : 50,
+            apply: (view: EditorView, _completion: any, from: number, to: number) => {
+              view.dispatch({
+                changes: { from, to, insert: text },
+                selection: { anchor: from + cursorOffset },
+              });
+            },
+          };
+        }),
+        filter: false,
+      };
+    };
+
     const state = EditorState.create({
       doc: value,
       selection: { anchor: initialCursorPos, head: initialCursorPos },
@@ -453,7 +495,7 @@ export function EditorPane({
         bracketMatching(),
         closeBrackets(),
         autocompletion({
-          override: [wikiLinkCompletionSource],
+          override: [wikiLinkCompletionSource, slashCommandCompletionSource],
         }),
         rectangularSelection(),
         crosshairCursor(),
@@ -616,7 +658,33 @@ export function EditorPane({
       ref={containerRef}
       className="editor-pane-container"
       data-testid="codemirror-editor"
-      style={{ width: "100%", height: "100%", overflow: "hidden" }}
-    />
+      style={{ width: "100%", height: "100%", overflow: "hidden", position: "relative" }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        const view = viewRef.current;
+        if (view) {
+          const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
+          if (pos !== null && view.state.selection.main.empty) {
+            view.dispatch({ selection: { anchor: pos, head: pos } });
+          }
+        }
+        setContextMenuPos({ x: e.clientX, y: e.clientY });
+      }}
+    >
+      {contextMenuPos && viewRef.current && (
+        <EditorContextMenu
+          x={contextMenuPos.x}
+          y={contextMenuPos.y}
+          onClose={() => setContextMenuPos(null)}
+          view={viewRef.current}
+          currentFilePath={currentFilePath}
+          onExtractToNote={onExtractToNote}
+          onSendToFlash={onSendToFlash}
+          onPrint={onPrint}
+          onToggleMindmap={onToggleMindmap}
+          onRevealInToc={onRevealInToc}
+        />
+      )}
+    </div>
   );
 }

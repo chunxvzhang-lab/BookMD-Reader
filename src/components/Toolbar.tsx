@@ -12,6 +12,7 @@ import {
   Minimize2,
   Hash,
   Eye,
+  Printer,
 } from "lucide-react";
 import type { EditorViewMode, ThemeMode } from "../core/types";
 import { ViewModeControl } from "./ViewModeControl";
@@ -46,6 +47,7 @@ type ToolbarProps = {
   onOpenDirectory?: () => void;
   onThemeChange?: (theme: ThemeMode) => void;
   onFontScaleChange: (scale: number) => void;
+  onPrint?: () => void;
 };
 
 export function Toolbar(props: ToolbarProps) {
@@ -180,6 +182,17 @@ export function Toolbar(props: ToolbarProps) {
             title={props.isFullscreen ? "退出全屏 (F11 / Esc)" : "全屏模式 (F11)"}
           >
             {props.isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        )}
+
+        {props.onPrint && (
+          <button
+            className="icon-button"
+            onClick={props.onPrint}
+            aria-label="打印与导出高保真 PDF"
+            title="打印与导出高保真 PDF (Ctrl+P)"
+          >
+            <Printer size={17} />
           </button>
         )}
 
